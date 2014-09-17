@@ -5,7 +5,7 @@
 
 \usage{
 calc.condlogLik(y, X = NULL, family, trial.size = NULL, lv.coefs, 
-	X.coefs = NULL, site.coefs = NULL, lv, cutoffs = NULL, 
+	X.coefs = NULL, row.coefs = NULL, lv, cutoffs = NULL, 
      powerparam = NULL)
 }
 
@@ -14,7 +14,7 @@ calc.condlogLik(y, X = NULL, family, trial.size = NULL, lv.coefs,
 
   \item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
 
-\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. 
+\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
 
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
@@ -25,7 +25,7 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{site.coefs}{Row effect estimates for the boral model. Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
+  \item{row.coefs}{Row effect estimates for the boral model. Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
 
   \item{lv}{Latent variables "estimates" from the boral model, which the conditional log-likelihood is based on. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the conditional log-likelihood.}
 
@@ -35,7 +35,7 @@ All columns assumed to have ordinal responses are constrained to have the same c
 }
 
 \details{
-For an \eqn{n x p} response matrix \eqn{y}, suppose we fit an boral model with \eqn{q} latent varables. If we denote the latent varibles by \eqn{\bm{z}_i; i = 1,\ldots,n}, then the conditional log-likelihood is given by (with parameters where appropriate),
+For an \eqn{n x p} response matrix \eqn{y}, suppose we fit an boral model with \eqn{q} latent variables. If we denote the latent variables by \eqn{\bm{z}_i; i = 1,\ldots,n}, then the conditional log-likelihood is given by (with parameters where appropriate),
 
 \deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log (f(y_{ij} | \alpha_i, \tau_k, \theta_{0j}, \bm{\theta}_j, \bm{z}_i, \bm{x}_i, \bm{\beta}_j, \phi_j)), }
 
@@ -55,7 +55,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \note{
-The conditional DIC, WAIC, EAIC, and EBIC returned from \code{\link{get.measures}} are based on the conditional log-likelihood calculated from this function. Additionally, \code{\link{get.measures}} returns the conditional log-likelihood evalulated at all MCMC samples of a fitted boral model.
+The conditional DIC, WAIC, EAIC, and EBIC returned from \code{\link{get.measures}} are based on the conditional log-likelihood calculated from this function. Additionally, \code{\link{get.measures}} returns the conditional log-likelihood evaluated at all MCMC samples of a fitted boral model.
 }
 
 \seealso{
@@ -72,7 +72,7 @@ n <- nrow(y); p <- ncol(y);
 ## Example 1 - model with 2 latent variables, site effects, 
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     site.eff = TRUE, save.model = TRUE, calc.ics = FALSE)
+     row.eff = TRUE, save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
 fit.mcmc <- as.mcmc(spider.fit.nb$jags.model)[[1]] 
@@ -86,13 +86,13 @@ lvs.mat <- matrix(apply(fit.mcmc[,grep("lvs",colnames(fit.mcmc))],2,median),nrow
 
 ## Caculate the conditional log-likelihood at the posterior median
 calc.condlogLik(y, family = "negative.binomial", 
-     lv.coefs =  coef.mat, site.coefs = site.coef.median, lv = lvs.mat)
+     lv.coefs =  coef.mat, row.coefs = site.coef.median, lv = lvs.mat)
 
 
 ## Example 2 - model with one latent variable, no site effects, 
 ## 	and environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 1, 
-     site.eff = FALSE, save.model = TRUE, calc.ics = FALSE)
+     row.eff = FALSE, save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
 fit.mcmc <- as.mcmc(spider.fit.nb2$jags.model)[[1]] 

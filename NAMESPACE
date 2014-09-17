@@ -6,6 +6,7 @@ export(boral,
 	create.life,
 	ds.residuals,
 	fitted.boral, 
+	get.enviro.cor,
 	get.hpdintervals, 
 	get.measures, 
 	get.more.measures, 
@@ -21,10 +22,13 @@ exportClasses(boral)
 import(coda, mvtnorm, fishMod, MASS)
 importFrom(R2jags, jags)
 
-importFrom(stats, dpois, ppois, qpois, rpois)
+importFrom(stats, dbeta, pbeta, qbeta, rbeta)
 importFrom(stats, dbinom, pbinom, qbinom, rbinom)
+importFrom(stats, dexp, pexp, qexp, rexp)
+importFrom(stats, dgamma, pgamma, qgamma, rgamma)
 importFrom(stats, dnbinom, pnbinom, qnbinom, rnbinom)
 importFrom(stats, dnorm, pnorm, qnorm, rnorm)
 importFrom(stats, dlnorm, plnorm, qlnorm, rlnorm)
+importFrom(stats, dpois, ppois, qpois, rpois)
 
 

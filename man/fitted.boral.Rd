@@ -37,7 +37,7 @@ data(spider)
 y <- spider$abun
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     site.eff = TRUE, n.burnin = 10, n.iteration = 100, 
+     row.eff = TRUE, n.burnin = 10, n.iteration = 100, 
      n.thin = 1, calc.ics = FALSE)
 
 fitted(spider.fit.nb)

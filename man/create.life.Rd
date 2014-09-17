@@ -5,25 +5,25 @@
 
 \usage{ 
 create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, 
-     family, site.coefs = NULL, trial.size = NULL, 
+     family, row.coefs = NULL, trial.size = NULL, 
      cutoffs = NULL, powerparam = NULL, manual.dim = NULL)
 }
 
 \arguments{
   \item{true.lv}{A matrix of true latent variables. With multivariate abundance data in ecology for instance, each row corresponds to the true site ordination coordinates. Defaults to \code{NULL}, in which case no latent variables are included.}
 
- \item{lv.coefs}{The column-specific intercepts, regression coefficients relating to the latent variables \code{true.lv}, and dispersion parameters.}
+ \item{lv.coefs}{The column-specific intercepts, coefficients relating to the latent variables \code{true.lv}, and dispersion parameters.}
 
-  \item{X}{An model matrix of covariates, which can be included as part of the data generation. Defaults to \code{NULL}, in which case no model matrix is used. No intercept column should be included in \code{X}.}  
+  \item{X}{An model mat	rix of covariates, which can be included as part of the data generation. Defaults to \code{NULL}, in which case no model matrix is used. No intercept column should be included in \code{X}.}  
 
   \item{X.coefs}{The coefficients relating to the model matrix \code{X}.}
 
-\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. 
+\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
 
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
-\item{site.coefs}{Row effects. Defaults to \code{NULL}, in which case it is assumed there are no row effects.} 
+\item{row.coefs}{Row effects. Defaults to \code{NULL}, in which case it is assumed there are no row effects.} 
 
  \item{trial.size}{Either equal to NULL, a single element, or a vector of length equal to the number of columns in \eqn{y}. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of \eqn{y}.}
 
@@ -64,7 +64,7 @@ sim.y <- create.life(true.lv, lv.coefs, X, X.coefs, family = "normal")
 
 \dontrun{
 fit.boral <- boral(sim.y, X = X, family = "normal", num.lv = 2, 
-     site.eff = FALSE, save.model = FALSE)
+     row.eff = FALSE, save.model = FALSE)
 
 lvsplot(fit.boral)
 }
@@ -84,7 +84,7 @@ sim.y <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs,
      family = "ordinal", cutoffs = true.ordinal.cutoffs) 
 
 \dontrun{
-fit.boral <- boral(y = sim.y, family = "ordinal", num.lv = 2, site.eff = F, 
-     n.thin = 5, save.model = FALSE, calc.ics = TRUE)
+fit.boral <- boral(y = sim.y, family = "ordinal", num.lv = 2, 
+	site.eff = FALSE, n.thin = 5, save.model = FALSE, calc.ics = TRUE)
 }
 }

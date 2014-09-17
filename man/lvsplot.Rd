@@ -8,7 +8,7 @@
 \arguments{
   \item{x}{An object for class "boral".}
 
-  \item{jitter}{If \code{jitter = TRUE}, then some jittering is applied so that points on the plots do not overlap exactly (which can often occur with discrete data and samll sample sizes). Please see \code{\link{jitter}} for its implementation.}
+  \item{jitter}{If \code{jitter = TRUE}, then some jittering is applied so that points on the plots do not overlap exactly (which can often occur with discrete data and small sample sizes). Please see \code{\link{jitter}} for its implementation.}
      
   \item{a}{Default parameter used in cex. Graphical options are adjusted as \cr \code{par(cex = a, cex.axis = a, cex.lab = a+0.5, cex.main = a+0.5, ...)}. Defaults to 1.}
       
@@ -18,9 +18,9 @@
 }
 
 \details{
-Two plots are produced, based on the posterior medians and posterior means of the latent variables respectively. The points in each plot are labelled using the row index of the reponse matrix \eqn{y}. 
+Two plots are produced, based on the posterior medians and posterior means of the latent variables respectively. The points in each plot are labeled using the row index of the response matrix \eqn{y}. 
 
-If the fitted model does not include covariates (\code{X = NULL}), the plots can be interpreted in the exactly same manner as unconstrainted ordination plots constructed from methods such as Nonmetric Multi-dimensional Scaling (NMDS, Kruskal, 1964) and Correspondence Analysis (CA, Hill, 1974). with multivariate abundance data for instance, where the response matrix \eqn{y} consists of \eqn{n} sites and \eqn{p} species, the ordination plots can be studied to look for possible clustering of sites, location and/or dispersion effects, an arch pattern indicative of some sort species succession over an environmental gradient, and so on.
+If the fitted model does not include covariates (\code{X = NULL}), the plots can be interpreted in the exactly same manner as unconstrained ordination plots constructed from methods such as Nonmetric Multi-dimensional Scaling (NMDS, Kruskal, 1964) and Correspondence Analysis (CA, Hill, 1974). with multivariate abundance data for instance, where the response matrix \eqn{y} consists of \eqn{n} sites and \eqn{p} species, the ordination plots can be studied to look for possible clustering of sites, location and/or dispersion effects, an arch pattern indicative of some sort species succession over an environmental gradient, and so on.
 }
 
 \author{
@@ -42,7 +42,7 @@ y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     site.eff = TRUE, save.model = FALSE, calc.ics = FALSE)
+     row.eff = TRUE, save.model = FALSE, calc.ics = FALSE)
 
 ## Three clusters are observable with site 25 roughly in the middle.
 lvsplot(spider.fit.nb) 

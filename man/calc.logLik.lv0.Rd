@@ -1,11 +1,11 @@
 \name{calc.logLik.lv0}
 \alias{calc.logLik.lv0}
 \title{Log-likelihood for a boral model with no latent variables}
-\description{Calculates the log-likelihood for a set of parameter estimates from an boral model with no latent variables. In such a model, the conditional and marginal logl-likelihood are equivalent.}
+\description{Calculates the log-likelihood for a set of parameter estimates from an boral model with no latent variables. In such a model, the conditional and marginal log-likelihood are equivalent.}
 
 \usage{
 calc.logLik.lv0(y, X = NULL, family, trial.size = NULL, lv.coefs, 
-	X.coefs = NULL, site.coefs = NULL, cutoffs = NULL,
+	X.coefs = NULL, row.coefs = NULL, cutoffs = NULL,
      powerparam = NULL)
 }
 
@@ -14,7 +14,7 @@ calc.logLik.lv0(y, X = NULL, family, trial.size = NULL, lv.coefs,
 
 \item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
 
-\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. 
+\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
 
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
@@ -25,7 +25,7 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{site.coefs}{Row effects estimates for the boral model. Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
+  \item{row.coefs}{Row effects estimates for the boral model. Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
 
   \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \eqn{y} are ordinal responses. Defaults to \code{NULL}.}
 
@@ -66,7 +66,7 @@ n <- nrow(y); p <- ncol(y);
 
 ## Example 1 - NULL model with site effects and species specific intercepts
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 0, 
-     site.eff = TRUE, save.model = TRUE, calc.ics = FALSE)
+     row.eff = TRUE, save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
 fit.mcmc <- as.mcmc(spider.fit.nb$jags.model)[[1]]
@@ -79,13 +79,13 @@ site.coef.median <- apply(fit.mcmc[,grep("site.params", colnames(fit.mcmc))],
 
 ## Calculate the log-likelihood at the posterior median
 calc.logLik.lv0(y, family = "negative.binomial",
-     lv.coefs =  coef.mat, site.coefs = site.coef.median)
+     lv.coefs =  coef.mat, row.coefs = site.coef.median)
 
 
 ## Example 2 - Model without site effects, latent variables, 
 ##   but includes environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 0, 
-     site.eff = FALSE, save.model = TRUE, calc.ics = FALSE)
+     row.eff = FALSE, save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
 fit.mcmc <- as.mcmc(spider.fit.nb2$jags.model)[[1]]

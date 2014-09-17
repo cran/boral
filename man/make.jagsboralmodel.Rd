@@ -3,29 +3,34 @@
 \title{Write a text file containing an boral model for use into JAGS}
 \description{This function is designed to write boral models with one or more latent variables.}
 
-\usage{make.jagsboralmodel(family, X.eff, site.eff, n, p, hypparams = c(100,100))}
+\usage{make.jagsboralmodel(family, num.X = 0, row.eff, n, p, 
+	hypparams = c(100,100,100,100), ssvs.index = -1)}
 
 \arguments{
-\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. 
+\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
 
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
-  \item{X.eff}{A logical value indicating whether covariates are to be included in the model.}
+\item{num.X}{Number of columns in the model matrix \code{X}. Defaults to 0, in which case it is assumed not model matrix is included in model.}
 
- \item{site.eff}{A logical value indicating whether to include row effects or not.}    
+ \item{row.eff}{A logical value indicating whether to include row effects or not.}    
 
 \item{n}{The number of rows in the response matrix \eqn{y}.}
 
   \item{p}{The number of columns in the response matrix \eqn{y}.}
 
- \item{hypparams}{Vector of 2 hyperparameters in the Bayesian estimation. The first hyperparameter is the variance for the normal priors of all coefficients i.e., row effects, column-specific intercepts, column-specific regression coefficients corresponding to all latent variables and covariates, cutoff points for ordinal data. The second hyperparameter is the maximum of the uniform prior used for the dispersion parameters i.e, for the negative binomial, normal, and tweedie distributions. Defaults to 100 for both elements. The common power parameter in the tweedie distributon is assumed to have uniform prior from 1 to 2.
+ \item{hypparams}{Vector of 4 hyperparameters used in the set up of prior distributions. The first element is the variance for the normal priors of all (column-specific) intercepts, row effects, cutoff points for ordinal data. The second element is the variance for the normal priors of all column-specific coefficients relating to the latent variables (ignored if \code{num.lv = 0}). The third element is the variance for the normal priors of all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). The third element is the maximum of the uniform prior used for the dispersion parameters i.e, for the negative binomial, normal, lognormal, tweedie, gamma, beta (the dispersion parameter here refers to the sample size) distributions. Defaults to 100 for all three elements. Note the common power parameter in the tweedie distribution is assumed to have uniform prior from 1 to 2.
  
-If all columns of \eqn{y} are assumed to be ordinal responses, a sum-to-zero constaint is imposed on \eqn{\theta_{0j}} for model identifiability. Defaults to 100 for both hyperparameters.}
+Also, if all columns of \eqn{y} are assumed to be ordinal responses, a sum-to-zero constraint is imposed on \eqn{\theta_{0j}} for model identifiability.}
+
+ \item{ssvs.index}{Indices to be used for Stochastic Search Variable Selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate, or any integer exceeding 1 (SSVS is performed on collectively all coefficients on this covariate/s.) Defaults to -1, in which case no model selection is performed on the fitted model at all. 
+ 
+ This argument is only read if \code{X.eff = TRUE}, and is necessary to establish the prior distributions used for any explanatory variables. Please see the \code{\link{boral}} help file for more information regarding the implementation of SSVS.}
 }
 
 \details{
-This function is automatically executed inside \code{\link{boral}}, and therefore does not need to be run separately before fitting the boral model. It can however be run independently if one is: 1) interested in what the actual JAGS file for a particukar boral model looks like, 2) wanting to modify a basic JAGS model file to construct more complex model e.g., include environmental variables. Note however \code{\link{boral}} currently does not allow the user to manually enter a script to be run. 
+This function is automatically executed inside \code{\link{boral}}, and therefore does not need to be run separately before fitting the boral model. It can however be run independently if one is: 1) interested in what the actual JAGS file for a particular boral model looks like, 2) wanting to modify a basic JAGS model file to construct more complex model e.g., include environmental variables. Note however \code{\link{boral}} currently does not allow the user to manually enter a script to be run. 
 
 When running the main function \code{\link{boral}}, setting \code{save.model = TRUE} which automatically save the JAGS model file as a text file called "jagsboralmodel.txt" in the current working directory.
 }
@@ -51,12 +56,12 @@ n <- nrow(y); p <- ncol(y);
 ## between Poisson and negative binomial distributions 
 ##   across the rows of y...cool!
 make.jagsboralmodel(family = rep(c("poisson","negative.binomial"),length=n), 
-	site.eff = TRUE, X.eff = FALSE, n, p)
+	row.eff = TRUE, num.X = 0, n = n, p = p)
 
 ## Create a boral model JAGS script, where distributions are all negative 
 ## 	binomial distributions and covariates will be included.
-make.jagsboralmodel(family = "negative.binomial", 
-	site.eff = FALSE, X.eff = TRUE, n, p)
+make.jagsboralmodel(family = "negative.binomial", num.X = ncol(spider$x),
+	row.eff = FALSE, n = n, p = p)
 
 ## Simulate some ordinal data and create a JAGS model script
 true.lv <- rbind(rmvnorm(10,mean=c(-2,-2)),rmvnorm(10,mean=c(2,2)))
@@ -71,6 +76,6 @@ true.ordinal.cutoffs <- seq(-2,10,length=10-1)
 sim.y <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs, 
      family = "ordinal", cutoffs = true.ordinal.cutoffs) 
 
-make.jagsboralmodel(family = "ordinal", X.eff = FALSE, site.eff = FALSE, n=20, p=30)
+make.jagsboralmodel(family = "ordinal", num.X = 0, row.eff = FALSE, n=20, p=30)
 }
 

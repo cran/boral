@@ -21,10 +21,10 @@ DIC value for the jags model.
 
 \references{
 \itemize{
-\item Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., & Rubin, D. B. (2013). Bayesian data analysis. CRC press.
+\item Gelman et al. (2013). Bayesian data analysis. CRC press.
 \item Millar, R. B. (2009). Comparison of hierarchical Bayesian models for overdispersed count data using DIC and Bayes' factors. Biometrics, 65, 962-969.
 \item Ntzoufras, I. (2011). Bayesian modeling using WinBUGS (Vol. 698). John Wiley & Sons.
-\item Spiegelhalter, D. J., Best, N. G., Carlin, B. P., & Van Der Linde, A. (2002). Bayesian measures of model complexity and fit. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 64, 583-639.
+\item Spiegelhalter, et al. (2002). Bayesian measures of model complexity and fit. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 64, 583-639.
 }
 }
 
@@ -48,7 +48,7 @@ y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     site.eff = TRUE, save.model = TRUE, calc.ics = TRUE)
+     row.eff = TRUE, save.model = TRUE, calc.ics = TRUE)
 
 spider.fit.nb$ics ## DIC returned as one of several information criteria.
 }

@@ -24,7 +24,7 @@ Four types of plots are provided:
 \enumerate{
      \item Plot of Dunn-Smyth residuals against the linear predictors. This can be useful to assess whether the mean variance assumption as been adequately satisfied, as well as to look for particular outliers.  
      \item Plot of Dunn-Smyth residuals against the row index/row names.  
-     \item Plot of Dunn-Smyth residuals against the column index/column names. Both this and the previous plot are useful for assessing how well each row/column of the response matrix is being modelled. 
+     \item Plot of Dunn-Smyth residuals against the column index/column names. Both this and the previous plot are useful for assessing how well each row/column of the response matrix is being modeled. 
      \item A normal quantile plot of the Dunn-Smyth residuals, which can be used to assess the normality assumption and overall goodness of fit.  
      }
 }     
@@ -46,7 +46,7 @@ library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
-spider.fit.p <- boral(y, family = "poisson", num.lv = 2, site.eff = TRUE, 
+spider.fit.p <- boral(y, family = "poisson", num.lv = 2, row.eff = TRUE, 
      n.burnin = 10, n.iteration = 100, n.thin = 1, 
      save.model = FALSE, calc.ics = FALSE)
 
@@ -56,7 +56,7 @@ plot(spider.fit.p, which = 1:4)
 ## The normal quantile plot also suggests some lack of fit.
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     site.eff = TRUE, n.burnin = 10, n.iteration = 100, n.thin = 1, 
+     row.eff = TRUE, n.burnin = 10, n.iteration = 100, n.thin = 1, 
      save.model = FALSE, calc.ics = FALSE)
 
 plot(spider.fit.nb, which = 1:4) 

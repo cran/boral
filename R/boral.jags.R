@@ -5,26 +5,37 @@
 ## Ordinal data handled as propotional odds regression, with same cutoff points for all spp. 
 ## Multinomial regression is available, but CURRENTLY NOT ALLOWED DUE TO COMPUTATION TIME
 ## This should make sense if the same ordinal scale is applied to all species
+
+## Changes from v0.4
+## 1) site.eff => row.eff
+## 2) boral.default: n.burnin = 5000; n.iteration = 35000
+## 3) get.enviro.cor: Calculates correlation due to shared responses to model matrix X
+## 4) family = exponential, gamma, beta added -- beta won't work if y = 0/1. Ad-hoc fix is to add a little bit, but dodgy. gamma parameterized in terms of shape and rate, and dispersion parameter returns rate
+## 5) Stochastic search variable selection now implemented: -1 for no selection; 0 for selection of coefficients separately for a covariate; >= 1 for selection of coefficients collectively on one or more covariates. Prior variance of hyperparams[2]*((1-I)*0.0001+I), with prior probability of I being a Bernoulli prior with prob = 0.5
+## 6) hypparams extended to four elements: 1) variance for all intercepts, row effects, ordinal cutoff points, 2) variance for all LV coefs, 3) variance for all X coefs, 4) max limit for dispersion parameters. This applies to both boral models with and without latent variables
+## 7) get.hpdintervals includes prob argument
+## 8) get.more.measures can now be run inside get.measures. Help files continue to exist for both
+## 9) Syntax change to make.jagsboralmodel and make.jagsboralnullmodel to use num.X argument instead of X.eff; done to allow ssvs.index to be replicated
 ##############
-# rm(list = ls())
-# library(R2jags); 
-# library(mvtnorm); 
-# library(mvabund); 
-# library(coda); 
-# library(MASS)
-# library(fishMod)
-# source("auxilaryfunctions.R")
-# #  
-#data(spider)
-#y <- spider$abun
-#X <- spider$x; family = "negative.binomial"; num.lv = 2; site.eff = T; n.burnin = 4000; n.iteration = 24000; n.thin = 5; save.model = FALSE; calc.ics = TRUE; trial.size <- NULL; seed <- 123; hypparams = c(100,100); 
+#  rm(list = ls())
+#  library(R2jags); 
+#  library(mvtnorm); 
+#  library(mvabund); 
+#  library(coda); 
+#  library(MASS)
+#  library(fishMod)
+#  source("auxilaryfunctions.R")
+# # # #  
+#  data(spider)
+#  y <- spider$abun
+#  X <- spider$x; family = "negative.binomial"; num.lv = 0; row.eff = T; n.burnin = 4000; n.iteration = 24000; n.thin = 5; save.model = FALSE; calc.ics = TRUE; trial.size <- NULL; seed <- 123; hypparams = c(100,100,100,100); ssvs.index <- -1; ssvs.index <- c(-1,1,2,1,0,-1)
 
 #library(ade4)
 #data(dunedata)
 #y = dunedata$veg+1 ## Shift levels up to start at 1
 #X = model.matrix(~A1 + factor(use) - 1, data = dunedata$envir)
 #family = rep("ordinal",30)
-#num.lv = 2; site.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 7; calc.ics = TRUE; trial.size = NULL; num.ord.levels <- 5; hypparams = c(100,100); 
+#num.lv = 2; row.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 7; calc.ics = TRUE; trial.size = NULL; num.ord.levels <- 5; hypparams = c(100,100,100,100); 
 #X <- matrix(rnorm(30*4),30,4)
 #true.beta <- cbind(matrix(rnorm(length(family)*(ncol(X)+1)),length(family),ncol(X)+1),NA); 
 #true.beta[nrow(true.beta),1] <- -sum(true.beta[-nrow(true.beta),1])
@@ -37,7 +48,7 @@
 # y <- matrix(NA,n,p)
 # for(j in 1:ncol(y)) { y[,j] <- rTweedie(nrow(y), mu = mu[,j], phi = beta[j,4], p = true.power) }
 # family = "tweedie"
-# num.lv = 0; site.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = NULL; hypparams = c(100,100); 
+# num.lv = 0; row.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = NULL; hypparams = c(100,100,100,100); 
 # 
 # library(FD)
 # data(tussock)
@@ -52,46 +63,50 @@
 # y <- y[-which(is.na(rowSums(y))),]
 # 
 # family = c("lnormal","normal","normal","lnormal","lnormal","lnormal","ordinal","binomial","binomial")
-# num.lv = 2; site.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 123; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100); X <- NULL
+# num.lv = 2; row.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 123; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); X <- NULL
 
 # n = 30; s <- 30; num.multinom.levels <- 4
 # X <- matrix(rnorm(n*2),n,2)
 # X.coefs <- rbind(matrix(0,s-1,2),c(1,2))
 # X.multinom.coefs <- array(NA,dim=c(s-1,2,num.multinom.levels))
 # for(k in 1:num.multinom.levels) { X.multinom.coefs[,,k] <- rnorm((s-1)*2) }
-# site.coefs <- runif(n)
+# row.coefs <- runif(n)
 # lv.coefs <- cbind(matrix(runif(s,-3,-1),s,1),2)
 # family = c(rep("multinom",s-1),"normal")
-# num.lv = 2; site.eff = TRUE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100); 
-# y <- create.life(lv.coefs = lv.coefs, X = X, X.coefs = X.coefs, X.multinom.coefs = X.multinom.coefs, family = family, site.coefs = site.coefs)
+# num.lv = 2; row.eff = TRUE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); 
+# y <- create.life(lv.coefs = lv.coefs, X = X, X.coefs = X.coefs, X.multinom.coefs = X.multinom.coefs, family = family, row.coefs = row.coefs)
 
 boral <- function(y, ...) UseMethod("boral")
 
-## Model is g(mu_{ij}) = site + theta0 + LV_i*theta_j + X_i*beta_j
-boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, site.eff = FALSE, n.burnin = 4000, n.iteration = 24000, n.thin = 5, save.model = FALSE, seed = 123, calc.ics = TRUE, hypparams = c(100,100), ...) {
+## Model is g(mu_{ij}) = row + theta0 + LV_i*theta_j + X_i*beta_j
+boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, row.eff = FALSE, n.burnin = 5000, n.iteration = 35000, n.thin = 5, save.model = FALSE, seed = 123, calc.ics = TRUE, hypparams = c(100,100,100,100), ssvs.index = -1, ...) {
  	if(is.null(dim(y))) { cat("Converting y into a one column matrix.\n"); y <- matrix(y,ncol=1) }
  	if(!is.null(X) & is.null(dim(X))) { cat("Converting X into a one column matrix\n"); X <- matrix(X,ncol=1) }
+ 	if(length(hypparams) != 4) { stop("hypparams must be a vector of four elements. Please see boral help file as to what the elements correspond to.\n") }
  
  	if(num.lv > 3) warnings("We won't stop you, but please consider if you really want more than three latent variables in the model!")
  	if(length(family) != ncol(y) & length(family) != 1) { stop("Number of elements in family must either one or the # of columns in y") }
  	if(length(family) == 1) family <- rep(family, ncol(y))
- 	if(!all(family %in% c("negative.binomial","poisson","binomial","normal","lnormal","tweedie","ordinal"))) 
+ 	if(!all(family %in% c("negative.binomial","poisson","binomial","normal","lnormal","tweedie","ordinal","exponential","gamma","beta"))) 
  		stop("At least one of the elements in family is not compatible with current version of boral...sorry!") 
  	if(any(family == "binomial") & is.null(trial.size)) 
- 		stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of columns in y. The latter will assume the specified trial size for all rows labelled binomial in the family argument.")
+ 		stop("trial.size needs to be specified if any columns are binomially distributed. It can either be a single element or a vector equal to the # of columns in y. The latter will assume the specified trial size for all rows labelled binomial in the family argument.")
  	if(any(family == "ordinal")) {
  		if(sum(y[,family == "ordinal"] == 0) > 0) stop("For ordinal data, please shift minimum level to 1.") 
  		print("It is assumed all ordinal columns have the same number of levels -- please see help file as to the motivation behind this.")
- 		print("boral may take a ridiculously long time to fit ordinal data models. Apolgies in advance!\n") }
+ 		print("boral may take a ridiculously long time to fit ordinal data models. Apolgoies in advance!\n") }
  	if(any(family == "binomial")) {
  		if(!all(unlist(y[,family=="binomial"]) %in% c(0,1)))
  			stop("Any columns of y specified to be binomial must only contain 0/1 elements") }
- 		
- 		
+ 		 	
  	if(!is.null(X)) { X.eff <- TRUE } else { X.eff <- FALSE } 
  	X.eff <- as.numeric(X.eff); 
  	if(!X.eff) { num.X <- 0 } else { num.X <- ncol(X) }
  
+ 	if(!(length(ssvs.index) %in% c(1,ncol(X)))) stop("Number of elements in ssvs.index must either one or the # of columns in X.") 
+	if(length(ssvs.index) == 1 & X.eff) ssvs.index <- rep(ssvs.index, ncol(X))
+	if(any(ssvs.index < -1)) stop("Elements of ssvs.index can only take values in -1, 0, or any positive integer; please see help file for guide.")
+
  	if(any(family == "binomial") & length(trial.size) == 1) { 
  		complete.trial.size <- rep(0,ncol(y)); complete.trial.size[which(family == "binomial")] <- trial.size }
  	if(any(family == "binomial") & length(trial.size) == ncol(y)) { complete.trial.size <- trial.size }
@@ -103,24 +118,26 @@ boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, si
   	if(all(family != "multinom")) { num.multinom.levels <- 0; index.multinom.cols <- NULL }
   	if(any(family == "multinom")) { num.multinom.levels <- apply(y[,family == "multinom"],2,max); index.multinom.cols <- which(family == "multinom") }
  	
- 	site.eff <- as.numeric(site.eff); 
+ 	row.eff <- as.numeric(row.eff); 
  	n <- nrow(y); p <- ncol(y); 
  	n.chains = 1; ## Run one chain only to avoid arbitrary rotation problems
  	
- 	if(num.lv > 0) make.jagsboralmodel(family, X.eff, site.eff, n, p, hypparams)
- 	if(num.lv == 0) make.jagsboralnullmodel(family, X.eff, site.eff, n, p, hypparams)
+ 	if(num.lv > 0) make.jagsboralmodel(family, num.X, row.eff, n, p, hypparams, ssvs.index)
+ 	if(num.lv == 0) make.jagsboralnullmodel(family, num.X, row.eff, n, p, hypparams, ssvs.index)
  	
  	jags.data <- list("y","n","p","num.lv","num.X","complete.trial.size","num.ord.levels","num.multinom.levels")
  	if(X.eff) jags.data <-  c("X",jags.data)
  	if(any(family == "ordinal")) { ones <- matrix(1,n,p); jags.data <- c(jags.data,"ones") }
  
  	jags.params <- c("all.params")
- 	if(num.lv > 0) jags.params <- c(jags.params, "lvs"); if(site.eff) jags.params <- c(jags.params,"site.params")
+ 	if(num.lv > 0) jags.params <- c(jags.params, "lvs"); if(row.eff) jags.params <- c(jags.params,"row.params")
  	if(X.eff & any(family != "multinom")) jags.params <- c(jags.params,"X.params")
  	if(X.eff & any(family == "multinom")) jags.params <- c(jags.params,"X.multinom.params")
  	if(any(family == "tweedie")) jags.params <- c(jags.params,"powerparam")
  	if(any(family == "ordinal")) jags.params <- c(jags.params,"alpha")
- 
+	if(any(ssvs.index == 0)) jags.params <- c(jags.params,paste("probindX",which(ssvs.index == 0),sep=""))
+	if(any(ssvs.index > 0)) jags.params <- c(jags.params,paste("probGpX",unique(ssvs.index[ssvs.index>0]),sep=""))
+ 	
  	jags.inits <- NULL
  	if(any(family %in% "tweedie")) { 
  		initial.list <- list("numfish" = matrix(1,n,p))
@@ -128,7 +145,7 @@ boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, si
  		jags.inits <- function() { return(initial.list) } } 
  	set.seed(seed)
  
- 	jagsfit <- suppressWarnings(jags(data=jags.data, inits=jags.inits, jags.params, model.file = "jagsboralmodel.txt", n.iter = n.iteration, n.burnin = n.burnin, n.thin = n.thin, n.chains = n.chains, DIC = T))
+	jagsfit <- suppressWarnings(jags(data=jags.data, inits=jags.inits, jags.params, model.file = "jagsboralmodel.txt", n.iter = n.iteration, n.burnin = n.burnin, n.thin = n.thin, n.chains = n.chains, DIC = T))
 	## Format into big matrix; also deals with the conflict of as.mcmc converting to lists or the MCMC samples themselves
 	fit.mcmcBase <- jagsfit$BUGSoutput
 	fit.mcmc <- mcmc(fit.mcmcBase$sims.matrix, start = 1, thin = n.thin) ## Thanks to Guilliaume Blanchet for this!
@@ -146,8 +163,8 @@ boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, si
  	sel.thetas <- grep("all.params",colnames(combined.fit.mcmc))
  	sel.thetas2 <- as.numeric(sel.thetas[(length(sel.thetas)-p+1):length(sel.thetas)])
  	combined.fit.mcmc[,sel.thetas2] <- 1/combined.fit.mcmc[,sel.thetas2]
- 	if(any(family == "tweedie")) combined.fit.mcmc[,sel.thetas2[family == "tweedie"]] <- 1/combined.fit.mcmc[,sel.thetas2[family == "tweedie"]] ## Flip it back for tweedie
- 	if(any(family %in% c("poisson","binomial","ordinal","multinom"))) combined.fit.mcmc[,sel.thetas2[family %in% c("poisson","binomial","ordinal","multinom")]] <- 0
+ 	if(any(family %in% c("tweedie","beta","gamma"))) combined.fit.mcmc[,sel.thetas2[family %in% c("tweedie","beta","gamma")]] <- 1/combined.fit.mcmc[,sel.thetas2[family %in% c("tweedie","beta","gamma")]] ## Flip it back for tweedie, beta, gamma (parameterization in terms of shape and rate)
+ 	if(any(family %in% c("poisson","binomial","ordinal","multinom","exponential"))) combined.fit.mcmc[,sel.thetas2[family %in% c("poisson","binomial","ordinal","multinom","exponential")]] <- 0
  
   	## For any multinomial columns, set the corresponding rows in X.coefs to zero
   	if(any(family == "multinom") & X.eff == 1) {
@@ -184,16 +201,16 @@ boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, si
  		colnames(out.fit$lv.coefs.median) <- colnames(out.fit$lv.coefs.iqr) <- colnames(out.fit$lv.coefs.mean) <- colnames(out.fit$lv.coefs.sd) <- c("theta0","Dispersion")
  		}
  		
- 	if(site.eff) {
- 		out.fit$site.coefs.median <- apply(combined.fit.mcmc[,grep("site.params", colnames(combined.fit.mcmc))],2,median)
- 		out.fit$site.coefs.iqr <- apply(combined.fit.mcmc[,grep("site.params", colnames(combined.fit.mcmc))],2,IQR)
- 		out.fit$site.coefs.mean <- apply(combined.fit.mcmc[,grep("site.params", colnames(combined.fit.mcmc))],2,mean)
- 		out.fit$site.coefs.sd <- apply(combined.fit.mcmc[,grep("site.params", colnames(combined.fit.mcmc))],2,sd)
+ 	if(row.eff) {
+ 		out.fit$row.coefs.median <- apply(combined.fit.mcmc[,grep("row.params", colnames(combined.fit.mcmc))],2,median)
+ 		out.fit$row.coefs.iqr <- apply(combined.fit.mcmc[,grep("row.params", colnames(combined.fit.mcmc))],2,IQR)
+ 		out.fit$row.coefs.mean <- apply(combined.fit.mcmc[,grep("row.params", colnames(combined.fit.mcmc))],2,mean)
+ 		out.fit$row.coefs.sd <- apply(combined.fit.mcmc[,grep("row.params", colnames(combined.fit.mcmc))],2,sd)
  
- 		names(out.fit$site.coefs.median) <- names(out.fit$site.coefs.iqr) <- names(out.fit$site.coefs.mean) <- names(out.fit$site.coefs.sd) <- rownames(y) 
+ 		names(out.fit$row.coefs.median) <- names(out.fit$row.coefs.iqr) <- names(out.fit$row.coefs.mean) <- names(out.fit$row.coefs.sd) <- rownames(y) 
  		}
  
- 	if(X.eff & any(family != "multinom")) {
+ 	if(X.eff) {
  		out.fit$X.coefs.median <- matrix(apply(combined.fit.mcmc[,grep("X.params", colnames(combined.fit.mcmc))],2,median),nrow=p)
  		out.fit$X.coefs.iqr <- matrix(apply(combined.fit.mcmc[,grep("X.params", colnames(combined.fit.mcmc))],2,IQR),nrow=p)
  		out.fit$X.coefs.mean <- matrix(apply(combined.fit.mcmc[,grep("X.params", colnames(combined.fit.mcmc))],2,mean),nrow=p)
@@ -201,16 +218,28 @@ boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, si
  
  		rownames(out.fit$X.coefs.median) <- rownames(out.fit$X.coefs.iqr) <- rownames(out.fit$X.coefs.mean) <- rownames(out.fit$X.coefs.sd) <- colnames(y) 
  		colnames(out.fit$X.coefs.median) <- colnames(out.fit$X.coefs.iqr) <- colnames(out.fit$X.coefs.mean) <- colnames(out.fit$X.coefs.sd) <- colnames(X) 
- 		}
+ 		
+ 		if(any(ssvs.index == 0)) {
+			out.fit$ssvs.indcoefs.mean <- matrix(apply(combined.fit.mcmc[,grep("probindX", colnames(combined.fit.mcmc))],2,mean),nrow=p)
+			rownames(out.fit$ssvs.indcoefs.mean) <- colnames(y); colnames(out.fit$ssvs.indcoefs.mean) <- colnames(X)[which(ssvs.index==0)]
+			out.fit$ssvs.indcoefs.sd <- matrix(apply(combined.fit.mcmc[,grep("probindX", colnames(combined.fit.mcmc))],2,sd),nrow=p)
+			rownames(out.fit$ssvs.indcoefs.sd) <- colnames(y); colnames(out.fit$ssvs.indcoefs.sd) <- colnames(X)[which(ssvs.index==0)] }
+
+		if(any(ssvs.index > 0)) {
+			out.fit$ssvs.gpcoefs.mean <- apply(as.matrix(combined.fit.mcmc[,grep("probGpX", colnames(combined.fit.mcmc))]),2,mean)
+			names(out.fit$ssvs.gpcoefs.mean) <- paste("Gp",unique(ssvs.index[ssvs.index>0]),sep="")
+			out.fit$ssvs.gpcoefs.sd <- apply(as.matrix(combined.fit.mcmc[,grep("probGpX", colnames(combined.fit.mcmc))]),2,sd)
+			names(out.fit$ssvs.gpcoefs.sd) <- paste("Gp",unique(ssvs.index[ssvs.index>0]),sep="") }
+		}
  
-  	if(X.eff & any(family == "multinom")) {
-  		out.fit$X.multinom.coefs.median <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,median),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
-  		out.fit$X.multinom.coefs.iqr <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,IQR),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
-  		out.fit$X.multinom.coefs.mean <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,mean),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
-  		out.fit$X.multinom.coefs.sd <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,sd),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
-  
-  		dimnames(out.fit$X.multinom.coefs.median) <- dimnames(out.fit$X.multinom.coefs.iqr) <- dimnames(out.fit$X.multinom.coefs.mean) <- dimnames(out.fit$X.multinom.coefs.sd) <- list("1" = index.multinom.cols, "2" = colnames(X), "level" = 1:num.multinom.levels)
-  		}
+#   	if(X.eff & any(family == "multinom")) {
+#   		out.fit$X.multinom.coefs.median <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,median),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
+#   		out.fit$X.multinom.coefs.iqr <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,IQR),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
+#   		out.fit$X.multinom.coefs.mean <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,mean),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
+#   		out.fit$X.multinom.coefs.sd <- array(apply(combined.fit.mcmc[,grep("X.multinom.params", colnames(combined.fit.mcmc))],2,sd),dim=c(length(index.multinom.cols),num.X,num.multinom.levels))
+#   
+#   		dimnames(out.fit$X.multinom.coefs.median) <- dimnames(out.fit$X.multinom.coefs.iqr) <- dimnames(out.fit$X.multinom.coefs.mean) <- dimnames(out.fit$X.multinom.coefs.sd) <- list("1" = index.multinom.cols, "2" = colnames(X), "level" = 1:num.multinom.levels)
+#   		}
  
  	if(any(family == "ordinal")) {
  		out.fit$cutoffs.median <- apply(combined.fit.mcmc[,grep("alpha", colnames(combined.fit.mcmc))],2,median)
@@ -235,7 +264,7 @@ boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, si
  	
  	if(calc.ics) { 
  		cat("Calculating Information criteria\n")
- 		get.ics <- get.measures(y, X, family, complete.trial.size, site.eff, num.lv, combined.fit.mcmc)
+ 		get.ics <- get.measures(y, X, family, complete.trial.size, row.eff, num.lv, combined.fit.mcmc, more.measures = FALSE)
  		ics <- c(get.dic(jagsfit), get.ics$waic, get.ics$eaic, get.ics$ebic, get.ics$aic.median, get.ics$bic.median, get.ics$comp.lm, get.ics$num.params)
  		names(ics) <- c("Conditional DIC","WAIC","EAIC","EBIC","AIC at post. median", "BIC at post. median","Compound L-M at post. median","# of parameters")
 		out.fit$ics <- ics 		
@@ -251,10 +280,11 @@ boral.default <- function(y, X = NULL, family, trial.size = NULL, num.lv = 0, si
  	out.fit$family <- family; 
  	out.fit$num.lv <- num.lv; 
  	out.fit$num.X <- num.X; 
-	out.fit$site.eff <- site.eff; 
+	out.fit$row.eff <- row.eff; 
  	out.fit$calc.ics <- calc.ics
  	out.fit$trial.size <- complete.trial.size
  	out.fit$hypparams <- hypparams
+ 	out.fit$ssvs.index <- ssvs.index
  	out.fit$num.ord.levels <- num.ord.levels
  	#out.fit$num.multinom.levels <- num.multinom.levels; 
  	
@@ -295,11 +325,12 @@ print.boral <- function(x, ...) {
  	print(x$call)
  	cat("\n")
  	cat("Response matrix attributes\n \t# of rows:", x$n, "\n\t# of columns:", x$p, "\n") 
- 	cat("Model attributes\n \tColumn families:", x$family, "\n\t# of latent variables:", x$num.lv, "\n\tRow effect included (0=no/1=yes)?", as.numeric(x$site.eff), "\n") 
+ 	cat("Model attributes\n \tColumn families:", x$family, "\n\t# of latent variables:", x$num.lv, "\n\tRow effect included (0=no/1=yes)?", as.numeric(x$row.eff), "\n") 
  	if(any(x$family == "binomial")) cat("Trial sizes used (columns with binomial families):", x$trial.size,"\n")
  	if(any(x$family == "ordinal")) cat("Number of levels for ordinal data:", x$num.ord.levels,"\n")
  	#cat("Hyperparameters (variance in normal priors of coefficients, maximum in uniform prior for dispersion):", x$hypparams, "\n") 
  	if(x$num.X > 0) cat("Model matrix with", x$num.X, "covariates also fitted\n\n")
+ 	if(any(x$ssvs.index > -1)) cat("SSVS performed on covariates with indices", x$ssvs.index, "\n\n")
 # 	cat("Output attributes\n")
 # 	print(attributes(x))
  	}
@@ -310,9 +341,9 @@ print.summary.boral <- function(x, ...) {
  	cat("\n")
  	
  	if(x$est == "median") { cat("Median point estimates\n\n LV coefficients (thetas) and dispersion parameter\n"); print(x$coefficients); cat("\n") }
- 	if(x$est == "mean") { cat("Mean point estimates\n\n LV coefficients (thetas) and dispersion parameter\n"); print(x$coefficients); cat("\n") }		
+ 	if(x$est == "mean") { cat("Mean point estimates\n\n LV coefficients (thetas) and dispersion parameter\n"); print(x$coefficients); cat("\n") }	
  	
- 	if(!is.null(x$site.coefficients)) { cat("Row coefficients\n"); print(x$site.coefficients); cat("\n") }
+ 	if(!is.null(x$row.coefficients)) { cat("Row coefficients\n"); print(x$row.coefficients); cat("\n") }
  	if(!is.null(x$X.coefficients)) { cat("X coefficients (betas)\n"); print(x$X.coefficients); cat("\n") }
  	if(!is.null(x$X.multinom.coefficients)) { cat("There are also coefficients corresponding to multinomial columns which have not been printed"); }
  	
@@ -328,12 +359,15 @@ print.summary.boral <- function(x, ...) {
  		cat("BIC at posterior median:", as.vector(unlist(x$ics[6])), "\n")
  		cat("Compound Laplace-Metropolis estimator at posterior median:", as.vector(unlist(x$ics[7])), "\n")
 		}
- 	}	
+
+	if(!is.null(x$ssvs.indcoefs.prob)) { cat("SSVS probabilities on individual coefficients\n"); print(x$ssvs.indcoefs.prob); cat("\n") }
+	if(!is.null(x$ssvs.gpcoefs.prob)) { cat("SSVS probabilities on groups of coefficients\n"); print(x$ssvs.gpcoefs.prob); cat("\n") }			
+	}	
 		
 summary.boral <- function(object, est = "median", ...) {
- 	if(est == "median") {
+	if(est == "median") {
  		gather.output <- list(call = object$call, coefficients = round(object$lv.coefs.med,3))
- 		if(object$site.eff == TRUE) gather.output$site.coefficients = round(object$site.coefs.med,3)
+ 		if(object$row.eff == TRUE) gather.output$row.coefficients = round(object$row.coefs.med,3)
  		if(object$num.X > 0) gather.output$X.coefficients = round(object$X.coefs.med,3)
  		if(any(object$family == "ordinal")) gather.output$cutoffs = round(object$cutoffs.median,3)
  		if(any(object$family == "tweedie")) gather.output$powerparam = round(object$powerparam.median,3)
@@ -341,7 +375,7 @@ summary.boral <- function(object, est = "median", ...) {
  
  	if(est == "mean") {
  		gather.output <- list(call = object$call, coefficients = round(object$lv.coefs.mean,3))
- 		if(object$site.eff == TRUE) gather.output$site.coefficients = round(object$site.coefs.mean,3)
+ 		if(object$row.eff == TRUE) gather.output$row.coefficients = round(object$row.coefs.mean,3)
  		if(object$num.X > 0) gather.output$X.coefficients = round(object$X.coefs.mean,3)
  		if(any(object$family == "ordinal")) gather.output$cutoffs = round(object$cutoffs.mean,3)
  		if(any(object$family == "tweedie")) gather.output$powerparam = round(object$powerparam.mean,3)
@@ -351,8 +385,12 @@ summary.boral <- function(object, est = "median", ...) {
  	gather.output$calc.ics <- object$calc.ics
 	gather.output$trial.size <- object$trial.size
  	gather.output$num.ord.levels <- object$num.ord.levels
+ 	gather.output$ssvs.index <- object$ssvs.index
  	
- 	if(object$calc.ics) gather.output$ics = object$ics
+	if(any(object$ssvs.index == 0)) gather.output$ssvs.indcoefs.prob = round(object$ssvs.indcoefs.mean,3)
+	if(any(object$ssvs.index > 0)) gather.output$ssvs.gpcoefs.prob = round(object$ssvs.gpcoefs.mean,3) 
+
+	if(object$calc.ics) gather.output$ics = object$ics
  	class(gather.output) <- "summary.boral"
  	gather.output 
  	}
@@ -364,8 +402,8 @@ plot.boral <- function(x, est = "median", jitter = FALSE, a = 1, ...) {
  	get.etas <- get.mus
  	get.ds.res <- ds.residuals(object = x, est = est)$residuals
  	for(j in 1:ncol(x$y)) {
- 		if(x$family[j] == "binomial") get.etas[,j] <- log(get.mus[,j]/(1-get.mus[,j]))
- 		if(x$family[j] %in% c("poisson","lnormal","negative.binomial","tweedie")) get.etas[,j] <- log(get.mus[,j]+1e-5)
+ 		if(x$family[j] %in% c("binomial","beta")) get.etas[,j] <- log((get.mus[,j]+1e-5)/(1-get.mus[,j]+1e-5))
+ 		if(x$family[j] %in% c("poisson","lnormal","negative.binomial","tweedie","exponential")) get.etas[,j] <- log(get.mus[,j]+1e-5)
  		if(x$family[j] == "normal") get.etas[,j] <- (get.mus[,j]) }
  
  	par(ask = T, cex = a, mar = c(5,5,1,1), cex.main = a) 
@@ -395,45 +433,3 @@ plot.boral <- function(x, est = "median", jitter = FALSE, a = 1, ...) {
  	palette("default")
  	}
  	
-###############
-## For some reason I cannot import mcmc function from coda 
-###############
-# fh.mcmc <- function (data = NA, start = 1, end = numeric(0), thin = 1) 
-# {
-#     if (is.matrix(data)) {
-#         niter <- nrow(data)
-#         nvar <- ncol(data)
-#     }
-#     else if (is.data.frame(data)) {
-#         if (!all(sapply(data, is.numeric))) {
-#             stop("Data frame contains non-numeric values")
-#         }
-#         data <- as.matrix(data)
-#         niter <- nrow(data)
-#         nvar <- ncol(data)
-#     }
-#     else {
-#         niter <- length(data)
-#         nvar <- 1
-#     }
-#     thin <- round(thin)
-#     if (length(start) > 1) 
-#         stop("Invalid start")
-#     if (length(end) > 1) 
-#         stop("Invalid end")
-#     if (length(thin) != 1) 
-#         stop("Invalid thin")
-#     if (missing(end)) 
-#         end <- start + (niter - 1) * thin
-#     else if (missing(start)) 
-#         start <- end - (niter - 1) * thin
-#     nobs <- floor((end - start)/thin + 1)
-#     if (niter < nobs) 
-#         stop("Start, end and thin incompatible with data")
-#     else {
-#         end <- start + thin * (nobs - 1)
-#         if (nobs < niter) 
-#             data <- data[1:nobs, , drop = FALSE]
-#     }
-#     data
-# }
