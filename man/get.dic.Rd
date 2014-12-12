@@ -12,7 +12,7 @@ get.dic(jagsfit)
 }
 
 \details{
-Details regarding the Deviance Information Criterion may be found in (Spiegelhalter et al., 2002; Ntzoufras, 2011; Gelman et al., 2013). The DIC here is based on the conditional log-likelihood i.e., the latent variables are treated as "fixed effects". A DIC based on the marginal likelihood is obtainable from \code{\link{get.more.measures}}, although this requires a much longer time to compute. For models with overdispered count data, conditional DIC may not perform as well as marginal DIC (Millar, 2009)
+Details regarding the Deviance Information Criterion may be found in (Spiegelhalter et al., 2002; Ntzoufras, 2011; Gelman et al., 2013). The DIC here is based on the conditional log-likelihood i.e., the latent variables (and row effects if applicable) are treated as "fixed effects". A DIC based on the marginal likelihood is obtainable from \code{\link{get.more.measures}}, although this requires a much longer time to compute. For models with overdispered count data, conditional DIC may not perform as well as marginal DIC (Millar, 2009)
 }
 
 \value{
@@ -48,7 +48,7 @@ y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = TRUE, save.model = TRUE, calc.ics = TRUE)
+     save.model = TRUE, calc.ics = TRUE)
 
 spider.fit.nb$ics ## DIC returned as one of several information criteria.
 }

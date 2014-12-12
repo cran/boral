@@ -1,10 +1,10 @@
 \name{calc.condlogLik}
 \alias{calc.condlogLik}
 \title{Conditional log-likelihood for an boral model}
-\description{Calculates the conditional log-likelihood for a set of parameter estimates from an boral model, whereby the latent variables are treated as "fixed effects".}
+\description{Calculates the conditional log-likelihood for a set of parameter estimates from an boral model, whereby the latent variables (and row effects if applicable) are treated as "fixed effects".}
 
 \usage{
-calc.condlogLik(y, X = NULL, family, trial.size = NULL, lv.coefs, 
+calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 
 	X.coefs = NULL, row.coefs = NULL, lv, cutoffs = NULL, 
      powerparam = NULL)
 }
@@ -19,13 +19,13 @@ calc.condlogLik(y, X = NULL, family, trial.size = NULL, lv.coefs,
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
- \item{trial.size}{Either equal to NULL, a single element, or a vector of length equal to the number of columns in \eqn{y}. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of \eqn{y}.}
+ \item{trial.size}{ This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
 
   \item{lv.coefs}{The column-specific intercept, coefficient estimates relating to the latent variables, and dispersion parameters from the boral model.}
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{row.coefs}{Row effect estimates for the boral model. Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
+  \item{row.coefs}{ Row effect estimates for the boral model. Even if they were estimated as random effects, the conditional log-likelihood is defined conditional on these estimates i.e., they are (also) treated as ``fixed effects". Defaults to NULL, in which case it is assumed there are no row effects in the model.} 
 
   \item{lv}{Latent variables "estimates" from the boral model, which the conditional log-likelihood is based on. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the conditional log-likelihood.}
 
@@ -37,11 +37,11 @@ All columns assumed to have ordinal responses are constrained to have the same c
 \details{
 For an \eqn{n x p} response matrix \eqn{y}, suppose we fit an boral model with \eqn{q} latent variables. If we denote the latent variables by \eqn{\bm{z}_i; i = 1,\ldots,n}, then the conditional log-likelihood is given by (with parameters where appropriate),
 
-\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log (f(y_{ij} | \alpha_i, \tau_k, \theta_{0j}, \bm{\theta}_j, \bm{z}_i, \bm{x}_i, \bm{\beta}_j, \phi_j)), }
+\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log (f(y_{ij} | \alpha_i, \tau_k, \beta_{0j}, \bm{\theta}_j, \bm{z}_i, \bm{x}_i, \bm{\beta}_j, \phi_j)), }
 
-where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\alpha_i} is the row effect, \eqn{\tau_k} are the common cutoffs for proportional odds regression, \eqn{\theta_{0j}} is the column-specific intercept, \eqn{\bm{z}'_i} are the latent variables, \eqn{\bm{\theta}_j} are the column-specific coefficients relating to the latent variables, \eqn{\bm{x}'_i} is row \eqn{i} of the model matrix,, \eqn{\bm{\beta}_j} are the column-specific coefficients relating to the model matrix of explanatory variables, \eqn{\phi_j} are-column-specific dispersion parameters.
+where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\alpha_i} is the row effect, \eqn{\tau_k} are the common cutoffs for proportional odds regression, \eqn{\beta_{0j}} is the column-specific intercept, \eqn{\bm{z}'_i} are the latent variables, \eqn{\bm{\theta}_j} are the column-specific coefficients relating to the latent variables, \eqn{\bm{x}'_i} is row \eqn{i} of the model matrix,, \eqn{\bm{\beta}_j} are the column-specific coefficients relating to the model matrix of explanatory variables, \eqn{\phi_j} are-column-specific dispersion parameters.
 
-The key difference between this and the marginal likelihood (see \code{calc.marglogLik}) is that the conditional log-likelihood treats the latent variables as "fixed effects", while the marginal log-likelihood treats them as "random effects" which require integrating over. 
+The key difference between this and the marginal likelihood (see \code{\link{calc.marglogLik}}) is that the conditional log-likelihood treats the latent variables (and row effects if applicable) as "fixed effects", while the marginal log-likelihood treats them as "random effects" which require integrating over.
 }
 
 \value{
@@ -72,15 +72,17 @@ n <- nrow(y); p <- ncol(y);
 ## Example 1 - model with 2 latent variables, site effects, 
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = TRUE, save.model = TRUE, calc.ics = FALSE)
+     n.burnin = 10, n.iteration = 100, n.thin = 1,
+	row.eff = "random", save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
-fit.mcmc <- as.mcmc(spider.fit.nb$jags.model)[[1]] 
+fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix, 
+	start = 1, thin = spider.fit.nb$n.thin) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
      2,median),nrow=p)
-site.coef.median <- apply(fit.mcmc[,grep("site.params", colnames(fit.mcmc))],
+site.coef.median <- apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
      2,median)
 lvs.mat <- matrix(apply(fit.mcmc[,grep("lvs",colnames(fit.mcmc))],2,median),nrow=n)
 
@@ -92,10 +94,12 @@ calc.condlogLik(y, family = "negative.binomial",
 ## Example 2 - model with one latent variable, no site effects, 
 ## 	and environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 1, 
-     row.eff = FALSE, save.model = TRUE, calc.ics = FALSE)
+	n.burnin = 10, n.iteration = 100, n.thin = 1,
+     save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
-fit.mcmc <- as.mcmc(spider.fit.nb2$jags.model)[[1]] 
+fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix, 
+	start = 1, thin = spider.fit.nb2$n.thin) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
@@ -107,6 +111,5 @@ lvs.mat <- matrix(apply(fit.mcmc[,grep("lvs",colnames(fit.mcmc))],2,median),nrow
 ## Caculate the log-likelihood at the posterior median
 calc.condlogLik(y, X = spider$x, family = "negative.binomial", 
 	lv.coefs =  coef.mat, X.coefs = X.coef.mat, lv = lvs.mat)
-}     
 }
-
+}

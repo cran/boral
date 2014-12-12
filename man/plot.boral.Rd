@@ -42,11 +42,12 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \seealso{\code{\link{fitted.boral}} to obtain the fitted values, \code{\link{ds.residuals}} to obtain Dunn-Smyth residuals and details as to what they are.}
 
 \examples{
+\dontrun{
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
-spider.fit.p <- boral(y, family = "poisson", num.lv = 2, row.eff = TRUE, 
+spider.fit.p <- boral(y, family = "poisson", num.lv = 2, row.eff = "fixed", 
      n.burnin = 10, n.iteration = 100, n.thin = 1, 
      save.model = FALSE, calc.ics = FALSE)
 
@@ -56,10 +57,11 @@ plot(spider.fit.p, which = 1:4)
 ## The normal quantile plot also suggests some lack of fit.
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = TRUE, n.burnin = 10, n.iteration = 100, n.thin = 1, 
+     row.eff = "fixed", n.burnin = 10, n.iteration = 100, n.thin = 1, 
      save.model = FALSE, calc.ics = FALSE)
 
 plot(spider.fit.nb, which = 1:4) 
 ## The fan shape is not as clear now, 
 ## and the normal quantile plot also suggests a better fit to the data 
+}
 }

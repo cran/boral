@@ -12,7 +12,7 @@ get.hpdintervals(y, X = NULL, fit.mcmc, num.lv, prob = 0.95)
   
   \item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
   
-  \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and the applying \code{as.mcmc} on the \code{jags.model} component of the output.} 
+  \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
   
   \item{num.lv}{The number of latent variables used in the boral model. If zero, then HPD intervals will not be produced for latent variables.}   
 
@@ -26,7 +26,8 @@ The function uses the \code{HPDinterval} function from the \code{coda} package t
 \value{
 \item{lv.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the column-specific intercepts, coefficients relating to the latent variables, and dispersion parameters.}
 \item{lv.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the latent variables.}
-\item{site.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for row effects.}
+\item{row.coefs.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for row effects.}
+\item{row.raneff.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for the mean and variance of the normal distribution for the row effects, if they were assumed to be random.}
 \item{X.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for coefficients relating to the model matrix \code{X}.}
 \item{cutoffs.hpd.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for common cutoffs in proportional odds regression.}
 \item{powerparam.hpd.lower/upper}{Two scalars corresponding to the lower and upper bounds of the HPD interval for common power parameter in tweedie regression.}
@@ -58,7 +59,7 @@ n <- nrow(y); p <- ncol(y);
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = TRUE, save.model = TRUE)
+     row.eff = "fixed", save.model = TRUE)
 
 ## Returns a list with components corresponding to values described above.
 spider.fit.nb$hpdintervals 
@@ -66,7 +67,7 @@ spider.fit.nb$hpdintervals
 ## Example 2 - model with one latent variable, site effects, 
 ## 	and environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 1, 
-     row.eff = TRUE, save.model = TRUE)
+     row.eff = "random", save.model = TRUE)
 
 ## Returns a list with components corresponding to values described above.
 spider.fit.nb2$hpdintervals 

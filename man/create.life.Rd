@@ -5,7 +5,7 @@
 
 \usage{ 
 create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, 
-     family, row.coefs = NULL, trial.size = NULL, 
+     family, row.eff = "none", row.params = NULL, trial.size = 1, 
      cutoffs = NULL, powerparam = NULL, manual.dim = NULL)
 }
 
@@ -23,9 +23,11 @@ create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL,
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
-\item{row.coefs}{Row effects. Defaults to \code{NULL}, in which case it is assumed there are no row effects.} 
+  \item{row.eff}{Single element indicating whether row effects as are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with non-zero mean and variance. Defaults to "none". } 
 
- \item{trial.size}{Either equal to NULL, a single element, or a vector of length equal to the number of columns in \eqn{y}. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of \eqn{y}.}
+  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then these are the mean and variance for the random effects normal distribution respectively. If \code{row.eff = "none"}, then this argument is ignored.}
+
+  \item{trial.size}{ This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
 
   \item{cutoffs}{A vector of common common cutoffs for proportional odds regression when any of \code{family} is ordinal. They should be increasing order. Defaults to \code{NULL}.}
 
@@ -64,7 +66,7 @@ sim.y <- create.life(true.lv, lv.coefs, X, X.coefs, family = "normal")
 
 \dontrun{
 fit.boral <- boral(sim.y, X = X, family = "normal", num.lv = 2, 
-     row.eff = FALSE, save.model = FALSE)
+	save.model = FALSE)
 
 lvsplot(fit.boral)
 }
@@ -85,6 +87,7 @@ sim.y <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs,
 
 \dontrun{
 fit.boral <- boral(y = sim.y, family = "ordinal", num.lv = 2, 
-	site.eff = FALSE, n.thin = 5, save.model = FALSE, calc.ics = TRUE)
+	n.thin = 5, save.model = FALSE, calc.ics = TRUE)
 }
+
 }

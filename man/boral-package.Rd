@@ -6,10 +6,10 @@
 
 \details{
 \tabular{ll}{
-Package: \tab boralv2\cr
+Package: \tab boral\cr
 Type: \tab Package\cr
-Version: \tab 0.2\cr
-Date: \tab 2014-02-18\cr
+Version: \tab 0.6\cr
+Date: \tab 2014-12-12\cr
 License: \tab GPL-2\cr
 }
 }
@@ -27,6 +27,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \examples{
+\dontrun{
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -34,7 +35,7 @@ y <- spider$abun
 ## Example 1 - model with 2 latent variables, site effects, 
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = TRUE, n.burnin = 10, n.iteration = 100, 
+     row.eff = "fixed", n.burnin = 10, n.iteration = 100, 
      n.thin = 1, save.model = TRUE, calc.ics = FALSE)
 
 ## Example 2 - model with latent variables, no site effects, 
@@ -43,6 +44,7 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
 ## the latent variables are permitted provide a method of accounting for
 ## 	correlation between species. 
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 2, 
-     row.eff = FALSE, n.burnin = 10, n.iteration = 100, 
-     n.thin = 1, save.model = TRUE, calc.ics = FALSE)
+     n.burnin = 10, n.iteration = 100, n.thin = 1, calc.ics = FALSE,
+     save.model = TRUE)
+}
 }

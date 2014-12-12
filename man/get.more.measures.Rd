@@ -4,8 +4,8 @@
 \description{Calculates some information criteria beyond those from \code{\link{get.measures}} for an boral model, although this set of criteria takes much longer to compute!!!}
 
 \usage{
-get.more.measures(y, X = NULL, family, trial.size = NULL, row.eff, num.lv, 
-	fit.mcmc, verbose = TRUE)
+get.more.measures(y, X = NULL, family, trial.size = 1, 
+	row.eff = "none", num.lv, fit.mcmc, verbose = TRUE)
 }
 
 \arguments{
@@ -18,15 +18,15 @@ get.more.measures(y, X = NULL, family, trial.size = NULL, row.eff, num.lv,
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
-\item{trial.size}{Either equal to NULL, a single element, or a vector of length equal to the number of columns in \eqn{y}. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of \eqn{y}.}
+ \item{trial.size}{ This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
 
-  \item{row.eff}{A logical value indicating whether to include row effects were included in the model.}    
+  \item{row.eff}{Single element indicating whether row effects as are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with non-zero mean and variance. Defaults to "none". } 
 
   \item{num.lv}{The number of latent variables used in the fitted boral model.}
 
-  \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then applying \code{as.mcmc} on the \code{jags.model} component of the output.} 
+  \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
 
-  \item{verbose}{If \code{TRUE}, a notice is printed every 100 samples indicating progress in calculation of the marginal log-likelihood. Defaults to \code{TRUE}.}    
+  \item{verbose}{If TRUE, a notice is printed every 100 samples indicating progress in calculation of the marginal log-likelihood. Defaults to TRUE.}    
 }
 
 \details{
@@ -55,7 +55,7 @@ A list with the following components:
 }
 
 \section{Warning}{
-Using information criterion for variable selection should be done with extreme caution, for two reasons: 1) The implementation of these criteria are both \emph{heuristic} and experimental. 2) Deciding what model to fit for ordination purposes should be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables. However, if we interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are far more appropriate. As an another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{site.eff = FALSE}) or in terms of species composition (\code{site.eff = TRUE}).  
+Using information criterion for variable selection should be done with extreme caution, for two reasons: 1) The implementation of these criteria are both \emph{heuristic} and experimental. 2) Deciding what model to fit for ordination purposes should be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables. However, if we interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are far more appropriate. As an another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = FALSE}) or in terms of species composition (\code{row.eff = "fixed"}).  
 
 Also, the use of information criterion in the presence of variable selection using SSVS is questionable.
 }
@@ -87,12 +87,14 @@ y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = TRUE, save.model = TRUE, calc.ics = TRUE)
+     row.eff = "fixed", save.model = TRUE, calc.ics = TRUE)
 
-all.mcmc <- as.mcmc(spider.fit.nb$jags.model)
+## Extract MCMC samples
+fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix, 
+	start = 1, thin = spider.fit.nb$n.thin)
 
 ## WATCH OUT! The following takes a very long time to run!
 get.more.measures(y, family = "negative.binomial", 
-     num.lv = 2, fit.mcmc = all.mcmc, row.eff = TRUE)		
+     num.lv = 2, fit.mcmc = fit.mcmc, row.eff = "fixed")		
 }
 }

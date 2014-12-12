@@ -38,13 +38,15 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \code{\link{plot.boral}} for constructing residual analysis plots directly; \code{\link{fitted.boral}} which calculated fitted values from a boral model.}
 
 \examples{
+\dontrun{
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = TRUE, n.burnin = 10, n.iteration = 100, 
+     row.eff = "fixed", n.burnin = 10, n.iteration = 100, 
      n.thin = 1, calc.ics = FALSE)
 
 ds.residuals(spider.fit.nb) 
+}
 }

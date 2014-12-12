@@ -1,11 +1,11 @@
 \name{calc.logLik.lv0}
 \alias{calc.logLik.lv0}
 \title{Log-likelihood for a boral model with no latent variables}
-\description{Calculates the log-likelihood for a set of parameter estimates from an boral model with no latent variables. In such a model, the conditional and marginal log-likelihood are equivalent.}
+\description{Calculates the log-likelihood for a set of parameter estimates from an boral model with no latent variables. If the row effects are assumed to be random, then they are integrated over using Monte Carlo integration. }
 
 \usage{
-calc.logLik.lv0(y, X = NULL, family, trial.size = NULL, lv.coefs, 
-	X.coefs = NULL, row.coefs = NULL, cutoffs = NULL,
+calc.logLik.lv0(y, X = NULL, family, trial.size = 1, lv.coefs, 
+	X.coefs = NULL, row.eff = "none", row.params = NULL, cutoffs = NULL,
      powerparam = NULL)
 }
 
@@ -19,13 +19,15 @@ calc.logLik.lv0(y, X = NULL, family, trial.size = NULL, lv.coefs,
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
- \item{trial.size}{Either equal to NULL, a single element, or a vector of length equal to the number of columns in \eqn{y}. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of \eqn{y}.}
+  \item{trial.size}{ This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
 
   \item{lv.coefs}{The column-specific intercept, coefficient estimates relating to the latent variables, and dispersion parameters from the boral model.}
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{row.coefs}{Row effects estimates for the boral model. Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
+  \item{row.eff}{Single element indicating whether row effects as are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with non-zero mean and variance. Defaults to "none". } 
+
+  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then these are the mean and variance for the random effects normal distribution respectively. If \code{row.eff = "none"}, then this argument is ignored.}
 
   \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \eqn{y} are ordinal responses. Defaults to \code{NULL}.}
 
@@ -33,20 +35,25 @@ All columns assumed to have ordinal responses are constrained to have the same c
 }
 
 \details{
-A separate function to \code{\link{calc.marglogLik}} and \code{\link{calc.condlogLik}} has been written for boral models with with no latent variables, because the marginal and conditional log-likelihoods functions for such a model are equivalent. For an \eqn{n x p} response matrix \eqn{y}, the log-likelihood is given by (with parameters where appropriate),
+For an \eqn{n x p} response matrix \eqn{y}, the log-likelihood is given by (with parameters where appropriate),
 
-\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log (f(y_{ij} | \alpha_i, \tau_k, \theta_{0j}, \bm{x}_i, \bm{\beta}_j, \phi_j)), }
+\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log (f(y_{ij} | \alpha_i, \tau_k, \beta_{0j}, \bm{x}_i, \bm{\beta}_j, \phi_j)), }
 
-where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\alpha_i} is the row effect, \eqn{\tau_k} are the cutoffs for proportional odds regression, \eqn{\theta_{0j}} is the column-specific intercepts, \eqn{\bm{x}'_i} is row \eqn{i} of the model matrix, \eqn{\bm{\beta}_j} are the column-specific coefficients relating to the model matrix of covariates, \eqn{\phi_j} are column-specific dispersion parameters.
+where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\alpha_i} is the row effect, \eqn{\tau_k} are the cutoffs for proportional odds regression, \eqn{\beta_{0j}} is the column-specific intercepts, \eqn{\bm{x}'_i} is row \eqn{i} of the model matrix, \eqn{\bm{\beta}_j} are the column-specific coefficients relating to the model matrix of covariates, \eqn{\phi_j} are column-specific dispersion parameters.
 
-The function returns log-likelihood values both on a per-row and per-column basis. The latter is useful as it returns the log-likelihood for the separate GLMs fitted to each column of \eqn{y}. 
+If the row effects are assumed to be random (\code{row.eff = "random"}), then the log-likelihood is calculated by integrating over them,
+
+\deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \alpha_i, \tau_k, \beta_{0j}, \bm{x}_i, \bm{beta}_j, \phi_j))f(\alpha_i) d\alpha_i ), } 
+     
+where \eqn{f(\alpha_i)} is the random effects distribution with mean and variance given by the first and second elements of \code{row.params} respectively. The integration is performed using Monte Carlo methods.
 }
 
 \value{
 A list with the following components:
-     \item{logLik}{Value of the log-likelihood.}
-     \item{logLik.row.comp}{A vector of the log-likelihood values for each row of \eqn{y}, \cr such that \code{sum(logLik.row.comp) = logLik}.}
-     \item{logLik.col.comp}{A vector of the log-likelihood values for each column of \eqn{y}, \cr such that \code{sum(logLik.row.comp) = logLik}.}
+    \item{logLik}{Value of the log-likelihood}
+	\item{logLik.row.comp}{A vector of the log-likelihood values for each row of y, such that \cr \code{sum(logLik.row.comp) = logLik}. This is only returned if \code{row.eff} was not set to "random".}
+	\item{logLik.col.comp}{A vector of the log-likelihood values for each column of y, such that \cr \code{sum(logLik.row.comp) = logLik}. This is only returned if \code{row.eff} was not set to "random".}
+	\item{logLik.comp}{A vector of the log-likelihood values for each row of y, such that \cr \code{sum(logLik.comp) = logLik}. This is only returned if \code{row.eff = "random".}}
 }
 
 \author{
@@ -54,7 +61,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \seealso{
-\code{\link{calc.marglogLik}} for calculation of the marginal log-likelihood, and \code{\link{calc.condlogLik}} for calculation of the conditional log-likelihood for boral models with one or more latent variables.
+\code{\link{calc.marglogLik}} for calculation of the log-likelihood marginalizing over one or more latent variables (and random row effects if applicable), and \code{\link{calc.condlogLik}} for calculation of the conditional log-likelihood for boral models with one or more latent variables (and random row effects if applicable).
 }
 
 \examples{
@@ -66,29 +73,31 @@ n <- nrow(y); p <- ncol(y);
 
 ## Example 1 - NULL model with site effects and species specific intercepts
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 0, 
-     row.eff = TRUE, save.model = TRUE, calc.ics = FALSE)
+     row.eff = "fixed", save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
-fit.mcmc <- as.mcmc(spider.fit.nb$jags.model)[[1]]
+fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix, 
+	start = 1, thin = spider.fit.nb$n.thin) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
      2,median),nrow=p)
-site.coef.median <- apply(fit.mcmc[,grep("site.params", colnames(fit.mcmc))],
+site.coef.median <- apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
      2,median)
 
 ## Calculate the log-likelihood at the posterior median
 calc.logLik.lv0(y, family = "negative.binomial",
-     lv.coefs =  coef.mat, row.coefs = site.coef.median)
+     lv.coefs =  coef.mat, row.eff = "fixed", row.coefs = site.coef.median)
 
 
 ## Example 2 - Model without site effects, latent variables, 
 ##   but includes environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 0, 
-     row.eff = FALSE, save.model = TRUE, calc.ics = FALSE)
+     save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
-fit.mcmc <- as.mcmc(spider.fit.nb2$jags.model)[[1]]
+fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix, 
+	start = 1, thin = spider.fit.nb2$n.thin) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
@@ -99,5 +108,5 @@ X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.params",colnames(fit.mcmc))],
 ## Calculate the log-likelihood at the posterior median
 calc.logLik.lv0(y, X = spider$x, family = "negative.binomial", 
 	lv.coefs =  coef.mat, X.coefs = X.coef.mat)
-}     
+}
 }

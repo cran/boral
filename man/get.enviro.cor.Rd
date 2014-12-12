@@ -4,15 +4,11 @@
 \description{Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables (i.e., shared environmental response)}
 
 \usage{
-get.enviro.cor(y, X, fit.mcmc, est = "median")
+get.enviro.cor(object, est = "median")
 }
 
 \arguments{
-  \item{y}{The response matrix that the boral model was fitted to.}
-  
-  \item{X}{The model matrix that was used in the boral model.}  
-
-  \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then applying \code{as.mcmc} on the \code{jags.model} component of the output.} 
+  \item{object}{An object for class "boral".}
 
   \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
 }
@@ -43,6 +39,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \examples{
+\dontrun{
 library(mvabund) ## Load a dataset from the mvabund package
 library(corrplot) ## For plotting correlations
 data(spider)
@@ -53,8 +50,9 @@ spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 2
      row.eff = FALSE, n.burnin = 10, n.iteration = 100, 
      n.thin = 1, save.model = TRUE, calc.ics = FALSE)
 
-enviro.cors <- get.enviro.cor(y, X = spider$x, 
-	fit.mcmc = as.mcmc(spider.fit.nb$jags.model)[[1]])
+enviro.cors <- get.enviro.cor(spider.fit.nb)
 
-corrplot(enviro.cors, title = "Shared response correlations", type = "lower")
+corrplot(enviro.cors, title = "Shared response correlations", 
+	type = "lower", diag = FALSE)
+}
 }
