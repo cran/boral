@@ -25,9 +25,9 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{row.eff}{Single element indicating whether row effects as are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with non-zero mean and variance. Defaults to "none". } 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and variance given by \code{row.params}. Defaults to "none". } 
 
-  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then these are the mean and variance for the random effects normal distribution respectively. If \code{row.eff = "none"}, then this argument is ignored.}
+  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is variance for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
   \item{num.lv}{The number of latent variables used in the boral model. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the marginal log-likelihood.}
 
@@ -51,7 +51,7 @@ If the row effects are assumed to be random (\code{row.eff = "random"}), then th
 
 \deqn{\log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \alpha_i, \tau_k, \beta_{0j}, \bm{theta}_j, \bm{z}_i, \bm{x}_i, \bm{beta}_j, \phi_j)) f(\bm{z}_i) f(\alpha_i) d\bm{z}_i d\alpha_i ),} 
      
-where \eqn{f(\alpha_i)} is the random effects distribution with mean and variance given by the first and second elements of \code{row.params} respectively.
+where \eqn{f(\alpha_i)} is the random effects distribution with variance given by \code{row.params}.
 
 The key difference between this and the conditional likelihood (see \code{calc.condlogLik}) is that the marginal log-likelihood treats the latent variables as "random effects" and integrates over them, whereas the conditional log-likelihood treats the latent variables as "fixed effects". 
 

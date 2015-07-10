@@ -19,6 +19,12 @@ export(boral,
 
 exportClasses(boral)
 
+S3method(summary, boral)
+S3method(plot, boral)
+S3method(fitted, boral)
+S3method(boral, default)
+
+
 import(coda, mvtnorm, fishMod, MASS)
 importFrom(R2jags, jags)
 
@@ -27,8 +33,12 @@ importFrom(stats, dbinom, pbinom, qbinom, rbinom)
 importFrom(stats, dexp, pexp, qexp, rexp)
 importFrom(stats, dgamma, pgamma, qgamma, rgamma)
 importFrom(stats, dnbinom, pnbinom, qnbinom, rnbinom)
-importFrom(stats, dnorm, pnorm, qnorm, rnorm)
+importFrom(stats, dnorm, pnorm, qnorm, rnorm, qqnorm)
 importFrom(stats, dlnorm, plnorm, qlnorm, rlnorm)
 importFrom(stats, dpois, ppois, qpois, rpois)
+importFrom(stats, dunif, runif)
+importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor)
+importFrom(graphics,abline,axis,layout,legend,lines,matplot,par,points,plot,text)
+importFrom(grDevices,palette, rainbow)
 
 

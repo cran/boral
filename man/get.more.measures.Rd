@@ -20,7 +20,7 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
  \item{trial.size}{ This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
 
-  \item{row.eff}{Single element indicating whether row effects as are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with non-zero mean and variance. Defaults to "none". } 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown variance. Defaults to "none". } 
 
   \item{num.lv}{The number of latent variables used in the fitted boral model.}
 

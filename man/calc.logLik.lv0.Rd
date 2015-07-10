@@ -25,9 +25,9 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{row.eff}{Single element indicating whether row effects as are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with non-zero mean and variance. Defaults to "none". } 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and variance given by \code{row.params}. Defaults to "none". } 
 
-  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then these are the mean and variance for the random effects normal distribution respectively. If \code{row.eff = "none"}, then this argument is ignored.}
+  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is the variance for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
   \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \eqn{y} are ordinal responses. Defaults to \code{NULL}.}
 
@@ -45,7 +45,7 @@ If the row effects are assumed to be random (\code{row.eff = "random"}), then th
 
 \deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \alpha_i, \tau_k, \beta_{0j}, \bm{x}_i, \bm{beta}_j, \phi_j))f(\alpha_i) d\alpha_i ), } 
      
-where \eqn{f(\alpha_i)} is the random effects distribution with mean and variance given by the first and second elements of \code{row.params} respectively. The integration is performed using Monte Carlo methods.
+where \eqn{f(\alpha_i)} is the random effects distribution with mean zero and variance given by the \code{row.params}. The integration is performed using Monte Carlo methods.
 }
 
 \value{

@@ -21,11 +21,15 @@ For multivariate abundance data, the inclusion of latent variables provides a pa
 
 \deqn{\beta_{0j} + \bm{x}'_i\bm{\beta}_j + \bm{z}'_i\bm{\theta}_j}
 
-is normally distributed with a residual covariance given by \eqn{\bm{\Theta}\bm{\Theta}'}. A strong residual covariance/correlation matrix between two species can then be interpreted as evidence of species interaction (e.g., facilitation or competition), missing covariates, as well as any additional species correlation not accounted for by shared environmental responses (see also Pollock et al., 2014, for residual correlation matrices in the context of Joint Species Distribution Models).
+is normally distributed with a residual covariance matrix given by \eqn{\bm{\Theta}\bm{\Theta}'}. A strong residual covariance/correlation matrix between two species can then be interpreted as evidence of species interaction (e.g., facilitation or competition), missing covariates, as well as any additional species correlation not accounted for by shared environmental responses (see also Pollock et al., 2014, for residual correlation matrices in the context of Joint Species Distribution Models).
+
+In addition to the residual correlation matrix, the median or mean point estimator of trace of the residual covariance matrix is returned, \eqn{\sum\limits_{j=1}^p [\bm{\Theta}\bm{\Theta}']_{jj}}. Often used in other areas of multivariate statistics, the trace may be interpreted as the amount of covariation explained by the latent variables. One situation where the trace may be useful is when comparing a pure LVM versus a model with latent variables and some predictors (Correlated column models) -- the proportional difference in trace between these two models may be interpreted as the proportion of covariation between species explained by the predictors. Of course, the trace itself is random due to the MCMC sampling, and so it is not 100\% guranteed to produce sensible answers =P
 }
 
 \value{
-A \eqn{p \times p} residual correlation matrix matrix based on posteriori median or mean estimators of the latent variables and coefficients.
+A list with the following components:
+\item{rescor}{A \eqn{p \times p} residual correlation matrix matrix based on posteriori median or mean estimators of the latent variables and coefficients.}
+\item{trace}{The median/mean point estimator of the trace (sum of the diagonal elements) of the residual covariance matrix.}
 }
 
 \references{
@@ -60,6 +64,6 @@ spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 2
 
 res.cors <- get.residual.cor(spider.fit.nb)
 
-corrplot(res.cors, title = "Residual correlations", type = "lower", diag = FALSE)
+corrplot(res.cors$rescor, title = "Residual correlations", type = "lower", diag = FALSE)
 }
 }

@@ -1,15 +1,15 @@
 Package: boral
 Title: Bayesian Ordination and Regression AnaLysis
-Version: 0.6
-Date: 2014-12-12
+Version: 0.7
+Date: 2015-07-10
 Author: Francis K.C. Hui
 Maintainer: Francis Hui <fhui28@gmail.com>
 Description: Bayesian approaches for analyzing multivariate data in ecology. Estimation is performed using Markov Chain Monte Carlo (MCMC) methods via JAGS. Three types of models may be fitted: 1) With explanatory variables only, boral fits independent column GLMs to each column of the response matrix; 2) With latent variables only, boral fits a purely latent variable model for model-based unconstrained ordination; 3) With explanatory and latent variables, boral fits correlated column GLMs with latent variables to account for any residual correlation between the columns of the response matrix. 
 License: GPL-2
 Depends: coda
-Imports: R2jags, mvtnorm, fishMod, MASS
+Imports: R2jags, mvtnorm, fishMod, MASS, stats, graphics, grDevices
 Suggests: mvabund (>= 3.8.4), corrplot
 NeedsCompilation: no
-Packaged: 2014-12-13 05:47:00 UTC; fhui
+Packaged: 2015-07-09 23:12:55 UTC; francis
 Repository: CRAN
-Date/Publication: 2014-12-13 11:19:06
+Date/Publication: 2015-07-10 20:32:40

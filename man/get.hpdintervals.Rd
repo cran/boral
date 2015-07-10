@@ -27,7 +27,7 @@ The function uses the \code{HPDinterval} function from the \code{coda} package t
 \item{lv.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the column-specific intercepts, coefficients relating to the latent variables, and dispersion parameters.}
 \item{lv.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the latent variables.}
 \item{row.coefs.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for row effects.}
-\item{row.raneff.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for the mean and variance of the normal distribution for the row effects, if they were assumed to be random.}
+\item{row.sigma2.lower/upper}{Two scalars corresponding to the lower and upper bounds of the HPD interval for the variance of the normal distribution for the row effects, if they were assumed to be random.}
 \item{X.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for coefficients relating to the model matrix \code{X}.}
 \item{cutoffs.hpd.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for common cutoffs in proportional odds regression.}
 \item{powerparam.hpd.lower/upper}{Two scalars corresponding to the lower and upper bounds of the HPD interval for common power parameter in tweedie regression.}

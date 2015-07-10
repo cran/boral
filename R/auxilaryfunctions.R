@@ -84,16 +84,15 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 	if(length(trial.size) == 1) complete.trial.size <- rep(trial.size, ncol(y))
 	if(length(trial.size) > 1) complete.trial.size <- trial.size
     
-	if(row.eff == FALSE) row.eff <- "none"; if(row.eff == TRUE) row.eff <- "fixed"
+	if(row.eff == FALSE) row.eff <- "none"; 
+	if(row.eff == TRUE) row.eff <- "fixed"
 	if(row.eff == "none") row.coefs <- rep(0, n)
 	if(row.eff == "fixed") {
-		if(length(row.params) != nrow(y)) 
-			stop("If the row effects are fixed, then # of row.params should equal to # of rows in y")
+		if(length(row.params) != nrow(y)) stop("If the row effects are fixed, then # of row.params should equal to # of rows in y")
 		row.coefs <- row.params
 		}
 	if(row.eff == "random") {
-		if (length(row.params) != 2) 
-		stop("If the row effects are random, then row.params should contain the mean and variance of this random effects normal distribution")
+		if (length(row.params) != 1) stop("If the row effects are random, then row.params should contain the variance of this random effects normal distribution")
 		}
     
 	index.multinom.cols <- which(complete.family == "multinom")
@@ -124,6 +123,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 		return(list(logLik = sum(logl.comp), logLik.row.comp = apply(logl.comp, 1, sum), logLik.col.comp = apply(logl.comp, 2, sum)))
 		}
 
+		
 	if(row.eff == "random") {
 		loglik.comp <- numeric(n)
 		mc.row.eff <- 1000
@@ -144,7 +144,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
         
 		for(i in 1:n) {
 			spp.f <- matrix(lv.coefs[, 1], nrow = mc.row.eff, ncol = p, byrow = T)
-			eta <- row.params[1] + rnorm(mc.row.eff, 0, sqrt(row.params[2]))
+			eta <- rnorm(mc.row.eff, 0, sqrt(row.params[1]))
 			if(!is.null(X.coefs)) 
 				eta <- eta + matrix(t(as.matrix(X[i, ])) %*% t(X.coefs), nrow = mc.row.eff, ncol = p, byrow = T)
 				for(j in 1:p) {
@@ -160,7 +160,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 						spp.f[, j] <- dTweedie(rep(as.vector(y[i, j]), mc.row.eff), mu = exp(eta[, j]), phi = lv.coefs[j, ncol(lv.coefs)] + 1e-06, p = powerparam, LOG = FALSE)
 						spp.f[, j][which(spp.f[, j] == 0)] <- 1 }
 					if(complete.family[j] == "ordinal") {
-						get.probs <- ordinal.conversion.special(lv.coefs.j = lv.coefs[j, ], row.coefs.i = row.params[1] + dnorm(mc.row.eff, sqrt(row.params[2])), X.i = X[i, ], X.coefs.j = X.coefs[j, ], cutoffs = cutoffs)
+						get.probs <- ordinal.conversion.special(lv.coefs.j = lv.coefs[j, ], row.coefs.i = rnorm(mc.row.eff, 0, sqrt(row.params[1])), X.i = X[i, ], X.coefs.j = X.coefs[j, ], cutoffs = cutoffs)
 						spp.f[, j] <- get.probs[, as.vector(y[i, j])] + 1e-05 }
 					}
 				
@@ -201,7 +201,7 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 		if(length(row.params) != nrow(y)) stop("If the row effects are fixed, then # of row.params should equal to # of rows in y")
 		row.coefs <- row.params }
 	if(row.eff == "random") {
-		if(length(row.params) != 2) stop("If the row effects are random, then row.params should contain the mean and variance of this random effects normal distribution") }
+		if(length(row.params) != 1) stop("If the row effects are random, then row.params should contain the variance of this random effects normal distribution") }
 
 	if(any(complete.family == "ordinal") & is.null(cutoffs)) stop("Ordinal data requires cutoffs to be supplied")
 	if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) stop("Common power parameter for tweedie must be between 1 and 2.")
@@ -228,7 +228,7 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 	for(i in 1:n) {
 		spp.f <- matrix(NA, nrow = nrow(X.mc), ncol = p)
 		if(row.eff != "random") row.coefs.i <- row.coefs[i]
-		if(row.eff == "random") row.coefs.i <- row.params[1] + rnorm(nrow(X.mc), 0, sqrt(row.params[2]))
+		if(row.eff == "random") row.coefs.i <- rnorm(nrow(X.mc), 0, sqrt(row.params[1]))
 		spp.att.eta <- X.mc %*% t(lv.coefs[, 1:(num.lv + 1)]) + row.coefs.i
 		if(!is.null(X.coefs)) 
 			spp.att.eta <- spp.att.eta + matrix(t(as.matrix(X[i, ])) %*% t(X.coefs), nrow = nrow(X.mc), ncol = p, byrow = T)
@@ -310,12 +310,15 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, fam
         if(length(row.params) != n) stop("If the row effects are fixed, then # of row.params should equal to # of rows in lv.coefs")
         row.coefs <- row.params }
 	if(row.eff == "random") {
-		if(length(row.params) != 2) 
-			stop("If the row effects are random, then row.params should contain the mean and variance of this random effects normal distribution")
-		row.coefs <- rnorm(n, row.coefs[1], sqrt(row.coefs[2])) }
+		if(length(row.params) != 1) 
+			stop("If the row effects are random, then row.params should contain the variance of this random effects normal distribution")
+		row.coefs <- rnorm(n, 0, sqrt(row.params[1])) 
+		}
 
+		
 	if(num.lv > 5) 
 		warnings("We won't stop you, but please consider if you really want more than five latent variables in the model.")
+    
     
 	sim.y <- matrix(NA, n, s)
 	if(!is.null(true.lv)) eta <- cbind(1, true.lv) %*% t(lv.coefs[,1:(num.lv + 1)])
@@ -489,7 +492,14 @@ get.hpdintervals <- function(y, X = NULL, fit.mcmc, num.lv, prob = 0.95) {
 	if(length(grep("row.params", names(hpd.lower))) > 0) {
 		final.list$row.lv.coefs.lower <- hpd.lower[grep("row.params", names(hpd.lower))]
 		final.list$row.lv.coefs.upper <- hpd.upper[grep("row.params", names(hpd.upper))]
-		names(final.list$row.lv.coefs.lower) <- names(final.list$row.lv.coefs.upper) <- rownames(y) }
+		names(final.list$row.lv.coefs.lower) <- names(final.list$row.lv.coefs.upper) <- rownames(y) 
+		
+		if(length(grep("row.ranef.sigma2", names(hpd.lower))) > 0) { 
+			final.list$row.sigma2.lower <- hpd.lower[grep("row.ranef.sigma2", names(hpd.lower))]
+			final.list$row.sigma2.upper <- hpd.upper[grep("row.ranef.sigma2", names(hpd.upper))]
+			names(final.list$row.lv.coefs.lower) <- names(final.list$row.lv.coefs.upper) <- "Variance of random effect"
+			}
+		}
 
 	if(length(grep("X.params", names(hpd.lower))) > 0) {
 		final.list$X.coefs.lower <- matrix(hpd.lower[grep("X.params", names(hpd.lower))],nrow=p)
@@ -531,7 +541,8 @@ get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none",
         stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of columns in y. The latter will assume the specified trial size for all rows labelled binomial in the family argument.")
 	if(num.lv == 0 & more.measures == TRUE) 
 		stop("For boral models with no latent variables, the marginal and conditional likelihoods are equivalent, and there is nothing to gain from setting more.measures = TRUE")
-	if(row.eff == FALSE) row.eff <- "none"; if(row.eff == TRUE) row.eff <- "fixed"
+	if(row.eff == FALSE) row.eff <- "none"; 
+	if(row.eff == TRUE) row.eff <- "fixed"
 		
 	n <- nrow(y); p <- ncol(y)
 	all.lppd <- matrix(NA, nrow(fit.mcmc), n)
@@ -565,8 +576,7 @@ get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none",
 	coef.mat <- matrix(apply(fit.mcmc[, grep("all.params", colnames(fit.mcmc))], 2, median), nrow = p)
 	if(row.eff == "none") get.row.coefs <- NULL
 	if(row.eff == "fixed") get.row.coefs <- apply(fit.mcmc[, grep("row.params", colnames(fit.mcmc))], 2, median)
-	if(row.eff == "random") {
-		get.row.coefs <- c(median(fit.mcmc[, grep("row.ranef.mean", colnames(fit.mcmc))]), median(fit.mcmc[, grep("row.ranef.sigma2", colnames(fit.mcmc))])) }
+	if(row.eff == "random") { get.row.coefs <- median(fit.mcmc[, grep("row.ranef.sigma2", colnames(fit.mcmc))]) }
 	
 	if(!is.null(X)) { get.X.coefs <- matrix(apply(fit.mcmc[, grep("X.params", colnames(fit.mcmc))], 2, median), nrow = p) } else { get.X.coefs <- NULL }
 	if(any(complete.family == "ordinal")) { get.cutoffs <- apply(fit.mcmc[, grep("alpha", colnames(fit.mcmc))], 2, median) } else { get.cutoffs <- NULL }
@@ -591,7 +601,7 @@ get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none",
 	## Compound Laplace-Metroplis estimator from Lewis and Raftery, at component medians
 	get.bic2.det <- fit.mcmc[, grep("all.params", colnames(fit.mcmc))]
 	if(row.eff == "fixed") get.bic2.det <- cbind(get.bic2.det, fit.mcmc[, grep("row.params", colnames(fit.mcmc))])
-	if(row.eff == "random") get.bic2.det <- cbind(get.bic2.det, fit.mcmc[, grep("row.ranef.mean", colnames(fit.mcmc))])
+	#if(row.eff == "random") get.bic2.det <- cbind(get.bic2.det, fit.mcmc[, grep("row.ranef.mean", colnames(fit.mcmc))])
 	if(row.eff == "random") get.bic2.det <- cbind(get.bic2.det, fit.mcmc[, grep("row.ranef.sigma2", colnames(fit.mcmc))])
 	if(!is.null(X)) get.bic2.det <- cbind(get.bic2.det, fit.mcmc[, grep("X.params", colnames(fit.mcmc))])
 	if(any(complete.family == "ordinal")) get.bic2.det <- cbind(get.bic2.det, fit.mcmc[, grep("alpha", colnames(fit.mcmc))])
@@ -634,8 +644,7 @@ get.more.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "n
 		coef.mat <- matrix(fit.mcmc[t, grep("all.params", colnames(fit.mcmc))], nrow = p)
 		if(row.eff == "none") get.row.coefs <- NULL
 		if(row.eff == "fixed") get.row.coefs <- fit.mcmc[t, grep("row.params", colnames(fit.mcmc))]
-		if(row.eff == "random") {
-			get.row.coefs <- c(fit.mcmc[t, grep("row.ranef.mean", colnames(fit.mcmc))], fit.mcmc[t, grep("row.ranef.sigma2", colnames(fit.mcmc))]) }
+		if(row.eff == "random") { get.row.coefs <- fit.mcmc[t, grep("row.ranef.sigma2", colnames(fit.mcmc))] }
         
 		if(!is.null(X)) { get.X.coefs <- matrix(fit.mcmc[t, grep("X.params", colnames(fit.mcmc))], nrow = p) } else { get.X.coefs <- NULL }
 		if(any(complete.family == "ordinal")) { get.cutoffs <- fit.mcmc[t, grep("alpha", colnames(fit.mcmc))] } else { get.cutoffs <- NULL }
@@ -659,7 +668,7 @@ get.more.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "n
 	coef.mat <- matrix(apply(fit.mcmc[, grep("all.params", colnames(fit.mcmc))], 2, mean), nrow = p)
 	if(row.eff == "none") get.row.coefs <- NULL
 	if(row.eff == "fixed") get.row.coefs <- apply(fit.mcmc[, grep("row.params", colnames(fit.mcmc))], 2, mean)
-	if(row.eff == "random") { get.row.coefs <- c(mean(fit.mcmc[, grep("row.ranef.mean", colnames(fit.mcmc))]), mean(fit.mcmc[, grep("row.ranef.sigma2", colnames(fit.mcmc))])) }
+	if(row.eff == "random") { get.row.coefs <- mean(fit.mcmc[, grep("row.ranef.sigma2", colnames(fit.mcmc))]) }
 	if(!is.null(X)) { get.X.coefs <- matrix(apply(fit.mcmc[, grep("X.params", colnames(fit.mcmc))], 2, mean), nrow = p) } else { get.X.coefs <- NULL }
 	if(any(complete.family == "ordinal")) { get.cutoffs <- apply(fit.mcmc[, grep("alpha", colnames(fit.mcmc))], 2, mean) } else { get.cutoffs <- NULL }
 	if(any(complete.family == "tweedie")) { get.powerparam <- mean(fit.mcmc[, grep("powerparam", colnames(fit.mcmc))]) } else { get.powerparam <- NULL }
@@ -712,29 +721,36 @@ get.residual.cor <- function(object, est = "median") {
 	if(length(grep("lvs", colnames(fit.mcmc))) == 0) stop("Cannot find MCMC samples corresponding to latent variables.")
 
 	n <- nrow(y); p <- ncol(y)
-	res.cor.mat <- matrix(0,p,p)
+	rescor.mat <- matrix(0,p,p)
 	if(is.null(colnames(y))) colnames(y) <- 1:ncol(y); 
-	rownames(res.cor.mat) <- colnames(res.cor.mat) <- colnames(y)
-	all.res.cor.mat <- array(0,dim=c(nrow(fit.mcmc),p,p))
+	rownames(rescor.mat) <- colnames(rescor.mat) <- colnames(y)
+	all.rescor.mat <- array(0,dim=c(nrow(fit.mcmc),p,p))
+	all.trace.rescor <- numeric(nrow(fit.mcmc))
 
 	for(t in 1:nrow(fit.mcmc)) {
 		#lvs <- matrix(fit.mcmc[t,grep("lvs", colnames(fit.mcmc))],nrow=n)
 		lvs.coefs <- matrix(fit.mcmc[t,grep("all.params", colnames(fit.mcmc))],nrow=p)
-		res.linpreds <- as.matrix(lvs.coefs[,2:(num.lv+1)])%*%t(as.matrix(lvs.coefs[,2:(num.lv+1)]))
-		all.res.cor.mat[t,,] <- cor(res.linpreds) }
+		lambdalambdaT <- as.matrix(lvs.coefs[,2:(num.lv+1)])%*%t(as.matrix(lvs.coefs[,2:(num.lv+1)]))
+		all.rescor.mat[t,,] <- cov2cor(lambdalambdaT) 
+		all.trace.rescor[t] <- sum(diag(lambdalambdaT))
+		}
 
 	for(j in 1:p) { for(j2 in 1:p) { ## Average/Median over the MCMC samples
-		if(est == "median") res.cor.mat[j,j2] <- median(all.res.cor.mat[,j,j2])
-		if(est == "mean") res.cor.mat[j,j2] <- mean(all.res.cor.mat[,j,j2]) } }
+		if(est == "median") rescor.mat[j,j2] <- median(all.rescor.mat[,j,j2])
+		if(est == "mean") rescor.mat[j,j2] <- mean(all.rescor.mat[,j,j2]) 
+		} }
+
+	if(est == "median") final.trace <- median(all.trace.rescor)
+	if(est == "mean") final.trace <- mean(all.trace.rescor) 	
 		
-	#return(list(residual.correlations = res.cor.mat))
-	#corrplot(res.cor.mat, title = "Residual correlations", type = "lower")
-	return(res.cor.mat)
+	#return(list(residual.correlations = rescor.mat))
+	#corrplot(rescor.mat, title = "Residual correlations", type = "lower")
+	return(list(rescor = rescor.mat, trace = final.trace))
 	}
 		
 		
 #, index.multinom.cols = NULL
-make.jagsboralmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypparams = c(100, 100, 100, 100), ssvs.index = -1, model.name = NULL) {
+make.jagsboralmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypparams = c(100, 20, 100, 100), ssvs.index = -1, model.name = NULL) {
 	if(row.eff == FALSE) row.eff = "none"; if(row.eff == TRUE) row.eff = "fixed"
 
 	X.eff <- ifelse(num.X == 0, FALSE, TRUE)
@@ -742,8 +758,12 @@ make.jagsboralmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypp
 	if(length(family) > 1) complete.family <- family
 	if(length(ssvs.index) == 1 & X.eff) ssvs.index <- rep(ssvs.index, num.X)
 
-	mod.general.lv <- paste("model { \n\t C <- 10000 \n\n\t ##Likelihood \n\t for(i in 1:n) {", sep = "")
+	mod.general.lv <- paste("model { \n\t C <- 10000", sep = "")
+	mod.general.lv <- c(mod.general.lv, "\n\t ##Likelihood \n\t for(i in 1:n) {", sep = "")
+	
 	index.ord.cols <- which(complete.family == "ordinal")
+	index.tweed.cols <- which(complete.family == "tweedie")
+
 	for(j in 1:p) {
 		if(complete.family[j] != "multinom") {
 			if(!X.eff && row.eff != "none") 
@@ -782,13 +802,13 @@ make.jagsboralmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypp
 			mod.general.lv <- c(mod.general.lv, paste("\t\t y[i,",j, "] ~ dlnorm(all.params[", j, ",1] + eta[i,",j, "],all.params[", j, ",num.lv+2]) \n", sep = ""))
 			}
 		if(complete.family[j] == "tweedie") {
-			mod.general.lv <- c(mod.general.lv, paste("\t\t lambdanum[i,",j, "] <- pow(exp(all.params[", j, ",1] + eta[i,",j, "]),2-powerparam)/(all.params[", j, ",num.lv+2]*(2-powerparam))", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t numfish[i,",j, "] ~ dpois(lambdanum[i,", j, "])", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,",j, ",1] <- numfish[i,", j, "]*(2-powerparam)/(powerparam-1)", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,",j, ",1] <- 1/(all.params[", j, ",num.lv+2]*(powerparam-1)*pow(exp(all.params[",j, ",1] + eta[i,", j, "]),powerparam-1))", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,",j, ",2] <- 1", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,",j, ",2] <- exp(-lambdanum[i,", j, "])", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t y[i,",j, "] ~ dgamma(choose.shape[i,", j, ",1+equals(y[i,",j, "],0)],choose.rate[i,", j, ",1+equals(y[i,",j, "],0)]) \n", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t lambdanum[i,",which(index.tweed.cols == j), "] <- pow(exp(all.params[", j, ",1] + eta[i,",j, "]),2-powerparam)/(all.params[", j, ",num.lv+2]*(2-powerparam))", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t numfish[i,",which(index.tweed.cols == j), "] ~ dpois(lambdanum[i,", which(index.tweed.cols == j), "])", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,",which(index.tweed.cols == j), ",1] <- numfish[i,", which(index.tweed.cols == j), "]*(2-powerparam)/(powerparam-1)", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,",which(index.tweed.cols == j), ",1] <- 1/(all.params[", j, ",num.lv+2]*(powerparam-1)*pow(exp(all.params[",j, ",1] + eta[i,", j, "]),powerparam-1))", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,",which(index.tweed.cols == j), ",2] <- 1", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,",which(index.tweed.cols == j), ",2] <- exp(-lambdanum[i,", which(index.tweed.cols == j), "])", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t y[i,",j, "] ~ dgamma(choose.shape[i,", which(index.tweed.cols == j), ",1+equals(y[i,",j, "],0)],choose.rate[i,", which(index.tweed.cols == j), ",1+equals(y[i,",j, "],0)]) \n", sep = ""))
 			}
 		if(complete.family[j] == "ordinal") {
 			mod.general.lv <- c(mod.general.lv, paste("\t\t prob[i,",which(index.ord.cols == j), ",1] <- ilogit(alpha[1]-eta[i,",j, "]-all.params[", j, ",1])", sep = ""))
@@ -830,14 +850,15 @@ make.jagsboralmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypp
 	if(!any(complete.family == "ordinal")) {
 		mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:p) { all.params[i,1] ~ ", prior.string, " } ## Species intercept \n", sep = ""))
 		}
+
 		
 	if(row.eff == "fixed") mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:n) { row.params[i] ~ ", prior.string, " }", sep = ""))
 	if(row.eff == "random") {
-		mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:n) { row.params[i] ~ dnorm(row.ranef.mean,1/row.ranef.sigma2) }", sep = ""))
-		mod.general.lv <- c(mod.general.lv, paste("\t row.ranef.mean ~ ", prior.string, sep = ""))
+		mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:n) { row.params[i] ~ dnorm(0,1/row.ranef.sigma2) }", sep = ""))
 		mod.general.lv <- c(mod.general.lv, paste("\t row.ranef.sigma2 ~ dunif(0,", 1/hypparams[1], ")", sep = ""))
 		}
 
+		
 	prior.string <- paste("dnorm(0,", 1/hypparams[2], ")", sep = "")
 	mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:(num.lv-1)) { for(j in (i+2):(num.lv+1)) { all.params[i,j] <- 0 } } ## Constraints to 0 on upper diagonal", sep = ""))
 	mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:num.lv) { \n\t\t all.params[i,i+1] ~ dunif(0,", hypparams[2], ") } ## Sign constraints on diagonal elements", sep = ""))
@@ -889,7 +910,7 @@ make.jagsboralmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypp
 
 
 		
-make.jagsboralnullmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypparams = c(100, 100, 100, 100), ssvs.index = -1, model.name = NULL) {
+make.jagsboralnullmodel <- function (family, num.X = 0, row.eff = "none", n, p, hypparams = c(100, 20, 100, 100), ssvs.index = -1, model.name = NULL) {
 	if(row.eff == FALSE) row.eff = "none"; if(row.eff == TRUE) row.eff = "fixed"
 		
 	X.eff <- ifelse(num.X == 0, FALSE, TRUE)
@@ -897,8 +918,11 @@ make.jagsboralnullmodel <- function (family, num.X = 0, row.eff = "none", n, p, 
 	if(length(family) > 1) complete.family <- family
 	if(length(ssvs.index) == 1 & X.eff) ssvs.index <- rep(ssvs.index, num.X)
 
-	mod.general.lv <- paste("model { \n\t C <- 10000 \n\n\t ##Likelihood \n\t for(i in 1:n) {", sep = "")
+	mod.general.lv <- paste("model { \n\t C <- 10000", sep = "")
+	mod.general.lv <- c(mod.general.lv, "\n\t ##Likelihood \n\t for(i in 1:n) {", sep = "")
+
 	index.ord.cols <- which(complete.family == "ordinal")
+	index.tweed.cols <- which(complete.family == "tweedie")
     
 	for(j in 1:p) {
 		if(complete.family[j] != "multinom") {
@@ -933,13 +957,13 @@ make.jagsboralnullmodel <- function (family, num.X = 0, row.eff = "none", n, p, 
 			mod.general.lv <- c(mod.general.lv, paste("\t\t y[i,", j, "] ~ dlnorm(all.params[", j, ",1] + eta[i,", j, "],all.params[", j, ",2]) \n", sep = ""))
 			}
 		if(complete.family[j] == "tweedie") {
-			mod.general.lv <- c(mod.general.lv, paste("\t\t lambdanum[i,", j, "] <- pow(exp(all.params[", j, ",1] + eta[i,", j, "]),2-powerparam)/(all.params[", j, ",2]*(2-powerparam))", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t numfish[i,", j, "] ~ dpois(lambdanum[i,", j, "])", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,", j, ",1] <- numfish[i,", j, "]*(2-powerparam)/(powerparam-1)", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,", j, ",1] <- 1/(all.params[", j, ",2]*(powerparam-1)*pow(exp(all.params[", j, ",1] + eta[i,", j, "]),powerparam-1))", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,", j, ",2] <- 1", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,", j, ",2] <- exp(-lambdanum[i,", j, "])", sep = ""))
-			mod.general.lv <- c(mod.general.lv, paste("\t\t y[i,", j, "] ~ dgamma(choose.shape[i,", j, ",1+equals(y[i,", j, "],0)],choose.rate[i,", j, ",1+equals(y[i,", j, "],0)]) \n", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t lambdanum[i,", which(index.tweed.cols == j), "] <- pow(exp(all.params[", j, ",1] + eta[i,", j, "]),2-powerparam)/(all.params[", j, ",2]*(2-powerparam))", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t numfish[i,", which(index.tweed.cols == j), "] ~ dpois(lambdanum[i,", which(index.tweed.cols == j), "])", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,", which(index.tweed.cols == j), ",1] <- numfish[i,", which(index.tweed.cols == j), "]*(2-powerparam)/(powerparam-1)", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,", which(index.tweed.cols == j), ",1] <- 1/(all.params[", j, ",2]*(powerparam-1)*pow(exp(all.params[", j, ",1] + eta[i,", j, "]),powerparam-1))", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.shape[i,", which(index.tweed.cols == j), ",2] <- 1", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t choose.rate[i,", which(index.tweed.cols == j), ",2] <- exp(-lambdanum[i,", which(index.tweed.cols == j), "])", sep = ""))
+			mod.general.lv <- c(mod.general.lv, paste("\t\t y[i,", j, "] ~ dgamma(choose.shape[i,", which(index.tweed.cols == j), ",1+equals(y[i,", which(index.tweed.cols == j), "],0)],choose.rate[i,", j, ",1+equals(y[i,", j, "],0)]) \n", sep = ""))
 			}
 		if(complete.family[j] == "ordinal") {
 			mod.general.lv <- c(mod.general.lv, paste("\t\t prob[i,", which(index.ord.cols == j), ",1] <- ilogit(alpha[1]-eta[i,", j, "]-all.params[", j, ",1])", sep = ""))
@@ -986,8 +1010,7 @@ make.jagsboralnullmodel <- function (family, num.X = 0, row.eff = "none", n, p, 
 	if(row.eff == "fixed") 
 		mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:n) { row.params[i] ~ ", prior.string, " }", sep = ""))
 	if(row.eff == "random") {
-		mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:n) { row.params[i] ~ dnorm(row.ranef.mean,1/row.ranef.sigma2) }", sep = ""))
-		mod.general.lv <- c(mod.general.lv, paste("\t row.ranef.mean ~ ", prior.string, sep = ""))
+		mod.general.lv <- c(mod.general.lv, paste("\t for(i in 1:n) { row.params[i] ~ dnorm(0,1/row.ranef.sigma2) }", sep = ""))
 		mod.general.lv <- c(mod.general.lv, paste("\t row.ranef.sigma2 ~ dunif(0,", 1/hypparams[1], ")", sep = ""))
 		}
     

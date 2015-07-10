@@ -11,7 +11,7 @@ boral(y, ...)
 \method{boral}{default}(y, X = NULL, family, trial.size = 1, num.lv = 0, 
 	row.eff = "none", n.burnin = 5000, n.iteration = 35000, n.thin = 5, 
 	save.model = FALSE, seed = 123, calc.ics = TRUE, 
-	hypparams = c(100,100,100,100), ssvs.index = -1, do.fit = TRUE, 
+	hypparams = c(100,20,100,100), ssvs.index = -1, do.fit = TRUE, 
 	model.name = NULL, ...)
 
 \method{print}{boral}(x, ...)
@@ -29,11 +29,11 @@ boral(y, ...)
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
- \item{trial.size}{ This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
+ \item{trial.size}{This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
 
  \item{num.lv}{Number of latent variables to fit. Can take any non-negative integer value. Defaults to 0.} 
 
- \item{row.eff}{Single element indicating whether row effects as are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with non-zero mean and variance. Defaults to "none".}    
+ \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown variance, analogous to a random intercept in mixed models. Defaults to "none".}    
 
  \item{n.burnin}{Length of burnin i.e., the number of iterations to discard at the beginning of the MCMC sampler.}
 
@@ -47,7 +47,7 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
 \item{calc.ics}{A logical values indicating whether to return various information criteria values, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to TRUE.}
 
- \item{hypparams}{Vector of 4 hyperparameters used in the set up of prior distributions. The first element is the variance for the normal priors of all (column-specific) intercepts, row effects, cutoff points for ordinal data. It also controls the variance of the normal prior for the mean, and the maximum of the uniform prior for the variance, for the random effects normal distribution if \code{row.eff = "random"}. The second element is the variance for the normal priors of all column-specific coefficients relating to the latent variables (ignored if \code{num.lv = 0}). The third element is the variance for the normal priors of all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). The fourth element is the maximum of the uniform prior used for the dispersion parameters i.e, for the negative binomial, normal, lognormal, tweedie, gamma, beta (the dispersion parameter here refers to the sample size) distributions. Defaults to 100 for all three elements. Note the common power parameter in the tweedie distribution is assumed to have uniform prior from 1 to 2.}
+ \item{hypparams}{Vector of 4 hyperparameters used in the set up of prior distributions. The first element is the variance for the normal priors of all (column-specific) intercepts, row effects, cutoff points for ordinal data. It also controls the variance of the normal prior for the mean, and the maximum of the uniform prior for the variance, for the random effects normal distribution if \code{row.eff = "random"}. The second element is the variance for the normal priors of all column-specific coefficients relating to the latent variables (ignored if \code{num.lv = 0}). The third element is the variance for the normal priors of all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). The fourth element is the maximum of the uniform prior used for the dispersion parameters i.e, for the negative binomial, normal, lognormal, tweedie, gamma, beta (the dispersion parameter here refers to the sample size) distributions. Note the common power parameter in the tweedie distribution is assumed to have uniform prior from 1 to 2.}
 
  \item{ssvs.index}{Indices to be used for Stochastic Search Variable Selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate, or any integer exceeding 1 (SSVS is performed on collectively all coefficients on this covariate/s.) Defaults to -1, in which case no model selection is performed on the fitted model at all. Please see the \code{details} for more information regarding the implementation of SSVS.}
  
@@ -89,7 +89,7 @@ The parameterization above is useful for modeling multivariate abundance data in
 
 \deqn{g(\mu_{ij}) = \alpha_i + \beta_{0j} + \bm{z}'_i\bm{\theta}_j,}
 
-where instead of measured covariates, we now have a vector of latent variables \eqn{\bm{z}_i} with \eqn{\bm{\theta}_j} being the column-specific coefficients relating to these latent variables. Unconstrained ordination is used for visualizing multivariate data in a low-dimensional space, without reference to explanatory variables (see Chapter 9, Legendre and Legendre, 2012). Typically, \code{num.lv} = 1 or 2 latent variables is used, allowing the latent variables to plotted (using \code{\link{lvsplot}}, for instance). The resulting plot can be interpreted in the same manner as plots from Nonmetric Multi-dimensional Scaling (NMDS, Kruskal, 1964) and Correspondence Analysis (CA, Hill, 1974), for example. For instance, with multivariate abundance data, unconstrained ordination is used to visualize the relationships between sites in terms of species abundance or composition. The column-specific intercept, beta_{0j}, accounts for differences between species prevalence, while the row effect, alpha_i, is included to account for differences in site total abundance (typically assuming a fixed effect, \code{row.eff = "fixed"}, although see Jamil and ter Braak, 2013, for a motivation for using random site effects). If \eqn{\alpha_i} is omitted from the model i.e., \code{row.eff = FALSE}, the ordination will be in terms of relative species abundance.
+where instead of measured covariates, we now have a vector of latent variables \eqn{\bm{z}_i} with \eqn{\bm{\theta}_j} being the column-specific coefficients relating to these latent variables. Unconstrained ordination is used for visualizing multivariate data in a low-dimensional space, without reference to explanatory variables (see Chapter 9, Legendre and Legendre, 2012). Typically, \code{num.lv} = 1 or 2 latent variables is used, allowing the latent variables to plotted (using \code{\link{lvsplot}}, for instance). The resulting plot can be interpreted in the same manner as plots from Nonmetric Multi-dimensional Scaling (NMDS, Kruskal, 1964) and Correspondence Analysis (CA, Hill, 1974), for example. Additionally, a biplot can be constructed by setting \code{biplot = TRUE} when using \code{\link{lvsplot}}, so that both the latent variables \emph{and} their corresponding coefficients are plotted. For instance, with multivariate abundance data, unconstrained ordination is used to visualize the relationships between sites in terms of species abundance or composition, and biplots offer the added bonus of depicting the indicator species for the sites (see Chapter 9, Legendre and Legendre, 2012, for more details on biplots). The column-specific intercept, beta_{0j}, accounts for differences between species prevalence, while the row effect, alpha_i, is included to account for differences in site total abundance (typically assuming a fixed effect, \code{row.eff = "fixed"}, although see Jamil and ter Braak, 2013, for a motivation for using random site effects). If \eqn{\alpha_i} is omitted from the model i.e., \code{row.eff = FALSE}, the ordination will be in terms of relative species abundance.
 
 \bold{Correlated column models:} When one or more latent variables are included in conjunction with covariates i.e., \code{X} is non-empty and \code{num.lv} > 1, \code{boral} fits separate GLMs to each column of \eqn{y} while allowing for any potential correlation between columns via the latent variables. This is useful for multivariate abundance data in ecology, where a separate GLM is fitted to species (modeling its response against environmental covariates, say), while accounting for the fact species at a site are correlated. The model fitted takes the following form,
 
@@ -97,7 +97,7 @@ where instead of measured covariates, we now have a vector of latent variables \
 
 which we can see is a mash of the first two types of models. The linear predictor \eqn{\bm{z}'_i\bm{\theta}_j} induces a "residual covariance/correlation"" between the columns of \eqn{y}, which is of rank \code{num.lv}. For multivariate abundance data, this leads to a parsimonious method of accounting for correlation between species not due to the shared environmental responses. After fitting the model, the residual correlation matrix can be obtained using the \code{\link{get.residual.cor}} function. Note \code{num.lv > 1} is necessarily in order to flexibly model the residual correlations (see also Pollock et al., 2014, for residual correlation matrices in the context of Joint Species Distribution Models).
 
-\bold{Estimation:} For \code{boral} models, estimation is performed using Bayesian Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). By default, uninformative priors are used for all parameters. That is, normal priors with mean zero and variance given by \code{hypparams[1]} are assigned to all intercepts, coefficients relating to latent variables, cutoffs for ordinal responses. Normal priors with mean zero and variance given by \code{hypparams[2]} are assigned to all coefficients relating to covariates in \code{X}. For the negative binomial, normal, lognormal, and tweedie distributions, uniform priors from 0 to \eqn{hypparams[3]} are used on the dispersion parameters.  
+\bold{Estimation:} For \code{boral} models, estimation is performed using Bayesian Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). The setting for prior distributions are as follows: 1) normal priors with mean zero and variance given by \code{hypparams[1]} are assigned to all intercepts, cutoffs for ordinal responses, and fixed row effects, 2) normal priors with mean zero and variance given by \code{hypparams[2]} are assigned coefficients relating to latent variables, \eqn{\bm{\theta}_j}, 3) normal priors with mean zero and variance given by \code{hypparams[3]} are assigned to all coefficients relating to covariates in \code{X}, \eqn{\bm{\beta}_j}, 4) for the negative binomial, normal, lognormal, and tweedie distributions, uniform priors from 0 to \eqn{hypparams[4]} are used on the dispersion parameters. By default, all parameters are given uninformative prior distributions, except for the priors of the coefficients \eqn{\bm{\theta}_j}, which are assigned a normal prior with a variance of \code{hypparams[2] = 20}. We recommend such a ``semi-informative" prior as this tends to be produce more stable MCMC sampling, particularly if the response matrix is large and sparse. 
 
 \bold{Using information criteria at your own risk:} Using information criterion from \code{calc.ics = TRUE} for model selection should be done with extreme caution, for two reasons: 1) The implementation of some of these criteria is heuristic and experimental. 2) Deciding what model to fit should also be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables is more appropriate. However, if we are interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are more appropriate. As another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = "none"}) or species composition (\code{row.eff = "fixed"}).  
 
@@ -123,7 +123,7 @@ An object of class "boral" is returned, being a list containing the following co
      \item{cutoffs.mean/median/sd/iqr}{Vectors containing the mean/median/standard deviation/interquartile range of the posterior distributions of the common cutoffs for ordinal responses.}
      \item{powerparam.mean/median/sd/iqr}{Scalars for the mean/median/standard deviation/interquartile range of the posterior distributions of the common power parameter for tweedie responses.}
      \item{row.coefs.mean/median/sd/iq}{Vectors containing the mean/median/standard deviation/interquartile range of the posterior distributions of the row effects.}
-	\item{row.ranef.mean/median/sd/iqr}{Vectors containing the mean/median/standard deviation/interquartile range of the posterior distributions of the mean and variance for the row random effects normal distribution.}
+	\item{row.ranef.mean/median/sd/iqr}{Vectors containing the mean/median/standard deviation/interquartile range of the posterior distributions of the variance for the row random effects normal distribution.}
      \item{ssvs.indcoefs.mean/ssvs.indcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including individual coefficients in the model.}
      \item{ssvs.gpcoefs.mean/ssvs.gpcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including grouped coefficients in the model.}
      \item{hpdintervals}{A list containing components which correspond to the lower and upper bounds of highest posterior density (HPD) intervals for all the parameters indicated above. Please see \code{\link{get.hpdintervals}} for more details.}
@@ -172,7 +172,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \seealso{
-\code{\link{lvsplot}} for a scatter plot of the latent variables when \code{num.lv = 1} or \code{2}, \code{\link{summary.boral}} for a summary of the fitted boral model, \code{\link{get.measures}} and \code{\link{get.more.measures}} for information criteria from the fitted boral model, \code{\link{get.residual.cor}} for calculating the residual correlation matrix. 
+\code{\link{lvsplot}} for a scatter plot of the latent variables (and their coefficients if applicable) when \code{num.lv = 1} or \code{2}, \code{\link{summary.boral}} for a summary of the fitted boral model, \code{\link{get.measures}} and \code{\link{get.more.measures}} for information criteria from the fitted boral model, \code{\link{get.residual.cor}} for calculating the residual correlation matrix. 
 }
 
 \examples{
@@ -193,7 +193,7 @@ plot(spider.fit.nb, which = 1:4) ## Plots used in residual analysis,
 ## Used to check if assumptions such an mean-variance relationship 
 ## are adequately satisfied.
 
-lvsplot(spider.fit.nb) ## Scatterplot of the latent variables, 
+lvsplot(spider.fit.nb) ## Biplot of the latent variables, 
 ## which can be interpreted in the same manner as an ordination plot.
 
 \dontrun{
@@ -227,5 +227,5 @@ y <- y[,apply(y > 0,2,sum) > 2] ## Consider only spp with more than 2 presences
 tikus.fit <- boral(y, family = "binomial", num.lv = 2, 
 	n.burnin = 10, n.iteration = 100, n.thin = 1, calc.ics = FALSE)
      
-lvsplot(tikus.fit) ## A strong location between the two sampling years 
+lvsplot(tikus.fit, biplot = FALSE) ## A strong location between the two sampling years 
 }

@@ -23,14 +23,21 @@
 ## 3) add n.thin, n.burnin, n.iteration to output from boral; 
 ## 4) corrected some potential errors which may arise the examples in help files, due to problems with the as.mcmc() function in later versions of the R2jags/coda packages
 ## 5) corrected estimation of the Compound Laplace-Metropolis estimator in get.measures
-## 6) get.residual.cor now calculates the residual correlation based on lv.coefs%*%t(lv.coefs) cor(lvs%*%t(lv.coefs))
+## 6) get.residual.cor now calculates the residual correlation based on cov2cor(lvs%*%t(lv.coefs))
 ## 7) Allows the option of custom naming the model file. 
 ## 8) Rename theta0 to beta0; 
 ## 9) redo get.enviro.cor and get.residual.cor to take boral fit directly rather than mcmc
 ## 10) allow row.eff as random effect, with compatability of old row.eff = TRUE and FALSE
 ## 11) reparameterize the NB using dgamma(1/phi, 1/phi)
 
-## TODO: 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem. See also ms-LVMpaper for using logit regression in case of Bernoulli familly.
+## Changes from v0.6
+## 1) correct issues for running JAGS when tweedie is used in combination with other responses, i.e., numfish other tweedie specific nodes goes bonkers when not all of family is tweedie
+## 2) Tougher priors on the LV coefficients with variance = 20
+## 3) Will try to explicitly capture the problem with negative-binomial when the prior on the overdispersion is too flat, and recommend that a tougher prior be used
+## 4) for row.eff = "random" now draws from a normal dist with mean zero.
+## 5) get.residual.cor now also returns the mean/median of the trace of the residual covariance matrix
+
+## TODO: 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem. See also ms-LVMpaper for using logit regression in case of Bernoulli familly...maybe use a probit function instead?; 2) Find a way to do biplots after controlling for scaling; 3) Calculate proprtion of deviance explained based on marginal or conditional log-likelihood? 5) Allow options for weakly informative priors in terms t/Cauchy and half-t distributions; ; 7) Allow spp-specific coefficients to be regressed against traits? HARD!!! 8) draw coefficients as random effects, or reduce rank them? HARD!!!
 
 ##############
 #  rm(list = ls())
@@ -44,14 +51,14 @@
 # # # #  
 #  data(spider)
 #  y <- spider$abun
-#  X <- spider$x; family = "negative.binomial"; num.lv = 0; row.eff = T; n.burnin = 4000; n.iteration = 24000; n.thin = 5; save.model = FALSE; calc.ics = TRUE; trial.size <- NULL; seed <- 123; hypparams = c(100,100,100,100); ssvs.index <- -1; ssvs.index <- c(-1,1,2,1,0,-1)
+#  X <- spider$x; family = "negative.binomial"; num.lv = 0; row.eff = "fixed"; n.burnin = 4000; n.iteration = 24000; n.thin = 5; save.model = FALSE; calc.ics = TRUE; trial.size <- NULL; seed <- 123; hypparams = c(100,100,100,100); ssvs.index <- -1; ssvs.index <- c(-1,1,2,1,0,-1)
 
 #library(ade4)
 #data(dunedata)
 #y = dunedata$veg+1 ## Shift levels up to start at 1
 #X = model.matrix(~A1 + factor(use) - 1, data = dunedata$envir)
 #family = rep("ordinal",30)
-#num.lv = 2; row.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 7; calc.ics = TRUE; trial.size = NULL; num.ord.levels <- 5; hypparams = c(100,100,100,100); 
+#num.lv = 2; row.eff = "none"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 7; calc.ics = TRUE; trial.size = NULL; num.ord.levels <- 5; hypparams = c(100,100,100,100); 
 #X <- matrix(rnorm(30*4),30,4)
 #true.beta <- cbind(matrix(rnorm(length(family)*(ncol(X)+1)),length(family),ncol(X)+1),NA); 
 #true.beta[nrow(true.beta),1] <- -sum(true.beta[-nrow(true.beta),1])
@@ -64,7 +71,7 @@
 # y <- matrix(NA,n,p)
 # for(j in 1:ncol(y)) { y[,j] <- rTweedie(nrow(y), mu = mu[,j], phi = beta[j,4], p = true.power) }
 # family = "tweedie"
-# num.lv = 0; row.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = NULL; hypparams = c(100,100,100,100); 
+# num.lv = 0; row.eff = "none"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = NULL; hypparams = c(100,100,100,100); 
 # 
 # library(FD)
 # data(tussock)
@@ -79,7 +86,7 @@
 # y <- y[-which(is.na(rowSums(y))),]
 # 
 # family = c("lnormal","normal","normal","lnormal","lnormal","lnormal","ordinal","binomial","binomial")
-# num.lv = 2; row.eff = FALSE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 123; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); X <- NULL
+# num.lv = 2; row.eff = "none"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 123; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); X <- NULL
 
 # n = 30; s <- 30; num.multinom.levels <- 4
 # X <- matrix(rnorm(n*2),n,2)
@@ -89,13 +96,13 @@
 # row.coefs <- runif(n)
 # lv.coefs <- cbind(matrix(runif(s,-3,-1),s,1),2)
 # family = c(rep("multinom",s-1),"normal")
-# num.lv = 2; row.eff = TRUE; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); 
+# num.lv = 2; row.eff = "fixed"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); 
 # y <- create.life(lv.coefs = lv.coefs, X = X, X.coefs = X.coefs, X.multinom.coefs = X.multinom.coefs, family = family, row.coefs = row.coefs)
 
 boral <- function(y, ...) UseMethod("boral")
 
 ## Model is g(mu_{ij}) = row + beta0 + LV_i*theta_j + X_i*beta_j
-boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.eff = "none", n.burnin = 5000, n.iteration = 35000, n.thin = 5, save.model = FALSE, seed = 123, calc.ics = TRUE, hypparams = c(100, 100, 100, 100), ssvs.index = -1, do.fit = TRUE, model.name = NULL, ...) {
+boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.eff = "none", n.burnin = 5000, n.iteration = 35000, n.thin = 5, save.model = FALSE, seed = 123, calc.ics = TRUE, hypparams = c(100, 20, 100, 100), ssvs.index = -1, do.fit = TRUE, model.name = NULL, ...) {
 	if(is.null(dim(y))) { cat("Converting y into a one column matrix.\n"); y <- matrix(y, ncol = 1) }
 	if(!is.null(X) & is.null(dim(X))) { cat("Converting X into a one column matrix\n"); X <- matrix(X, ncol = 1) }
 	if(length(hypparams) != 4) { stop("hypparams must be a vector of four elements. Please see boral help file as to what the elements correspond to.\n") }
@@ -133,9 +140,9 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 	if(all(family != "binomial")) { complete.trial.size <- rep(0, ncol(y)) }
 	
 	if(all(family != "ordinal")) {
-        num.ord.levels <- 0; index.ord.cols <- NULL }
+        num.ord.levels <- 0; }
 	if(any(family == "ordinal")) {
-		num.ord.levels <- max(y[, family == "ordinal"]); index.ord.cols <- which(family == "ordinal") }
+		num.ord.levels <- max(y[, family == "ordinal"]); }
 	if(all(family != "multinom")) {
 		num.multinom.levels <- 0; index.multinom.cols <- NULL }
 	if(any(family == "multinom")) { 
@@ -158,7 +165,7 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 	jags.params <- c("all.params")
 	if(num.lv > 0) jags.params <- c(jags.params, "lvs")
 	if(row.eff != "none") jags.params <- c(jags.params, "row.params")
-	if(row.eff == "random") jags.params <- c(jags.params, "row.ranef.mean", "row.ranef.sigma2")
+	if(row.eff == "random") jags.params <- c(jags.params, "row.ranef.sigma2")
 	if(X.eff & any(family != "multinom")) jags.params <- c(jags.params, "X.params")
 	if(X.eff & any(family == "multinom")) jags.params <- c(jags.params, "X.multinom.params")
 	if(any(family == "tweedie")) jags.params <- c(jags.params, "powerparam")
@@ -168,17 +175,33 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 	
 	jags.inits <- NULL
 	if(any(family %in% "tweedie")) {
-		initial.list <- list(numfish = matrix(1, n, p))
+		initial.list <- list(numfish = matrix(1, n, sum(family=="tweedie")))
 		if(any(family %in% "ordinal")) initial.list$alpha0 <- seq(-1, 1, length = num.ord.levels - 1)
-		jags.inits <- function() {
-			return(initial.list) }
+		jags.inits <- function() { return(initial.list) }
 		}
     set.seed(seed)
 
     actual.filename <- model.name
     if(is.null(actual.filename)) actual.filename <- "jagsboralmodel.txt"
 
-    jagsfit <- suppressWarnings(jags(data = jags.data, inits = jags.inits, jags.params, model.file = actual.filename, n.iter = n.iteration, n.burnin = n.burnin, n.thin = n.thin, n.chains = n.chains, DIC = T))
+    jagsfit <- try(suppressWarnings(jags(data = jags.data, inits = jags.inits, jags.params, model.file = actual.filename, n.iter = n.iteration, n.burnin = n.burnin, n.thin = n.thin, n.chains = n.chains, DIC = T)),silent=T)
+    
+    
+	if(inherits(jagsfit,"try-error")) {
+		lookfornberror <- grep("Slicer stuck at value with infinite density", jagsfit[[1]])
+		if(any(family == "negative.binomial") & lookfornberror == TRUE) { 
+			cat("MCMC fitting through JAGS failed. This is likely due to the the prior on the overdispersion parameter in the negative binomial been too `flat'. Please consider a tougher prior, e.g. hypparams[4] = 20, or switch to a Poisson family for those response that don't appear to actually be overdispersed. The error below informs you explicity which column of y the MCMC sampling ran into trouble. For instance, all.params[24,4] suggests that column 24 of y is causing issues.\n")
+			print(jagsfit) }
+
+		else {
+			cat("MCMC fitting through JAGS failed:\n")
+			print(jagsfit) }
+
+		cat("boral fit failed...Exiting. Sorry!\n") 
+		return()
+		}
+    
+    
 	## Format into big matrix; also deals with the conflict of as.mcmc converting to lists or the MCMC samples themselves
 	fit.mcmcBase <- jagsfit$BUGSoutput
 	fit.mcmc <- mcmc(fit.mcmcBase$sims.matrix, start = 1, thin = n.thin) ## Thanks to Guilliaume Blanchet for this!
@@ -191,13 +214,17 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 # 			if(k > 1) { combined.fit.mcmc <- rbind(combined.fit.mcmc, fit.mcmc[[k]]); fit.mcmc[[k]] <- NA }
 # 			} }
     
+    
  	## Flip dispersion parameters for NB returns phi_j, for normal and lognormal return sigma^2_j
 	sel.thetas <- grep("all.params", colnames(combined.fit.mcmc))
 	sel.thetas2 <- as.numeric(sel.thetas[(length(sel.thetas) - p + 1):length(sel.thetas)])
 	combined.fit.mcmc[, sel.thetas2] <- 1/combined.fit.mcmc[, sel.thetas2]
-	if(any(family %in% c("tweedie", "beta", "gamma","negative.binomial"))) combined.fit.mcmc[, sel.thetas2[family %in% c("tweedie", "beta", "gamma")]] <- 1/combined.fit.mcmc[, sel.thetas2[family %in% c("tweedie", "beta", "gamma","negative.binomial")]] ## Flip it back for tweedie, beta, gamma (parameterization in terms of shape and rate)
-	if(any(family %in% c("poisson", "binomial", "ordinal", "multinom", "exponential"))) combined.fit.mcmc[, sel.thetas2[family %in% c("poisson", "binomial", "ordinal", "multinom", "exponential")]] <- 0
+	if(any(family %in% c("tweedie", "beta", "gamma","negative.binomial"))) 
+		combined.fit.mcmc[, sel.thetas2[family %in% c("tweedie", "beta", "gamma")]] <- 1/combined.fit.mcmc[, sel.thetas2[family %in% c("tweedie", "beta", "gamma","negative.binomial")]] ## Flip it back for tweedie, beta, gamma (parameterization in terms of shape and rate)
+	if(any(family %in% c("poisson", "binomial", "ordinal", "multinom", "exponential"))) 
+		combined.fit.mcmc[, sel.thetas2[family %in% c("poisson", "binomial", "ordinal", "multinom", "exponential")]] <- 0
 
+		
   	## For any multinomial columns, set the corresponding rows in X.coefs to zero
 	if(any(family == "multinom") & X.eff == 1) {
 		for(k in index.multinom.cols) {
@@ -205,6 +232,7 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 			combined.fit.mcmc[, sel.multinom.col] <- 0 }
 		}
 
+		
  	## Make output beautiful
 	if(is.null(colnames(y))) colnames(y) <- 1:ncol(y)
 	if(is.null(rownames(y))) rownames(y) <- 1:nrow(y)
@@ -212,9 +240,12 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 		if(is.null(colnames(X))) colnames(X) <- 1:ncol(X)
 		if(is.null(rownames(X))) rownames(X) <- 1:nrow(X) }
 
+		
 	out.fit <- list(lv.coefs.median = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, median), nrow = p), lv.coefs.iqr = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = p), lv.coefs.mean = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, mean), nrow = p), lv.coefs.sd = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, sd), nrow = p))
 
 	rownames(out.fit$lv.coefs.median) <- rownames(out.fit$lv.coefs.iqr) <- rownames(out.fit$lv.coefs.mean) <- rownames(out.fit$lv.coefs.sd) <- colnames(y)
+
+	
 	if(num.lv > 0) { 
 		out.fit$lv.median = matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, median), nrow = n)
 		out.fit$lv.iqr = matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, IQR), nrow = n)
@@ -223,26 +254,30 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 		rownames(out.fit$lv.median) <- rownames(out.fit$lv.iqr) <- rownames(out.fit$lv.mean) <- rownames(out.fit$lv.sd) <- rownames(y)
 		colnames(out.fit$lv.median) <- colnames(out.fit$lv.iqr) <- colnames(out.fit$lv.mean) <- colnames(out.fit$lv.sd) <- paste("LV", 1:num.lv, sep = "")
 		colnames(out.fit$lv.coefs.median) <- colnames(out.fit$lv.coefs.iqr) <- colnames(out.fit$lv.coefs.mean) <- colnames(out.fit$lv.coefs.sd) <- c("beta0", 
-		paste("theta", 1:num.lv, sep = ""), "Dispersion") }
+		paste("theta", 1:num.lv, sep = ""), "Dispersion") 
+		}
 	if(num.lv == 0) {
 		colnames(out.fit$lv.coefs.median) <- colnames(out.fit$lv.coefs.iqr) <- colnames(out.fit$lv.coefs.mean) <- colnames(out.fit$lv.coefs.sd) <- c("beta0", "Dispersion") }
+	
 	
 	if(row.eff != "none") {
 		out.fit$row.coefs.median <- apply(combined.fit.mcmc[, grep("row.params", colnames(combined.fit.mcmc))], 2, median)
 		out.fit$row.coefs.iqr <- apply(combined.fit.mcmc[, grep("row.params", colnames(combined.fit.mcmc))], 2, IQR)
 		out.fit$row.coefs.mean <- apply(combined.fit.mcmc[, grep("row.params", colnames(combined.fit.mcmc))], 2, mean)
 		out.fit$row.coefs.sd <- apply(combined.fit.mcmc[, grep("row.params", colnames(combined.fit.mcmc))], 2, sd)
+		
 		names(out.fit$row.coefs.median) <- names(out.fit$row.coefs.iqr) <- names(out.fit$row.coefs.mean) <- names(out.fit$row.coefs.sd) <- rownames(y)
 	
 		if(row.eff == "random") {
-			out.fit$row.ranef.median <- c(median(combined.fit.mcmc[, grep("row.ranef.mean", colnames(combined.fit.mcmc))]), median(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))]))
-			out.fit$row.ranef.iqr <- c(IQR(combined.fit.mcmc[, grep("row.ranef.mean", colnames(combined.fit.mcmc))]), IQR(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))]))
-			out.fit$row.ranef.mean <- c(mean(combined.fit.mcmc[, grep("row.ranef.mean", colnames(combined.fit.mcmc))]), mean(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))]))
-			out.fit$row.ranef.sd <- c(sd(combined.fit.mcmc[, grep("row.ranef.mean", colnames(combined.fit.mcmc))]), sd(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))]))
+			out.fit$row.ranef.median <- median(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
+			out.fit$row.ranef.iqr <- IQR(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
+			out.fit$row.ranef.mean <- mean(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
+			out.fit$row.ranef.sd <- sd(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
             
-			names(out.fit$row.ranef.median) <- names(out.fit$row.ranef.iqr) <- names(out.fit$row.ranef.mean) <- names(out.fit$row.ranef.sd) <- c("Row random effects mean", "Row random effects variance") }
+			names(out.fit$row.ranef.median) <- names(out.fit$row.ranef.iqr) <- names(out.fit$row.ranef.mean) <- names(out.fit$row.ranef.sd) <- c("Row random effects variance") }
 		}
 
+		
 	if(X.eff) {
 		out.fit$X.coefs.median <- matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, median), nrow = p)
 		out.fit$X.coefs.iqr <- matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = p)
@@ -327,39 +362,80 @@ boral.default <- function (y, X = NULL, family, trial.size = 1, num.lv = 0, row.
 
 	return(out.fit) }
  	
+
+ 	
 ################	
-lvsplot <- function(x, jitter = FALSE, a = 1, newplot = TRUE, ...) {
+lvsplot <- function(x, jitter = FALSE, a = 1, newplot = TRUE, biplot = TRUE, ind.spp = NULL, ...) {
  	if(x$num.lv > 2) stop("Manual plotting required for plotting beyond 2 latent variables")
  	if(x$num.lv == 0) stop("No latent variables to plot.")
  
- 	n <- nrow(x$lv.med)
+ 	n <- nrow(x$lv.median); p <- nrow(x$lv.coefs.median)
+ 	if(!is.null(ind.spp)) { if(ind.spp > p) { ind.spp <- p } }
+	if(biplot == TRUE & !is.null(ind.spp)) { cat("Only the first", ind.spp, "`most important' latent variable coefficients included in biplot\n") }
+	if(biplot == TRUE & is.null(ind.spp)) { ind.spp <- p; cat("All latent variable coefficients included in biplot\n") }
+
  	if(newplot == TRUE)
  		par(cex = a, cex.axis = a, cex.lab = a+0.5, mar = c(5,5,3,1), mfrow = c(1,2), cex.main = a+0.5, ...) 
  	if(newplot == FALSE)
  		par(cex = a, cex.axis = a, cex.lab = a+0.5, mar = c(5,5,3,1), cex.main = a+0.5, ...) 
  
  	if(x$num.lv == 1) {
- 		plot(1:n, x$lv.med, xlab = "Row index", ylab = "Latent variable 1", main = "Plot of the latent variable posterior medians", cex = 1.2*a, type = "n", ...)
- 		text(x = 1:n, y = x$lv.med, label = 1:n, cex = 1.2*a)
+ 		plot(1:n, x$lv.median, xlab = "Row index", ylab = "Latent variable 1", main = "Plot of the latent variable posterior medians", cex = 1.2*a, type = "n", ...)
+ 		text(x = 1:n, y = x$lv.median, label = 1:n, cex = 1.2*a)
+
  		plot(1:n, x$lv.mean, xlab = "Row index", ylab = "Latent variable 1", main = "Plot of the latent variable posterior means", cex = 1.2*a, type = "n", ...)
  		text(x = 1:n, y = x$lv.mean, label = 1:n, cex = 1.2*a) 
  		}	
+
+
  	if(x$num.lv == 2) {
-		plot(x$lv.med, xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Plot of the latent variable posterior medians", cex = 1.2*a, type = "n", ...)
- 		if(!jitter) text(x$lv.med, label = 1:n, cex = 1.2*a)
- 		if(jitter) text(jitter(x$lv.med[,1]), jitter(x$lv.med[,2]), label = 1:n, cex = 1.2*a)
- 		plot(x$lv.mean, xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Plot of the latent variable posterior means", cex = 1.2*a, type = "n", ...)
- 		if(!jitter) text(x$lv.mean, label = 1:n, cex = 1.2*a)
- 		if(jitter) text(jitter(x$lv.mean[,1]), jitter(x$lv.mean[,2]), label = 1:n, cex = 1.2*a)
+		## Scale by L2norms
+		x$lv.median2 <- scale(x$lv.median,center=T,scale=F)#*matrix(sqrt(colSums(x$lv.coefs.median[,2:3]^2))/sqrt(colSums(x$lv.median^2)),n,2,byrow=T) 
+		x$lv.coefs.median2 <- scale(x$lv.coefs.median[,2:3]*matrix(sqrt(colSums(x$lv.median2^2))/sqrt(colSums(x$lv.coefs.median[,2:3]^2)),p,2,byrow=T),center=T,scale=F) 
+
+		if(!biplot) {
+			plot(x$lv.median, xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Plot of the latent variable posterior medians", cex = 1.2*a, type = "n", ...)
+			if(!jitter) text(x$lv.median, label = 1:n, cex = 1.2*a)
+			if(jitter) text(jitter(x$lv.median[,1]), jitter(x$lv.median[,2]), label = 1:n, cex = 1.2*a)
+			}
+
+		if(biplot) {
+			largest.lnorms <- order(rowSums(x$lv.coefs.median2^2),decreasing=T)[1:ind.spp]
+			plot(rbind(x$lv.median2,x$lv.coefs.median2), xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Biplot of the latent variable and loadings posterior medians", cex = a, type = "n")
+			if(!jitter) text(x$lv.median2, label = 1:n, cex = 1.2*a)
+			if(jitter) text(jitter(x$lv.median2[,1]), jitter(x$lv.median2[,2]), label = 1:n, cex = 1.2*a)
+			text(x$lv.coefs.median2[largest.lnorms,], label = rownames(x$lv.coefs.mean[largest.lnorms,]), col = "red", cex = 0.9*a)			
+			}
+
+
+		## Scale by L2norms
+		x$lv.mean2 <- scale(x$lv.mean,center=T,scale=F) #*matrix(sqrt(colSums(x$lv.coefs.mean[,2:3]^2))/sqrt(colSums(x$lv.mean^2)),n,2,byrow=T) 
+		x$lv.coefs.mean2 <- scale(x$lv.coefs.mean[,2:3]*matrix(sqrt(colSums(x$lv.mean2^2))/sqrt(colSums(x$lv.coefs.mean[,2:3]^2)),p,2,byrow=T),center=T,scale=F) 
+
+		if(!biplot) {
+			plot(x$lv.mean, xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Biplot of the latent variable posterior means", cex = 1.2*a, type = "n", ...)
+			if(!jitter) text(x$lv.mean, label = 1:n, cex = 1.2*a)
+			if(jitter) text(jitter(x$lv.mean[,1]), jitter(x$lv.mean[,2]), label = 1:n, cex = 1.2*a)
+			}
+
+		if(biplot) {
+			largest.lnorms <- order(rowSums(x$lv.coefs.mean2^2),decreasing=T)[1:ind.spp]
+			plot(rbind(x$lv.mean2,x$lv.coefs.mean2), xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Plot of the latent variable posterior means", cex = 1.2*a, type = "n")
+			if(!jitter) text(x$lv.mean2, label = 1:n, cex = 1.2*a)
+			if(jitter) text(jitter(x$lv.mean2[,1]), jitter(x$lv.mean2[,2]), label = 1:n, cex = 1.2*a)
+			text(x$lv.coefs.mean2[largest.lnorms,], label = rownames(x$lv.coefs.mean[largest.lnorms,]), col = "red", cex = 0.9*a)
+			}
  		}	
+
  	}
+
 
 print.boral <- function(x, ...) {
  	cat("Call:\n")
  	print(x$call)
  	cat("\n")
  	cat("Response matrix attributes\n \t# of rows:", x$n, "\n\t# of columns:", x$p, "\n") 
- 	cat("Model attributes\n \tColumn families:", x$family, "\n\t# of latent variables:", x$num.lv, "\n\tRow effect included (0=no/1=yes)?", as.numeric(x$row.eff), "\n") 
+ 	cat("Model attributes\n \tColumn families:", x$family, "\n\t# of latent variables:", x$num.lv, "\n\tRow effect included (none/fixed/random)?", x$row.eff, "\n") 
  	if(any(x$family == "binomial")) cat("Trial sizes used (columns with binomial families):", x$trial.size,"\n")
  	if(any(x$family == "ordinal")) cat("Number of levels for ordinal data:", x$num.ord.levels,"\n")
  	#cat("Hyperparameters (variance in normal priors of coefficients, maximum in uniform prior for dispersion):", x$hypparams, "\n") 

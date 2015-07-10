@@ -73,7 +73,7 @@ n <- nrow(y); p <- ncol(y);
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
      n.burnin = 10, n.iteration = 100, n.thin = 1,
-	row.eff = "random", save.model = TRUE, calc.ics = FALSE)
+	row.eff = "fixed", save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
 fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix, 
