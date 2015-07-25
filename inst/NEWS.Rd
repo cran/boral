@@ -2,46 +2,60 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 0.7 (2015-07-08)}{
+\section{CHANGES IN boral VERSION 0.8 (2015-07-28)}{
 This list below is written in terms of what is deemed to be most important to least important changes =D
   \itemize{
-	\item \code{lvsplot} now has a \code{biplot} argument, such if \code{biplot = T}, then both of the latent
-	variables AND their coefficients are presented on a single plot. Such biplots are common in multivariate analysis
-	in ecology, for instance, to visualize both patterns between sites and the indicator species associated 
-	with these sites. In addition, there is \code{ind.spp} argument in \code{lvsplot}, that allows the user to 
-	include only the \code{ind.spp} "most important" latent variable coefficients (as determined by the L2-norm).
-	This can be used to avoid overly messy plots and just focus on the "indicator" columns (species). 
-	Please note that a necessary scaling is performed in order to construct the biplot, which is somewhat 
-	experimental in that it make not always get it "right" =P
+	\item There was a MAJOR error for in the specification of the normal distribution when 
+	\code{ran.eff = "random"} is version 0.7. This has now been corrected!
 	
-	\item Tougher priors are now used on for the latent variable coefficients. In particular, the \code{hypparams} 
-  	argument in the \code{boral, make.jagsboralmodel} and \code{make.jagsboralnullmodel} functions is now set to
-  	\code{hypparams = c(100,20,100,100)}. This implies that a normal prior with mean zero and variance 20 
-  	instead of 100 is used for the latent variable coefficients \eqn{\bm{\theta}_j}. We have found that 
-  	a slightly more informative prior tends to stablize the MCMC sampling and produce more believable results
-  	for the ordinations and residual correlations.
+	\item The probit link function is now used with the \code{binomial} and \code{ordinal} families. 
+	Previously, the logit link function was applied. While the logit function is the default choice
+	in regression analysis, given it is the canonical link for the binomial family and its convenient interpretation
+	as log odds, things have been switched over to the probit link because: 1) it offers the advantage that 
+	it can be readily intepreted in terms of having a auxilary ("latent") variable having a standard 
+	normal distribution, with cutoffs dividing up the distribution into categories. For instance with Bernoulli
+	responses, if the auxilary variable is greater than zero than this corresponds to a presence, otherwise it
+	corresponds to an absence. Regression coefficients can thus be interpreted on this auxilary variable scale,
+	2) Related to point 1 is the fact that by regarding the probit link as having a standard normal auxilary 
+	variable, this can be exploit in MCMC sampling, and often tends to produce more stable sampling. 
 
-	\item As well as returning a residual correlation matrix, \code{get.residual.cor} also now returns the 
-	mean/median point estimator of the trace of residual covariance matrix. This number may be interpreted as 
-	the amount of covariation explained by the latent variables. Where this comes in handy is if you are comparing 
-	a pure LVM versus a model with latent variables and predictor variables. The proportional difference in 
-	the trace between these two models is *somewhat* analogous to the amount of covariation explained by the predictors. 
-  	
-  	\item If \code{row.eff = "random"}, row effects are now sampled from a normal distribution with MEAN ZERO. 
-  	In boral 0.6, it was sampled from a normal distribution with non-zero mean. This correction ensures that any
-  	differences in row total abundance are "transferred" over to the column-specific coefficients. It is also makes
-  	it consistent with the notion of a row effect being considered a random intercept. 
-  	
-  	\item Several users have noted that the negative binomial family tends to have issues sampling the overdispersion 
-  	parameter. While this is dataset specific, and it is hard to offer a universal solution to this, a warning to 
-  	now printed out explicity informing the user that such a problem has arisen (when it occurs of course), and that
-  	they should consider enforcing a stricter prior on the overdispersion parameter or switch to a Poisson family 
-  	for some of the responses.
+	\item The \code{negative binomial} family has been reparameterized such that the variance is now written 
+	as \eqn{Var(y) = \mu + \mu^2/\phi}, where \eqn{\phi} is now the "new" dispersion parameter. I recognize this
+	will annoy a lot of people (ecologists?) who are used to the \eqn{\phi\mu^2} way of thinking, and 
+	I do apologize for this. The main reason for the change is: 1) it is now in line with the \code{nbinom} family
+	in base \code{R} as well as in JAGS, which parameterizes things as \eqn{Var(y) = \mu + \mu^2/(size)}, 2) the 
+	sampling algorithm in JAGS seems to work more stably with this parameterization. 
+	
+	\item Species traits can now be included in \code{boral}. Details can be found in the help file, but in summary, 
+	both the column-specific intercepts \eqn{\beta_{0j}} and regression coefficients \eqn{\bm{\beta}_j} may be
+	regressed against species traits in a linear model type manner. This makes the intercepts and coefficients
+	random effects. Consequently, this option may be considered as a form of dimension reduction -- rather than 
+	separate species coefficients, these coefficients are now linearly related to the value of the species traits 
+	themselves. This also has links to the so-called fourth corner problem in multivariate ecology. 
+	
+	\item In the help file for \code{boral}, there is now a note about why only one MCMC chain is sampled. In brief,
+	this is due to the sign switching problem -- different chains can have latent variables and their
+	coefficients that are similar in magnitude but opposite in sign. Consequently, checking convergence and combining chains
+	to produce do inference etc...becomes inappropriate. I recognize this is a cop out, and that there are ways to
+	deal with this through post-processing, but these are complicated to implement =P
 
-  	\item Corrected issues for running JAGS when the tweedie family is used in combination with other families.
-  	This previously straight out failed in JAGS, and should now be rectified.
+	\item For reasons of computation and increased customizability, both the functions \code{make.jagsboralmodel} 
+	and \code{make.jagsboralnullmodel} now incoporate an argument for \code{trial.size}, which is specified 
+	in the same manner as in \code{boral}. The default value is \code{trial.size = 1}, as is the case with \code{boral}.
 
+	\item Due to its instability (often produces NA values), the compound Laplace-Metropolis ICs has been 
+	as a potential information criterion available from \code{get.measures}.
+	
+	\item Both the plot functions, \code{lvsplot} and \code{plot.boral}, now reset the \code{par} arguments 
+	after constructing the plots
+	
+	\item If all columns of \code{y} are assumed to be Bernoulli responses, i.e. \code{family = "binomial", trial.size = 1}, then, given the use of the probit link, the model is now parameterized directly in terms of auxilary variable having standard normal distributions, with success \eqn{y=1} corresponding to if this auxilary variable is greater than zero. This parameterization tends rectifies a previous issue regarding the scale of the latent variables not being identifiable when all the responses are Bernoulli. 
+
+	\item To ease computation slightly, dispersion parameters are now no longer sampled in JAGS when they 
+	don't need to be, i.e. if all columns of \code{y} are binomial, exponential, multinomial, ordinal, and so on 
 	}
+
+	
 }
 
 %

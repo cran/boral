@@ -14,7 +14,7 @@ get.enviro.cor(object, est = "median")
 }
 
 \details{
-In both independent column and correlated column models, where the each of the columns of the response matrix \code{y} are fitted to a set of explanatory variables given by \code{X}, the correlation between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}'_i\bm{\beta}_j} and \eqn{\bm{x}'_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are column-specific coefficients relating to the explanatory variables (see also the help file for \code{\link{boral}}).
+In both independent column and correlated column models, where the each of the columns of the response matrix \code{y} are fitted to a set of explanatory variables given by \code{X}, the correlation between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}^T_i\bm{\beta}_j} and \eqn{\bm{x}^T_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are column-specific coefficients relating to the explanatory variables (see also the help file for \code{\link{boral}}).
 
 For multivariate abundance data, the correlation calculated by this function can be interpreted as the correlation attributable to similarities in the environmental response between species. Such correlation matrices are discussed and found in Ovaskainen et al., (2010), Pollock et al., 2014.
 }
@@ -46,8 +46,8 @@ data(spider)
 y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
-spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 2, 
-     row.eff = FALSE, n.burnin = 10, n.iteration = 100, 
+spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", 
+	num.lv = 2, row.eff = FALSE, n.burnin = 10, n.iteration = 100, 
      n.thin = 1, save.model = TRUE, calc.ics = FALSE)
 
 enviro.cors <- get.enviro.cor(spider.fit.nb)

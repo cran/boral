@@ -1,7 +1,7 @@
 \name{calc.marglogLik}
 \alias{calc.marglogLik}
 \title{Marginal log-likelihood for an boral model}
-\description{Calculates the marginal log-likelihood for a set of parameter estimates from an boral model, whereby the latent variables (and random effects where applicable) are integrated out. The integration is performed using Monte Carlo integration.}
+\description{Calculates the marginal log-likelihood for a set of parameter estimates from an boral model, whereby the latent variables and random effects (if applicable) are integrated out. The integration is performed using Monte Carlo integration.}
 
 \usage{
 calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 
@@ -10,16 +10,18 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 }
 
 \arguments{
-  \item{y}{The response matrix that the boral model was fitted to.}
+\item{y}{The response matrix that the boral model was fitted to.}
 
-  \item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
+\item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
 
-\item{family}{Either a single element, or a vector of length equal to the number of columns in \eqn{y}. The former assumes all columns of \eqn{y} come from this distribution. The latter option allows for different distributions for each column of \eqn{y}. Elements can be one of "binomial" (with logit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" which performs cumulative logit regression. For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi \mu^2}, where \eqn{\phi} is the column-specific overdispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
+\item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
+
+For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \mu^2/\phi}, where \eqn{\phi} is the column-specific dispersion parameter (often referred to as size). For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
 
 All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
-  \item{trial.size}{ This argument is ignored for all columns not assumed to be binomially distributed. Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. Defaults to 1.}
+ \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
   \item{lv.coefs}{The column-specific intercept, coefficient estimates relating to the latent variables, and dispersion parameters from the boral model.}
 
@@ -27,41 +29,42 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
   \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and variance given by \code{row.params}. Defaults to "none". } 
 
-  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is variance for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
+  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is variance for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
   \item{num.lv}{The number of latent variables used in the boral model. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the marginal log-likelihood.}
 
   \item{X.mc}{A matrix used for performing the Monte Carlo integration. Defaults to \code{NULL}, in which case a matrix is generated within the function.}
 
-  \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \eqn{y} are ordinal responses. Defaults to \code{NULL}.}
+  \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \code{y} are ordinal responses. Defaults to \code{NULL}.}
 
-\item{powerparam}{Common power parameter from the boral model when any of the columns of \eqn{y} are tweedie responses. Defaults to \code{NULL}.}
+\item{powerparam}{Common power parameter from the boral model when any of the columns of \code{y} are tweedie responses. Defaults to \code{NULL}.}
 }
 
 \details{
-For an \eqn{n x p} response matrix \eqn{y}, suppose we fit an boral model with \eqn{q} latent variables. If we denote the latent variables by \eqn{b_i; i = 1,\ldots,n}, then the marginal log-likelihood is given by (with parameters where appropriate)
+For an \eqn{n x p} response matrix \code{y}, suppose we fit an boral model with one or more latent variables. If we denote the latent variables by \eqn{\bm{z}_i; i = 1,\ldots,n}, then the marginal log-likelihood is given by
 
-\deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p f(y_{ij} | \alpha_i, \tau_k, \beta_{0j}, \bm{\theta}_j, \bm{z}_i, \bm{x}_i, \bm{\beta}_j, \phi_j) f(\bm{z}_i) d\bm{z}_i), }
+\deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p f(y_{ij} | \bm{z}_i, \beta_{0j}, \bm{\theta}_j, \ldots) f(\bm{z}_i) d\bm{z}_i), }
 
-where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\alpha_i} is the row effect, \eqn{\tau_k} are the cutoffs for proportional odds regression, \eqn{\beta_{0j}} is the column-specific intercepts, \eqn{\bm{z}'_i} are the latent variables, \eqn{\bm{\theta}_j} are the column-specific coefficients relating to the latent variables, \eqn{\bm{x}'_i} is row \eqn{i} of the model matrix, \eqn{\bm{\beta}_j} are the column-specific coefficients relating to the model matrix of covariates, \eqn{\phi_j} are column-specific dispersion parameters.
-
-The quantity \eqn{f(\bm{z}_i)} denotes the distribution of the latent variable, which is assumed to be standard multivariate Gaussian for boral models.
+where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\beta_{0j}} are the column-specific intercepts, \eqn{\bm{\theta}_j} are the column-specific latent variable coefficients, and \eqn{\ldots} generically denotes anything else included in the model, e.g. row effects, dispersion parameters etc... The quantity \eqn{f(\bm{z}_i)} denotes the distribution of the latent variable, which is assumed to be standard multivariate Gaussian.
 
 If the row effects are assumed to be random (\code{row.eff = "random"}), then the log-likelihood is calculated by integrating over these as well,
 
-\deqn{\log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \alpha_i, \tau_k, \beta_{0j}, \bm{theta}_j, \bm{z}_i, \bm{x}_i, \bm{beta}_j, \phi_j)) f(\bm{z}_i) f(\alpha_i) d\bm{z}_i d\alpha_i ),} 
+\deqn{\log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \bm{z}_i, \beta_{0j}, \bm{\theta}_j, \alpha_i, \ldots)) f(\bm{z}_i) f(\alpha_i) d\bm{z}_i d\alpha_i ),
+} 
      
 where \eqn{f(\alpha_i)} is the random effects distribution with variance given by \code{row.params}.
 
 The key difference between this and the conditional likelihood (see \code{calc.condlogLik}) is that the marginal log-likelihood treats the latent variables as "random effects" and integrates over them, whereas the conditional log-likelihood treats the latent variables as "fixed effects". 
 
-Monte Carlo integration is used for calculating the marginal log-likelihood. If \code{X.mc = NULL}, the function automatically generates a matrix as \code{X.mc <- cbind(1, rmvnorm(2000, rep(0,num.lv)))}. If there is need to apply this function numerous times, we recommend a matrix be inserted into \code{X.mc} to speed up computation.
+Monte Carlo integration is used for calculating the marginal log-likelihood. If \code{X.mc = NULL}, the function automatically generates a matrix as \cr \code{X.mc <- cbind(1, rmvnorm(2000, rep(0,num.lv)))}. If there is need to apply this function numerous times, we recommend a matrix be inserted into \code{X.mc} to speed up computation.
+
+Note that if traits are included in the model, then the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are now random effects. However, currently the calculation of the marginal log-likelihood does NOT take this into account, i.e. does not marginalize over them!
 }
 
 \value{
 A list with the following components:
      \item{logLik}{Value of the marginal log-likelihood.}
-     \item{logLik.comp}{A vector of the log-likelihood values for each row of \eqn{y}, \cr such that \code{sum(logLik.comp) = logLik}.}
+     \item{logLik.comp}{A vector of the log-likelihood values for each row of \code{y}, \cr such that \code{sum(logLik.comp) = logLik}.}
 }
 
 \author{
@@ -69,7 +72,8 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \note{
-The AIC at posterior median, BIC at posterior median, and compound Laplace-Metropolis estimator at posterior median, as returned from \code{\link{get.measures}}, are all based on the marginal log-likelihood calculated from this function. Additionally, \code{\link{get.more.measures}} returns even more information criteria based on the marginal log-likelihood.}
+The AIC and BIC at posterior median returned from \code{\link{get.measures}} are all based on the marginal log-likelihood calculated from this function. Additionally, \code{\link{get.more.measures}} returns even more information criteria based on the marginal log-likelihood. As mentioned in the details though, these information criteria do not take into acocunt that traits are included in the model!
+}
 
 \seealso{
 \code{\link{get.measures}} and \code{\link{get.more.measures}} for information criteria based on the marginal log-likelihood; \code{\link{calc.condlogLik}} for calculation of the conditional log-likelihood; \code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables.
@@ -82,7 +86,7 @@ data(spider)
 y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
-## Example 1 - model with 2 latent variables, site effects, 
+## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
      row.eff = "fixed", save.model = TRUE, calc.ics = FALSE)

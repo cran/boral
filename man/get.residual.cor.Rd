@@ -19,7 +19,7 @@ In models with latent variables, the residual correlation matrix is calculated b
 
 For multivariate abundance data, the inclusion of latent variables provides a parsimonious method of accounting for correlation between species. Specifically, the linear predictor,
 
-\deqn{\beta_{0j} + \bm{x}'_i\bm{\beta}_j + \bm{z}'_i\bm{\theta}_j}
+\deqn{\beta_{0j} + \bm{x}^T_i\bm{\beta}_j + \bm{z}^T_i\bm{\theta}_j}
 
 is normally distributed with a residual covariance matrix given by \eqn{\bm{\Theta}\bm{\Theta}'}. A strong residual covariance/correlation matrix between two species can then be interpreted as evidence of species interaction (e.g., facilitation or competition), missing covariates, as well as any additional species correlation not accounted for by shared environmental responses (see also Pollock et al., 2014, for residual correlation matrices in the context of Joint Species Distribution Models).
 
@@ -58,12 +58,12 @@ data(spider)
 y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
-spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", num.lv = 2, 
-     row.eff = FALSE, n.burnin = 10, n.iteration = 100, 
-     n.thin = 1, save.model = TRUE, calc.ics = FALSE)
+spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", 
+	num.lv = 2, row.eff = FALSE, save.model = TRUE)
 
 res.cors <- get.residual.cor(spider.fit.nb)
 
-corrplot(res.cors$rescor, title = "Residual correlations", type = "lower", diag = FALSE)
+corrplot(res.cors$rescor, title = "Residual correlations", 
+	type = "lower", diag = FALSE)
 }
 }

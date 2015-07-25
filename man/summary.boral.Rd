@@ -21,7 +21,7 @@
 }
 
 \value{
-Attributes of the model fitted, parameter estimates, and values of the information criteria if \code{calc.ics = TRUE} in the boral object, and posterior probabilities of including individual and/or grouped coefficients in the model based on SSVS.
+Attributes of the model fitted, parameter estimates, and values of the information criteria if \code{calc.ics = TRUE} in the boral object, and posterior probabilities of including individual and/or grouped coefficients in the model based on SSVS if appropriate.
 }
 
 \author{

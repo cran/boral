@@ -30,7 +30,7 @@ Four types of plots are provided:
 }     
 
 \note{
-If all the columns of \eqn{y} were assumed to be ordinal, then this function is immediately stopped, as not residuals can be plotted in this case.
+If all the columns of \code{y} were assumed to be ordinal, then this function is immediately stopped, as not residuals can be plotted in this case.
 
 Due the inherent stochasticity, Dunn-Smyth residuals and consequently the plots will be slightly different time this function is run. Note also the fitted values and residuals are calculated from point estimates of the parameters, as opposed to a fully Bayesian approach (please see details in \code{\link{fitted.boral}} and \code{\link{ds.residuals}}). Consequently, it is recommended that this function is run several times to ensure that any trends observed in the plots are consistent throughout the runs.
 }
