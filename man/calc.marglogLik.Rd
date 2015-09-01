@@ -14,11 +14,11 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
 \item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
 
-\item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
+  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
-For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \mu^2/\phi}, where \eqn{\phi} is the column-specific dispersion parameter (often referred to as size). For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
+  For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi\mu^2}, where \eqn{\phi} is the column-specific dispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi^2}, where \eqn{\phi} is the column-specific standard deviation. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
 
-All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
+ All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
@@ -27,9 +27,9 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and variance given by \code{row.params}. Defaults to "none". } 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and standard deviation given by \code{row.params}. Defaults to "none". } 
 
-  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is variance for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
+  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is standard deviation for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
   \item{num.lv}{The number of latent variables used in the boral model. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the marginal log-likelihood.}
 
@@ -52,7 +52,7 @@ If the row effects are assumed to be random (\code{row.eff = "random"}), then th
 \deqn{\log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \bm{z}_i, \beta_{0j}, \bm{\theta}_j, \alpha_i, \ldots)) f(\bm{z}_i) f(\alpha_i) d\bm{z}_i d\alpha_i ),
 } 
      
-where \eqn{f(\alpha_i)} is the random effects distribution with variance given by \code{row.params}.
+where \eqn{f(\alpha_i)} is the random effects distribution with standard deviation given by \code{row.params}.
 
 The key difference between this and the conditional likelihood (see \code{calc.condlogLik}) is that the marginal log-likelihood treats the latent variables as "random effects" and integrates over them, whereas the conditional log-likelihood treats the latent variables as "fixed effects". 
 
@@ -92,8 +92,7 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
      row.eff = "fixed", save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
-fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix, 
-	start = 1, thin = spider.fit.nb$n.thin) 
+fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
@@ -103,18 +102,17 @@ site.coef.median <- apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
      
 ## Caculate the marginal log-likelihood at the posterior median
 calc.marglogLik(y, family = "negative.binomial",
-	lv.coefs = coef.mat, row.eff = "fixed", row.coefs = site.coef.median, 
-	num.lv = 2, X.mc = NULL)
+	lv.coefs = coef.mat, row.eff = "fixed", row.params = site.coef.median, 
+	num.lv = 2)
 
 	
 ## Example 2 - model with one latent variable, no site effects, 
 ## 	and environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
-     num.lv = 1, save.model = TRUE, calc.ics = FALSE)
+     num.lv = 2, save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
-fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix, 
-	start = 1, thin = spider.fit.nb2$n.thin) 
+fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
@@ -124,6 +122,6 @@ X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.params",colnames(fit.mcmc))],
 
 ## Caculate the log-likelihood at the posterior median
 calc.marglogLik(y, X = spider$x, family = "negative.binomial", 
-	lv.coefs = coef.mat, X.coefs = X.coef.mat, num.lv = 1)	
+	lv.coefs = coef.mat, X.coefs = X.coef.mat, num.lv = 2)	
 }
 }

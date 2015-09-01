@@ -17,11 +17,14 @@ export(boral,
 	plot.boral,
 	summary.boral)
 
+
 exportClasses(boral)
+
 
 S3method(summary, boral)
 S3method(plot, boral)
 S3method(fitted, boral)
+S3method(simulate, boral)
 S3method(boral, default)
 
 
@@ -38,7 +41,7 @@ importFrom(stats, dlnorm, plnorm, qlnorm, rlnorm)
 importFrom(stats, dpois, ppois, qpois, rpois)
 importFrom(stats, dunif, runif, punif, qunif)
 importFrom(stats, rWishart)
-importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor)
+importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor, simulate)
 importFrom(graphics,abline,axis,layout,legend,lines,matplot,par,points,plot,text)
 importFrom(grDevices,palette, rainbow)
 

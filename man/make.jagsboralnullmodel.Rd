@@ -5,14 +5,15 @@
 
 \usage{make.jagsboralnullmodel(family, num.X = 0, num.traits = 0, 
    which.traits = NULL, row.eff = "none", trial.size = 1, n, p, 
-   hypparams = c(100,20,100,100), ssvs.index = -1, model.name = NULL)}
+   hypparams = c(100,20,100,50), ssvs.index = -1, model.name = NULL)}
 
 \arguments{
-\item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
-For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \mu^2/\phi}, where \eqn{\phi} is the column-specific dispersion parameter (often referred to as size). For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi}, where \eqn{\phi} is the column-specific variance. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
+  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
-All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
+  For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi\mu^2}, where \eqn{\phi} is the column-specific dispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi^2}, where \eqn{\phi} is the column-specific standard deviation. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
+
+ All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
 \item{num.X}{Number of columns in the model matrix \code{X}. Defaults to 0, in which case it is assumed that no covariates are included in the model.}
@@ -23,7 +24,7 @@ All columns assumed to have ordinal responses are constrained to have the same c
 
 Defaults to \code{NULL}, in conjunction with \code{num.traits = 0}).} 
 
-\item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown variance. Defaults to "none". } 
+\item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown standard deviation. Defaults to "none". } 
 
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
@@ -31,7 +32,7 @@ Defaults to \code{NULL}, in conjunction with \code{num.traits = 0}).}
 
   \item{p}{The number of columns in the response matrix \code{y}.}
 
- \item{hypparams}{Vector of four hyperparameters used in the set up of prior distributions. The first element is the variance for the normal priors of all column-specific intercepts, row effects, and cutoff points for ordinal data. It also controls the the maximum of the uniform prior for the variance of the random effects normal distribution if \code{row.eff = "random"}. The second element is the variance for the normal priors of all latent variable coefficients (ignored if \code{num.lv = 0}). The third element is the variance for the normal priors of all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). The fourth element is the maximum of the uniform prior used for any dispersion parameters. Note the common power parameter in the tweedie distribution is assumed to have uniform prior from 1 to 2. Also, if all columns of \code{y} are assumed to be ordinal responses, a sum-to-zero constraint is imposed on \eqn{\beta_{0j}} for model identifiability.}
+ \item{hypparams}{Vector of four hyperparameters used in the set up of prior distributions. The first element is the variance for the normal priors of all column-specific intercepts, row effects, and cutoff points for ordinal data. It also controls the maximum of the uniform prior for the standard deviation of the random effects normal distribution, if \code{row.eff = "random"}. The second element is the variance for the normal priors of all latent variable coefficients (ignored if \code{num.lv = 0}). The third element is the variance for the normal priors of all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also controls the maximum of the uniform prior for the standard deviation of the normally distributed random effects (please see section on \emph{Including species traits} below). The fourth element controls the maximum of the uniform prior used for dispersion parameters, \eqn{\phi}. Note the common power parameter in the tweedie distribution is assumed to have uniform prior from 1 to 2. Note that if all columns of \code{y} are assumed to be ordinal responses, a sum-to-zero constraint is imposed on \eqn{\beta_{0j}} for model identifiability.}
 
  \item{ssvs.index}{Indices to be used for Stochastic Search Variable Selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer exceeding 1 (SSVS is performed on collectively all coefficients on this covariate/s.) Defaults to -1, in which case no model selection is performed on the fitted model at all. 
  
@@ -68,14 +69,14 @@ n <- nrow(y); p <- ncol(y);
 
 ## Create a boral "null" model JAGS script, where distributions alternative 
 ## between Poisson and negative distributions 
-##   across the rows of y...cool!
-make.jagsboralnullmodel(family = rep(c("poisson","negative.binomial"),n), 
+##   across the rows of y...why not?
+make.jagsboralnullmodel(family = rep(c("poisson","negative.binomial"),length=p), 
      num.X = ncol(spider$x), row.eff = "fixed", n = n, p = p)
 
      
 ## Create a boral "null" model JAGS script, where distributions are all negative 
 ## 	binomial distributions and covariates will be included!
-make.jagsboralnullmodel(family = rep("negative.binomial",length=n), 
+make.jagsboralnullmodel(family = rep("negative.binomial",length=p), 
      num.X = ncol(spider$x), n = n, p = p, model.name = "myawesomeordnullmodel.txt")
 
      

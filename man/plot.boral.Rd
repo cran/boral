@@ -22,7 +22,7 @@
 \details{
 Four types of plots are provided:
 \enumerate{
-     \item Plot of Dunn-Smyth residuals against the linear predictors. This can be useful to assess whether the mean variance assumption as been adequately satisfied, as well as to look for particular outliers.  
+     \item Plot of Dunn-Smyth residuals against the linear predictors. This can be useful to assess whether the assumed mean-variance relationship is adequately satisfied, as well as to look for particular outliers.  
      \item Plot of Dunn-Smyth residuals against the row index/row names.  
      \item Plot of Dunn-Smyth residuals against the column index/column names. Both this and the previous plot are useful for assessing how well each row/column of the response matrix is being modeled. 
      \item A normal quantile plot of the Dunn-Smyth residuals, which can be used to assess the normality assumption and overall goodness of fit.  
@@ -47,20 +47,18 @@ library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
-spider.fit.p <- boral(y, family = "poisson", num.lv = 2, row.eff = "fixed", 
-     n.burnin = 10, n.iteration = 100, n.thin = 1, 
-     save.model = FALSE, calc.ics = FALSE)
+spider.fit.p <- boral(y, family = "poisson", num.lv = 2, 
+	row.eff = "fixed")
 
-plot(spider.fit.p, which = 1:4) 
-## A distinct fan pattern is observed in the plot of Dunn-Smyth residuals 
+plot(spider.fit.p, ask = FALSE, mfrow = c(2,2)) 
+## A distinct fan pattern is observed in the plot of residuals 
 ## versus linear predictors plot. 
-## The normal quantile plot also suggests some lack of fit.
+
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", n.burnin = 10, n.iteration = 100, n.thin = 1, 
-     save.model = FALSE, calc.ics = FALSE)
+     row.eff = "fixed")
 
-plot(spider.fit.nb, which = 1:4) 
+plot(spider.fit.nb, ask = FALSE, mfrow = c(2,2)) 
 ## The fan shape is not as clear now, 
 ## and the normal quantile plot also suggests a better fit to the data 
 }

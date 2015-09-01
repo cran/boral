@@ -18,7 +18,7 @@ get.hpdintervals(y, X = NULL, traits = NULL, fit.mcmc, num.lv, prob = 0.95)
   
   \item{num.lv}{The number of latent variables used in the boral model. If zero, then HPD intervals will not be produced for latent variables.}   
 
-  \item{prob}{A numeric scalar in the interval (0,1) giving the target probability content of the intervals. Defaults to 0.95.}   
+  \item{prob}{A numeric scalar in the interval (0,1) giving the target probability coverage of the intervals. Defaults to 0.95.}   
 }
 
 \details{
@@ -29,9 +29,9 @@ The function uses the \code{HPDinterval} function from the \code{coda} package t
 \item{lv.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the column-specific intercepts, latent variable coefficients, and dispersion parameters if appropriate.}
 \item{lv.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the latent variables.}
 \item{row.coefs.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for row effects.}
-\item{row.sigma2.lower/upper}{Two scalars corresponding to the lower and upper bounds of the HPD interval for the variance of the normal distribution for the row effects, if they were assumed to be random.}
+\item{row.sigma.lower/upper}{Two scalars corresponding to the lower and upper bounds of the HPD interval for the standard deviation of the normal distribution for the row effects, if they were assumed to be random.}
 \item{X.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for coefficients relating to the model matrix \code{X}.}
-\item{traits.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for coefficients and variance relating to the traits matrix \code{traits}.}
+\item{traits.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for coefficients and standard deviation relating to the traits matrix \code{traits}.}
 \item{cutoffs.hpd.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for common cutoffs in proportional odds regression.}
 \item{powerparam.hpd.lower/upper}{Two scalars corresponding to the lower and upper bounds of the HPD interval for common power parameter in tweedie regression.}
 }
@@ -67,10 +67,10 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
 ## Returns a list with components corresponding to values described above.
 spider.fit.nb$hpdintervals 
 
-## Example 2 - model with one latent variable, site effects, 
+## Example 2 - model with two latent variable, site effects, 
 ## 	and environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
-	num.lv = 1, row.eff = "random", save.model = TRUE)
+	num.lv = 2, row.eff = "fixed", save.model = TRUE, hypparams = c(100,20,100,50))
 
 ## Returns a list with components corresponding to values described above.
 spider.fit.nb2$hpdintervals 

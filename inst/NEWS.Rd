@@ -2,57 +2,52 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 0.8 (2015-07-28)}{
+\section{CHANGES IN boral VERSION 0.9}{
 This list below is written in terms of what is deemed to be most important to least important changes =D
   \itemize{
-	\item There was a MAJOR error for in the specification of the normal distribution when 
-	\code{ran.eff = "random"} is version 0.7. This has now been corrected!
-	
-	\item The probit link function is now used with the \code{binomial} and \code{ordinal} families. 
-	Previously, the logit link function was applied. While the logit function is the default choice
-	in regression analysis, given it is the canonical link for the binomial family and its convenient interpretation
-	as log odds, things have been switched over to the probit link because: 1) it offers the advantage that 
-	it can be readily intepreted in terms of having a auxilary ("latent") variable having a standard 
-	normal distribution, with cutoffs dividing up the distribution into categories. For instance with Bernoulli
-	responses, if the auxilary variable is greater than zero than this corresponds to a presence, otherwise it
-	corresponds to an absence. Regression coefficients can thus be interpreted on this auxilary variable scale,
-	2) Related to point 1 is the fact that by regarding the probit link as having a standard normal auxilary 
-	variable, this can be exploit in MCMC sampling, and often tends to produce more stable sampling. 
+	\item After complaints from several users, a backflip has been and the \code{negative binomial} family is now 
+	back to been reparameterized so that the variance is written as \eqn{Var(y) = \mu + \phi*\mu^2}, where \eqn{\phi} is 
+	the overdispersion parameter. Please see the next point however.
 
-	\item The \code{negative binomial} family has been reparameterized such that the variance is now written 
-	as \eqn{Var(y) = \mu + \mu^2/\phi}, where \eqn{\phi} is now the "new" dispersion parameter. I recognize this
-	will annoy a lot of people (ecologists?) who are used to the \eqn{\phi\mu^2} way of thinking, and 
-	I do apologize for this. The main reason for the change is: 1) it is now in line with the \code{nbinom} family
-	in base \code{R} as well as in JAGS, which parameterizes things as \eqn{Var(y) = \mu + \mu^2/(size)}, 2) the 
-	sampling algorithm in JAGS seems to work more stably with this parameterization. 
+	\item All normal random effects distributions, e.g. for the row effects if \code{row.eff = "random"} and
+	if traits are included in the model (please see the Section on \code{Including species traits} in
+	the \code{boral} help file)), are now parameterized in terms of their standard deviation instead of their
+	variance. Importantly, the standard deviation is now assigned a uniform prior distribution. This modification
+	is on the back of Gelman (2006) and other papers since, which have recommended placing a uniform prior on the
+	standard deviations rather than variances. The output for parameter estimates from boral in now also in terms 
+	of standard deviation.
 	
-	\item Species traits can now be included in \code{boral}. Details can be found in the help file, but in summary, 
-	both the column-specific intercepts \eqn{\beta_{0j}} and regression coefficients \eqn{\bm{\beta}_j} may be
-	regressed against species traits in a linear model type manner. This makes the intercepts and coefficients
-	random effects. Consequently, this option may be considered as a form of dimension reduction -- rather than 
-	separate species coefficients, these coefficients are now linearly related to the value of the species traits 
-	themselves. This also has links to the so-called fourth corner problem in multivariate ecology. 
-	
-	\item In the help file for \code{boral}, there is now a note about why only one MCMC chain is sampled. In brief,
-	this is due to the sign switching problem -- different chains can have latent variables and their
-	coefficients that are similar in magnitude but opposite in sign. Consequently, checking convergence and combining chains
-	to produce do inference etc...becomes inappropriate. I recognize this is a cop out, and that there are ways to
-	deal with this through post-processing, but these are complicated to implement =P
+	\item On a similar note to the above, for any columns of \code{y} that are assigned a normal or lognormal distributions,
+	they are now parameterized in terms of their standard deviations, with a uniform prior \code{dunif(0,hypparams[4])} now
+	assigned to the standard deviation for normal responses and standard deviation on the log scale for lognormal responses.
+		
+	\item Both \code{get.enviro.cor} and \code{get.residual.cor} now return covariance (\code{cov}) and 
+	correlation (\code{cor}) matrices as part of a list output. In addition, both functions will also print 
+	out a \code{sig.cor} matrix containing only the "signficant" correlations, that is, correlations whose 
+	highest posterior density interval does not include zero. All non-significant correlations are set 
+	to zero in this matrix. The target coverage of the intervals is determined by a \code{prob} argument 
+	in both functions, similar to how the \code{get.hpdintervals} function works, with a default of 0.95 or 95\%.
 
-	\item For reasons of computation and increased customizability, both the functions \code{make.jagsboralmodel} 
-	and \code{make.jagsboralnullmodel} now incoporate an argument for \code{trial.size}, which is specified 
-	in the same manner as in \code{boral}. The default value is \code{trial.size = 1}, as is the case with \code{boral}.
-
-	\item Due to its instability (often produces NA values), the compound Laplace-Metropolis ICs has been 
-	as a potential information criterion available from \code{get.measures}.
+	\item In \code{lvsplot}, the \code{new.plot} argument has been removed and replaced with a \code{est} argument,
+	so that the plots are constructed based on either the posterior mean or median. This is analogous to 
+	other functions like \code{get.residual.cor} that also accept an \code{est} argument. Please note this implies
+	that only ONE ordination plot is now returned instead of two.
 	
-	\item Both the plot functions, \code{lvsplot} and \code{plot.boral}, now reset the \code{par} arguments 
-	after constructing the plots
-	
-	\item If all columns of \code{y} are assumed to be Bernoulli responses, i.e. \code{family = "binomial", trial.size = 1}, then, given the use of the probit link, the model is now parameterized directly in terms of auxilary variable having standard normal distributions, with success \eqn{y=1} corresponding to if this auxilary variable is greater than zero. This parameterization tends rectifies a previous issue regarding the scale of the latent variables not being identifiable when all the responses are Bernoulli. 
+	\item In \code{lvsplot}, there is now an \code{alpha} parameter that gives the user more ability to adjust and 
+	"tweak" the relative scaling of the latent variables and their coefficients, when constructing a biplot. 
+	The notion of an \code{alpha} is akin to the different type of scalings available for correspondence analysis, and 
+	the notion of symmetric and asymmetric plots. We generally prefer to have alpha around 0.5, the default 
+	value, which is designed to place the latent variables and their coefficients on the same scale...in principle. 
 
-	\item To ease computation slightly, dispersion parameters are now no longer sampled in JAGS when they 
-	don't need to be, i.e. if all columns of \code{y} are binomial, exponential, multinomial, ordinal, and so on 
+	\item In \code{lvsplot}, there is now a \code{main} argument to allow a custom title for the ordination plot. 
+	The default to \code{NULL}, in which case a "standard" title in used. 
+	
+	\item The default MCMC sampling settings in \code{boral} have been increased to 
+	\code{n.burnin = 10000, n.iteration = 40000, n.thin = 30}.
+	
+	\item The normal quantile plot in \code{plot.boral} now includes a 1-to-1 line for better assessment
+	of the normality of residuals
+			
 	}
 
 	

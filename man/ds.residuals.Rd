@@ -44,8 +44,7 @@ data(spider)
 y <- spider$abun
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", n.burnin = 10, n.iteration = 100, 
-     n.thin = 1, calc.ics = FALSE)
+     row.eff = "fixed")
 
 ds.residuals(spider.fit.nb) 
 }

@@ -6,38 +6,6 @@
 ## Multinomial regression is available, but CURRENTLY NOT ALLOWED DUE TO COMPUTATION TIME
 ## This should make sense if the same ordinal scale is applied to all species
 
-## Changes from v0.4
-## 1) site.eff => row.eff
-## 2) boral.default: n.burnin = 5000; n.iteration = 35000
-## 3) get.enviro.cor: Calculates correlation due to shared responses to model matrix X
-## 4) family = exponential, gamma, beta added -- beta won't work if y = 0/1. Ad-hoc fix is to add a little bit, but dodgy. gamma parameterized in terms of shape and rate, and dispersion parameter returns rate
-## 5) Stochastic search variable selection now implemented: -1 for no selection; 0 for selection of coefficients separately for a covariate; >= 1 for selection of coefficients collectively on one or more covariates. Prior variance of hyperparams[2]*((1-I)*0.0001+I), with prior probability of I being a Bernoulli prior with prob = 0.5
-## 6) hypparams extended to four elements: 1) variance for all intercepts, row effects, ordinal cutoff points, 2) variance for all LV coefs, 3) variance for all X coefs, 4) max limit for dispersion parameters. This applies to both boral models with and without latent variables
-## 7) get.hpdintervals includes prob argument
-## 8) get.more.measures can now be run inside get.measures. Help files continue to exist for both
-## 9) Syntax change to make.jagsboralmodel and make.jagsboralnullmodel to use num.X argument instead of X.eff; done to allow ssvs.index to be replicated
-
-## Changes from v0.5
-## 1) Default trial.size = 1 except for create.life
-## 2) do.fit argument now available to creat JAGS model file but not actually fit the model
-## 3) add n.thin, n.burnin, n.iteration to output from boral; 
-## 4) corrected some potential errors which may arise the examples in help files, due to problems with the as.mcmc() function in later versions of the R2jags/coda packages
-## 5) corrected estimation of the Compound Laplace-Metropolis estimator in get.measures
-## 6) get.residual.cor now calculates the residual correlation based on cov2cor(lvs%*%t(lv.coefs))
-## 7) Allows the option of custom naming the model file. 
-## 8) Rename theta0 to beta0; 
-## 9) redo get.enviro.cor and get.residual.cor to take boral fit directly rather than mcmc
-## 10) allow row.eff as random effect, with compatability of old row.eff = TRUE and FALSE
-## 11) reparameterize the NB using dgamma(1/phi, 1/phi)
-
-## Changes from v0.6
-## 1) correct issues for running JAGS when tweedie is used in combination with other responses, i.e., numfish other tweedie specific nodes goes bonkers when not all of family is tweedie
-## 2) Tougher priors on the LV coefficients with variance = 20
-## 3) Will try to explicitly capture the problem with negative-binomial when the prior on the overdispersion is too flat, and recommend that a tougher prior be used
-## 4) for row.eff = "random" now draws from a normal dist with mean zero.
-## 5) get.residual.cor now also returns the mean/median of the trace of the residual covariance matrix
-## 6) lvsplot now allows biplots, after some "judicious" controlling for scaling =D 
-
 ## Changes from v0.7
 ## 1) Corrected MAJOR error for normal distribution random row effect!!!
 ## 2) par resets for lvsplot and plot.boral
@@ -50,8 +18,19 @@
 ## 4) If data is entirelly Bernoulli, then a "bernoulli" family is used with the step parameterization and probit link, and the latent variables are constructed so that the variance of lambda%*%t(lambda) + psi = 1
 ## 10) Spp-specific coefficients and intercepts can now be regressed against traits, beta_0j and beta_jk ~ N(gamma_k*traits_j, sigma2_k). Create life also allows simulating responses from traits
 
+## Changes from v0.8
+## 1) qqplot in plot.boral now adds a 1:1 line for better diagnosis
+## 3) get.enviro.cor and ger.residual.cor now return covariance and correlation matrices
+## 4) get.residual.cor and ger.enviro.cor now also print out correlation matrices that contains only significant correlations (HPDintervals not containing zero). As a result, there is a prob argument now included in both, with a default of 0.95
+## 5) Default settings for n.burnin, n.iteration, and n.thin have been ramped up
+## 6) In lvsplot, the new.plot argument has been removed and replaced with a est argument to plot either posterior mean or median. Also, a main argument has been included to allow custom titles
+## 7) For lvsplot, include an alpha parameter that allows the user to tweak the scaling themselves. This is akin to the different type of scalings in CA. For biplots, we generally prefer adjust alpha until the LVs and coefs are the same scale. This is usually around the value of alpha = 0.5 to 0.55
+## 8) After some complaints from users not the swtich to size for the negative.binomial family, it has now been switched back to V = mu + phi*mu^2. However,...
+## 9) All random effects distributions are now parametrized in terms of their standard deviation, with a uniform prior now placed on the standard deviation sigma2 instead of on the variance. This is following advice by Gelman, 2006, Prior distributions for variance parameters in hierarchical models
+## 10) Similarly, all normal and lognormal responses are now parameterized in terms of standard deviation instead of variance.
 
-## TODO: 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem?; 2) Calculate proprtion of deviance explained based on marginal or conditional log-likelihood? 3) Allow options for weakly informative priors in terms t/Cauchy and half-t distributions; 4) draw coefficients as random effects, or reduce rank them? HARD!!!; 5) allow missing data?; 6) consider abandoning multiple families; 7) allow model selection on traits.coefs using SSVS, and extend hypparams so that the fixed effects case can be subsumed within the random effects case.
+
+## TODO: 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem?; 2) Calculate proprtion of deviance explained based on marginal or conditional log-likelihood? 3) Allow options for weakly informative priors in terms t/Cauchy and half-t distributions; 4) draw coefficients as random effects, or reduce rank them? HARD!!!; 5) allow missing data?; 7) allow model selection on traits.coefs using SSVS, and extend hypparams so that the fixed effects case can be subsumed within the random effects case;  8) create a simulate function that accesses create.life from a boral fit.
 ##############
 #   rm(list = ls())
 #   library(R2jags); 
@@ -62,14 +41,14 @@
 #   library(fishMod)
 #   source("auxilaryfunctions.R")
 
-# family = "negative.binomial"; num.lv = 2; row.eff = "none"; n.burnin = 5000; n.iteration = 35000; n.thin = 50; save.model = TRUE; calc.ics = TRUE; trial.size <- 1; seed <- 123; hypparams = c(100,100,20,100); ssvs.index <- -1; do.fit = TRUE; model.name = NULL
+# family = "negative.binomial"; num.lv = 2; row.eff = "none"; n.burnin = 10000; n.iteration = 40000; n.thin = 30; save.model = TRUE; calc.ics = TRUE; trial.size <- 1; seed <- 123; hypparams = c(50,50,20,50); ssvs.index <- -1; do.fit = TRUE; model.name = NULL
 
 #library(ade4)
 #data(dunedata)
 #y = dunedata$veg+1 ## Shift levels up to start at 1
 #X = model.matrix(~A1 + factor(use) - 1, data = dunedata$envir)
 #family = rep("ordinal",30)
-#num.lv = 2; row.eff = "none"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 7; calc.ics = TRUE; trial.size = NULL; num.ord.levels <- 5; hypparams = c(100,100,100,100); 
+#num.lv = 2; row.eff = "none"; n.burnin = 10000; n.iteration = 40000; n.thin = 30; save.model = TRUE; seed = 7; calc.ics = TRUE; trial.size = NULL; num.ord.levels <- 5; hypparams = c(50,20,50,50); 
 #X <- matrix(rnorm(30*4),30,4)
 #true.beta <- cbind(matrix(rnorm(length(family)*(ncol(X)+1)),length(family),ncol(X)+1),NA); 
 #true.beta[nrow(true.beta),1] <- -sum(true.beta[-nrow(true.beta),1])
@@ -82,7 +61,7 @@
 # y <- matrix(NA,n,p)
 # for(j in 1:ncol(y)) { y[,j] <- rTweedie(nrow(y), mu = mu[,j], phi = beta[j,4], p = true.power) }
 # family = "tweedie"
-# num.lv = 0; row.eff = "none"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = NULL; hypparams = c(100,100,100,100); 
+# num.lv = 0; row.eff = "none"; n.burnin = 10000; n.iteration = 40000; n.thin = 30; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = NULL; hypparams = c(50,20,50,50); 
 # 
 # library(FD)
 # data(tussock)
@@ -97,7 +76,7 @@
 # y <- y[-which(is.na(rowSums(y))),]
 # 
 # family = c("lnormal","normal","normal","lnormal","lnormal","lnormal","ordinal","binomial","binomial")
-# num.lv = 2; row.eff = "none"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 123; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); X <- NULL
+# num.lv = 2; row.eff = "none"; n.burnin = 10000; n.iteration = 40000; n.thin = 30; save.model = TRUE; seed = 123; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); X <- NULL
 
 # n = 30; s <- 30; num.multinom.levels <- 4
 # X <- matrix(rnorm(n*2),n,2)
@@ -107,13 +86,13 @@
 # row.coefs <- runif(n)
 # lv.coefs <- cbind(matrix(runif(s,-3,-1),s,1),2)
 # family = c(rep("multinom",s-1),"normal")
-# num.lv = 2; row.eff = "fixed"; n.burnin = 4000; n.iteration = 24000; n.thin = 4; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = 1; hypparams = c(100,100,100,100); 
+# num.lv = 2; row.eff = "fixed"; n.burnin = 10000; n.iteration = 40000; n.thin = 30; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = 1; hypparams = c(50,20,50,50); 
 # y <- create.life(lv.coefs = lv.coefs, X = X, X.coefs = X.coefs, X.multinom.coefs = X.multinom.coefs, family = family, row.coefs = row.coefs)
 
 boral <- function(y, ...) UseMethod("boral")
 
 ## Model is g(mu_{ij}) = row + beta0 + LV_i*theta_j + X_i*beta_j
-boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, family, trial.size = 1, num.lv = 0, row.eff = "none", n.burnin = 5000, n.iteration = 35000, n.thin = 5, save.model = FALSE, seed = 123, calc.ics = TRUE, hypparams = c(100, 20, 100, 100), ssvs.index = -1, do.fit = TRUE, model.name = NULL, ...) {
+boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, family, trial.size = 1, num.lv = 0, row.eff = "none", n.burnin = 10000, n.iteration = 40000, n.thin = 30, save.model = FALSE, seed = 123, calc.ics = TRUE, hypparams = c(100, 20, 100, 50), ssvs.index = -1, do.fit = TRUE, model.name = NULL, ...) {
 
 	if(is.null(dim(y))) { cat("Converting y into a one column matrix.\n"); y <- matrix(y, ncol = 1) }
 	if(!is.null(X) & is.null(dim(X))) { cat("Converting X into a one column matrix\n"); X <- matrix(X, ncol = 1) }
@@ -134,7 +113,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	if(any(family == "ordinal")) {
 		if(sum(y[, family == "ordinal"] == 0) > 0) stop("For ordinal data, please shift minimum level to 1.")
 		print("It is assumed all ordinal columns have the same number of levels -- please see help file as to the motivation behind this.")
-		print("boral may take a ridiculously long time to fit ordinal data models. Apolgoies in advance!\n") 
+		print("boral may take a ridiculously long time to fit ordinal data models. Apolgoies in advance!") 
 		if(!is.null(traits)) stop("Current version of boral does not allow traits for ordinal responses. Sorry!")
 		}
 	
@@ -185,7 +164,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	if(num.lv == 0)  make.jagsboralnullmodel(family, num.X, num.traits, which.traits, row.eff, complete.trial.size, n, p, hypparams, ssvs.index, model.name)
  	if(!do.fit) { 
 		cat("JAGS model file created only. Thank you, come again!\n")
-		break; }
+		return() }
 
 		
 	jags.data <- list("y", "n", "p", "num.lv", "num.X", "num.traits", "num.ord.levels", "num.multinom.levels")
@@ -197,10 +176,10 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	jags.params <- c("all.params")
 	if(num.lv > 0) jags.params <- c(jags.params, "lvs")
 	if(row.eff != "none") jags.params <- c(jags.params, "row.params")
-	if(row.eff == "random") jags.params <- c(jags.params, "row.ranef.sigma2")
+	if(row.eff == "random") jags.params <- c(jags.params, "row.ranef.sigma")
 	if(num.X > 0 & any(family != "multinom")) jags.params <- c(jags.params, "X.params")
 	#if(num.X > 0 & any(family == "multinom")) jags.params <- c(jags.params, "X.multinom.params")
-	if(num.traits > 0) jags.params <- c(jags.params, "traits.params", "sigma2.trait")
+	if(num.traits > 0) jags.params <- c(jags.params, "traits.params", "sigma.trait")
 	if(any(family == "tweedie")) jags.params <- c(jags.params, "powerparam")
 	if(any(family == "ordinal")) jags.params <- c(jags.params, "alpha")
 	if(any(ssvs.index == 0)) jags.params <- c(jags.params, paste("probindX", which(ssvs.index == 0), sep = ""))
@@ -274,8 +253,8 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 # 			make.rhatslist$row.coefs <- fit.rhats[grep("row.params", names(fit.rhats))]		
 # 			names(make.rhatslist$row.coefs) <- rownames(y) }
 # 		if(row.eff == "random") {
-# 			make.rhatslist$row.ranef <- fit.rhats[grep("row.ranef.sigma2", names(fit.rhats))]
-# 			names(make.rhatslist$row.ranef) <- c("Row random effects variance") }
+# 			make.rhatslist$row.ranef <- fit.rhats[grep("row.ranef.sigma", names(fit.rhats))]
+# 			names(make.rhatslist$row.ranef) <- c("Row random effects sigma") }
 # 		
 # 		if(num.X > 0) {
 # 			make.rhatslist$X.coefs <- matrix(fit.rhats[grep("X.params", names(fit.rhats))], nrow = p)
@@ -348,12 +327,12 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 		names(out.fit$row.coefs.median) <- names(out.fit$row.coefs.iqr) <- names(out.fit$row.coefs.mean) <- names(out.fit$row.coefs.sd) <- rownames(y)
 	
 		if(row.eff == "random") {
-			out.fit$row.sigma2.median <- median(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
-			out.fit$row.sigma2.iqr <- IQR(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
-			out.fit$row.sigma2.mean <- mean(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
-			out.fit$row.sigma2.sd <- sd(combined.fit.mcmc[, grep("row.ranef.sigma2", colnames(combined.fit.mcmc))])
+			out.fit$row.sigma.median <- median(combined.fit.mcmc[, grep("row.ranef.sigma", colnames(combined.fit.mcmc))])
+			out.fit$row.sigma.iqr <- IQR(combined.fit.mcmc[, grep("row.ranef.sigma", colnames(combined.fit.mcmc))])
+			out.fit$row.sigma.mean <- mean(combined.fit.mcmc[, grep("row.ranef.sigma", colnames(combined.fit.mcmc))])
+			out.fit$row.sigma.sd <- sd(combined.fit.mcmc[, grep("row.ranef.sigma", colnames(combined.fit.mcmc))])
             
-			names(out.fit$row.sigma2.median) <- names(out.fit$row.sigma2.iqr) <- names(out.fit$row.sigma2.mean) <- names(out.fit$row.sigma2.sd) <- c("Row random effects variance") }
+			names(out.fit$row.sigma.median) <- names(out.fit$row.sigma.iqr) <- names(out.fit$row.sigma.mean) <- names(out.fit$row.sigma.sd) <- c("Row random effects sigma") }
 		}
 
 		
@@ -384,13 +363,13 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 		
 		
 	if(num.traits > 0) {
-		out.fit$traits.coefs.median <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, median), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma2.trait", colnames(combined.fit.mcmc))], 2, median))
-		out.fit$traits.coefs.iqr <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma2.trait", colnames(combined.fit.mcmc))], 2, IQR))
-		out.fit$traits.coefs.mean <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, mean), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma2.trait", colnames(combined.fit.mcmc))], 2, mean))
-		out.fit$traits.coefs.sd <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, sd), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma2.trait", colnames(combined.fit.mcmc))], 2, sd))
+		out.fit$traits.coefs.median <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, median), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, median))
+		out.fit$traits.coefs.iqr <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, IQR))
+		out.fit$traits.coefs.mean <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, mean), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, mean))
+		out.fit$traits.coefs.sd <- cbind(matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, sd), nrow = num.X+1),apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, sd))
 
 		rownames(out.fit$traits.coefs.median) <- rownames(out.fit$traits.coefs.iqr) <- rownames(out.fit$traits.coefs.mean) <- rownames(out.fit$traits.coefs.sd) <- c("beta0",colnames(X))
-		colnames(out.fit$traits.coefs.median) <- colnames(out.fit$traits.coefs.iqr) <- colnames(out.fit$traits.coefs.mean) <- colnames(out.fit$traits.coefs.sd) <- c(colnames(traits),"sigma2")
+		colnames(out.fit$traits.coefs.median) <- colnames(out.fit$traits.coefs.iqr) <- colnames(out.fit$traits.coefs.mean) <- colnames(out.fit$traits.coefs.sd) <- c(colnames(traits),"sigma")
 		}
 
 #   	if(num.X > 0 & any(family == "multinom")) {
@@ -434,9 +413,10 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 
 	out.fit$call <- match.call()
 	out.fit$n <- n; out.fit$p <- p
-	if(!is.null(X)) out.fit$X <- X
-	if(is.null(X)) out.fit$X <- NULL
+	out.fit$X <- X
+	out.fit$traits <- traits
 	out.fit$y <- y
+
 	out.fit$family <- family; if(all(family == "bernoulli")) out.fit$family <- rep("binomial",p)
 	out.fit$num.lv <- num.lv
 	out.fit$num.X <- num.X; out.fit$num.traits <- num.traits
@@ -458,7 +438,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 
  	
 ################	
-lvsplot <- function(x, jitter = FALSE, a = 1, newplot = TRUE, biplot = TRUE, ind.spp = NULL, ...) {
+lvsplot <- function(x, jitter = FALSE, a = 1, biplot = TRUE, ind.spp = NULL, alpha = 0.5, main = NULL, est = "median", ...) {
  	if(x$num.lv > 2) stop("Manual plotting required for plotting beyond 2 latent variables")
  	if(x$num.lv == 0) stop("No latent variables to plot.")
  
@@ -467,60 +447,60 @@ lvsplot <- function(x, jitter = FALSE, a = 1, newplot = TRUE, biplot = TRUE, ind
 	if(biplot == TRUE & !is.null(ind.spp)) { cat("Only the first", ind.spp, "`most important' latent variable coefficients included in biplot\n") }
 	if(biplot == TRUE & is.null(ind.spp)) { ind.spp <- p; cat("All latent variable coefficients included in biplot\n") }
 
- 	if(newplot == TRUE)
- 		par(cex = a, cex.axis = a, cex.lab = a+0.5, mar = c(5,5,3,1), mfrow = c(1,2), las = 1, cex.main = a+0.5, ...) 
- 	if(newplot == FALSE)
- 		par(cex = a, cex.axis = a, cex.lab = a+0.5, mar = c(5,5,3,1), ask = 1, cex.main = a+0.5, ...) 
+ 	par(cex = a, cex.axis = a, cex.lab = a+0.5, mar = c(5,5,3,1), mfrow = c(1,1), las = 1, cex.main = a+0.5, ...) 
  
  	if(x$num.lv == 1) {
- 		plot(1:n, x$lv.median, xlab = "Row index", ylab = "Latent variable 1", main = "Plot of latent variable posterior medians", cex = 1.2*a, type = "n", ...)
- 		text(x = 1:n, y = x$lv.median, label = 1:n, cex = 1.2*a)
-
- 		plot(1:n, x$lv.mean, xlab = "Row index", ylab = "Latent variable 1", main = "Plot of latent variable posterior means", cex = 1.2*a, type = "n", ...)
- 		text(x = 1:n, y = x$lv.mean, label = 1:n, cex = 1.2*a) 
- 		}	
+		choose.x <- x$lv.median; 
+		main <- "Plot of latent variable posterior medians"
+		if(est == "mean") { choose.x <- x$lv.mean; main <- "Plot of latent variable posterior means" }
+		plot(1:n, choose.x, xlab = "Row index", ylab = "Latent variable 1", main = main, cex = 1.2*a, type = "n", ...)
+		text(x = 1:n, y = x$lv.median, label = 1:n, cex = 1.2*a)
+		}
 
 
  	if(x$num.lv == 2) {
-		## Scale by L2norms
-		x$lv.median2 <- scale(x$lv.median,center=TRUE,scale=FALSE)#*matrix(sqrt(colSums(x$lv.coefs.median[,2:3]^2))/sqrt(colSums(x$lv.median^2)),n,2,byrow=TRUE) 
-		x$lv.coefs.median2 <- scale(x$lv.coefs.median[,2:3]*matrix(sqrt(colSums(x$lv.median2^2))/sqrt(colSums(x$lv.coefs.median[,2:3]^2)),p,2,byrow=TRUE),center=TRUE,scale=FALSE) 
+# 		## Scale by L2norms
+# 		x$lv.median2 <- scale(x$lv.median,center=TRUE,scale=FALSE) #*matrix(1/sqrt(colSums(x$lv.median^2)),n,2,byrow=TRUE)
+# 		x$lv.coefs.median2 <- scale(x$lv.coefs.median[,2:3]*matrix(sqrt(colSums(x$lv.median2^2))/sqrt(colSums(x$lv.coefs.median[,2:3]^2)),p,2,byrow=TRUE),center=TRUE,scale=FALSE) 
+
+#  		get.lv.norms <- sqrt(colSums(x$lv.median^2))
+#  		get.lv.coefs.norms <- sqrt(colSums(x$lv.coefs.median[,2:3]^2))
+# 		D <- diag(x=get.lv.norms,2,2)*diag(x=get.lv.coefs.norms,2,2)
+#  		x$lv.median2 <- (x$lv.median*matrix(1/get.lv.norms,x$n,2,byrow=TRUE))%*%D^alpha
+#  		x$lv.coefs.median2 <- (x$lv.coefs.median[,2:3]*matrix(1/get.lv.coefs.norms,x$p,2,byrow=TRUE))%*%D^(1-alpha)
+ 		
+   		testcov <- x$lv.median%*%t(x$lv.coefs.median[,2:3])
+		if(est == "mean") { testcov <- x$lv.mean%*%t(x$lv.coefs.mean[,2:3]) }
+
+		do.svd <- svd(testcov,x$num.lv,x$num.lv)   		
+   		choose.lvs <- scale(do.svd$u*matrix(do.svd$d[1:x$num.lv]^alpha,nrow=x$n,ncol=2,byrow=T),center=T, scale = F)
+   		choose.lv.coefs <- scale(do.svd$v*matrix(do.svd$d[1:x$num.lv]^(1-alpha),nrow=x$p,ncol=2,byrow=T),center=T, scale = F)
+   		
+#  		## Scale by L2norms
+# 		x$lv.mean2 <- scale(x$lv.mean,center=TRUE,scale=FALSE) #*matrix(sqrt(colSums(x$lv.coefs.mean[,2:3]^2))/sqrt(colSums(x$lv.mean^2)),n,2,byrow=TRUE) 
+# 		x$lv.coefs.mean2 <- scale(x$lv.coefs.mean[,2:3]*matrix(sqrt(colSums(x$lv.mean2^2))/sqrt(colSums(x$lv.coefs.mean[,2:3]^2)),p,2,byrow=TRUE),center=FALSE,scale=FALSE) 
 
 		if(!biplot) {
-			plot(x$lv.median, xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Plot of latent variable posterior medians", cex = 1.2*a, type = "n", ...)
-			if(!jitter) text(x$lv.median, label = 1:n, cex = 1.2*a)
-			if(jitter) text(jitter(x$lv.median[,1]), jitter(x$lv.median[,2]), label = 1:n, cex = 1.2*a)
+			if(is.null(main) & est == "median") { main = "Plot of latent variable posterior medians" }
+			if(is.null(main) & est == "mean") { main = "Plot of latent variable posterior means" }
+			plot(choose.lvs, xlab = "Latent variable 1", ylab = "Latent variable 2", main = main, cex = 1.2*a, type = "n", ...)
+			if(!jitter) text(choose.lvs, label = 1:n, cex = 1.2*a)
+			if(jitter) text(jitter(choose.lvs[,1]), jitter(choose.lvs[,2]), label = 1:n, cex = 1.2*a)
 			}
 
 		if(biplot) {
-			largest.lnorms <- order(rowSums(x$lv.coefs.median2^2),decreasing=TRUE)[1:ind.spp]
-			plot(rbind(x$lv.median2,x$lv.coefs.median2), xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Biplot using posterior medians", cex = a, type = "n", xlim = 1.1*range(rbind(x$lv.median2,x$lv.coefs.median2)[,1]), ylim = 1.1*range(rbind(x$lv.median2,x$lv.coefs.median2)[,2]))
-			if(!jitter) text(x$lv.median2, label = 1:n, cex = 1.2*a)
-			if(jitter) text(jitter(x$lv.median2[,1]), jitter(x$lv.median2[,2]), label = 1:n, cex = 1.2*a)
-			text(x$lv.coefs.median2[largest.lnorms,], label = rownames(x$lv.coefs.mean[largest.lnorms,]), col = "red", cex = 0.9*a)			
-			}
-
-
-		## Scale by L2norms
-		x$lv.mean2 <- scale(x$lv.mean,center=TRUE,scale=FALSE) #*matrix(sqrt(colSums(x$lv.coefs.mean[,2:3]^2))/sqrt(colSums(x$lv.mean^2)),n,2,byrow=TRUE) 
-		x$lv.coefs.mean2 <- scale(x$lv.coefs.mean[,2:3]*matrix(sqrt(colSums(x$lv.mean2^2))/sqrt(colSums(x$lv.coefs.mean[,2:3]^2)),p,2,byrow=TRUE),center=TRUE,scale=FALSE) 
-
-		if(!biplot) {
-			plot(x$lv.mean, xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Plot of latent variable posterior means", cex = 1.2*a, type = "n", ...)
-			if(!jitter) text(x$lv.mean, label = 1:n, cex = 1.2*a)
-			if(jitter) text(jitter(x$lv.mean[,1]), jitter(x$lv.mean[,2]), label = 1:n, cex = 1.2*a)
-			}
-
-		if(biplot) {
-			largest.lnorms <- order(rowSums(x$lv.coefs.mean2^2),decreasing=TRUE)[1:ind.spp]
-			plot(rbind(x$lv.mean2,x$lv.coefs.mean2), xlab = "Latent variable 1", ylab = "Latent variable 2", main = "Biplot using posterior means", cex = 1.2*a, type = "n", xlim = 1.1*range(rbind(x$lv.mean2,x$lv.coefs.mean2)[,1]), ylim = 1.1*range(rbind(x$lv.mean2,x$lv.coefs.mean2)[,2]))
-			if(!jitter) text(x$lv.mean2, label = 1:n, cex = 1.2*a)
-			if(jitter) text(jitter(x$lv.mean2[,1]), jitter(x$lv.mean2[,2]), label = 1:n, cex = 1.2*a)
-			text(x$lv.coefs.mean2[largest.lnorms,], label = rownames(x$lv.coefs.mean[largest.lnorms,]), col = "red", cex = 0.9*a)
+			if(is.null(main) & est == "median") { main = "Biplot of latent variable posterior medians" }
+			if(is.null(main) & est == "mean") { main = "Biplot of latent variable posterior means" }
+			largest.lnorms <- order(rowSums(choose.lv.coefs^2),decreasing=TRUE)[1:ind.spp]	
+			
+			plot(rbind(choose.lvs,choose.lv.coefs), xlab = "Latent variable 1", ylab = "Latent variable 2", main = main, cex = a, type = "n", xlim = 1.1*range(rbind(choose.lvs,choose.lv.coefs)[,1]), ylim = 1.1*range(rbind(choose.lvs,choose.lv.coefs)[,2]))
+			if(!jitter) text(choose.lvs, label = 1:n, cex = 1.2*a)
+			if(jitter) text(jitter(choose.lvs[,1]), jitter(choose.lvs[,2]), label = 1:n, cex = 1.2*a)
+			text(choose.lv.coefs[largest.lnorms,], label = rownames(x$lv.coefs.mean[largest.lnorms,]), col = "red", cex = 0.9*a)	
 			}
  		}	
 
- 	par(mfrow = c(1,1), las = 0) 	
+ 	par(mfrow = c(1,1), las = 0, cex = 1, cex.axis = 1, cex.lab = 1, ask = FALSE, cex.main = 1.2, mar = c(5.1,4.1,4.1,2.1)) 	
  	}
 
 
@@ -532,7 +512,6 @@ print.boral <- function(x, ...) {
  	cat("Model attributes\n \tColumn families:", x$family, "\n\t# of latent variables:", x$num.lv, "\n\tRow effect included (none/fixed/random)?", x$row.eff, "\n") 
  	if(any(x$family == "binomial")) cat("Trial sizes used (columns with binomial families):", x$trial.size,"\n")
  	if(any(x$family == "ordinal")) cat("Number of levels for ordinal data:", x$num.ord.levels,"\n")
- 	#cat("Hyperparameters (variance in normal priors of coefficients, maximum in uniform prior for dispersion):", x$hypparams, "\n") 
  	if(x$num.X > 0) cat("Model matrix with", x$num.X, "covariates also fitted\n\n")
  	if(x$num.traits > 0) cat("Trait matrix with", x$num.traits, "traits also included\n\n")
  	if(any(x$ssvs.index > -1)) cat("SSVS performed on covariates with indices", x$ssvs.index, "\n\n")
@@ -614,16 +593,16 @@ plot.boral <- function(x, est = "median", jitter = FALSE, a = 1, ...) {
  	get.mus <- fitted.boral(x, est = est)$out
  	get.etas <- get.mus
  	get.ds.res <- ds.residuals(object = x, est = est)$residuals
- 	for(j in 1:ncol(x$y)) {
+	for(j in 1:ncol(x$y)) {
  		if(x$family[j] %in% c("binomial","beta")) get.etas[,j] <- log((get.mus[,j]+1e-5)/(1-get.mus[,j]+1e-5))
  		if(x$family[j] %in% c("poisson","lnormal","negative.binomial","tweedie","exponential")) get.etas[,j] <- log(get.mus[,j]+1e-5)
  		if(x$family[j] == "normal") get.etas[,j] <- (get.mus[,j]) }
  
-	par(ask = TRUE, cex = a, mar = c(5,5,1,1), cex.main = a, las = 1, ...) 
+	par(ask = TRUE, cex = a, mar = c(5,5,2,1), cex.lab = 0.8*a, cex.main = a, las = 1, ...) 
  	palette(rainbow(ncol(get.etas)))
  
  	matplot(get.etas, get.ds.res, ylab = "Dunn-Smyth Residuals", xlab = "Linear Predictors", type="n")
- 	for(i in 1:ncol(get.etas)) { points(get.etas[,i], get.ds.res[,i], col=palette()[i]) }
+ 	for(i in 1:ncol(get.etas)) { points(get.etas[,i], get.ds.res[,i], col=palette()[i], cex = a) }
  	abline(h=0, lty = 2, lwd = 2)
 	
 # 	matplot(get.mus, get.ds.res, ylab = "Dunn-Smyth Residuals", xlab = "Fitted Values", type="n")
@@ -632,18 +611,20 @@ plot.boral <- function(x, est = "median", jitter = FALSE, a = 1, ...) {
 
 	matplot(get.ds.res, ylab = "Dunn-Smyth Residuals", xlab = "Row index",type="n", xaxt = "n")
  	axis(side = 1, at = 1:nrow(x$y), labels = rownames(x$lv.mean), cex.axis = 1)
- 	for (i in 1:ncol(get.mus)) { points(seq(1,nrow(x$y)),get.ds.res[,i], col=palette()[i]) }
+ 	for (i in 1:ncol(get.mus)) { points(seq(1,nrow(x$y)),get.ds.res[,i], col=palette()[i], cex = a) }
  	abline(0,0,lty=2)
  
  	matplot(t(get.ds.res), ylab = "Dunn-Smyth Residuals", xlab = "Column index", type="n", xaxt = "n")
  	axis(side = 1, at = 1:ncol(x$y), labels = rownames(x$coefs.mean), cex.axis = 1)
- 	for(i in 1:ncol(get.mus)) { points(rep(i,nrow(get.etas)), get.ds.res[,i], col=palette()[i]) }
+ 	for(i in 1:ncol(get.mus)) { points(rep(i,nrow(get.etas)), get.ds.res[,i], col=palette()[i], cex = a) }
  	abline(h=0, lty = 2, lwd = 2)
  
 	get.ds.res2 <- as.vector(unlist(get.ds.res))
- 	qqnorm(get.ds.res2[is.finite(get.ds.res2)], main = "Normal Quantile Plot")
+ 	qqnorm(get.ds.res2[is.finite(get.ds.res2)], main = "Normal Quantile Plot", cex.main = a*0.9, cex = a)
+ 	#qqline(get.ds.res2[is.finite(get.ds.res2)], lwd = a)
+ 	abline(0,1, lwd = a)
  	
  	palette("default")
-	par(ask = F, las = 0)
+ 	par(mfrow = c(1,1), las = 0, cex = 1, cex.axis = 1, cex.lab = 1, ask = FALSE, cex.main = 1.2, mar = c(5.1,4.1,4.1,2.1)) 	
  	}
  	
