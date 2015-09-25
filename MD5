@@ -1,10 +1,10 @@
-c2b6f9b36b658837612c2203409330e7 *DESCRIPTION
+777ef61c18f8cde8e672003f2b549f03 *DESCRIPTION
 50381bb7c63fde95ca85394b47eab000 *NAMESPACE
-56dacd1f3c14dfa6ed74e5d013c01221 *R/auxilaryfunctions.R
-1c06f901d9b21fddd58b27e278882b45 *R/boral.jags.R
-a72563f57bc240e98d8ad3992d6c1f20 *inst/NEWS.Rd
-6e43da9c7d51b5ab6de9f3d228162eae *man/boral-package.Rd
-7a49eb2cc1cc10f144a7223718fd5b49 *man/boral.Rd
+ba41427a6f3b077b629cfa0acb78db8f *R/auxilaryfunctions.R
+fa1aa93a849a73647a4b872f35081dda *R/boral.jags.R
+1e85127cda1d9ec5daf42d2a725cb324 *inst/NEWS.Rd
+80f190defded149ef6c8294f6e754f3a *man/boral-package.Rd
+1d53f5c50e032eadf0b1695b3357ebf7 *man/boral.Rd
 fb312461d64faf9010bd5be71cc5b9f5 *man/calc.condlogLik.Rd
 54bf81bcc9bf9c6a4a692258d36e4ee1 *man/calc.logLik.lv0.Rd
 97f65f4efe74d7642caf71cd19ad13bf *man/calc.marglogLik.Rd
@@ -22,3 +22,6 @@ b3e1cd88a287511e55018c50bb82ec66 *man/make.jagsboralmodel.Rd
 91c30937a8d87c27d676036d9994c9a4 *man/make.jagsboralnullmodel.Rd
 e40e084f7adba6d9581d5c5bc10de753 *man/plot.boral.Rd
 8ea6d7103125c022d6db549e442b5471 *man/summary.boral.Rd
+e255e516edb66f4bba11f343403f4231 *tests/testthat.R
+d49d54cb89cf70c23de747288b6bc638 *tests/testthat/test1.R
+21d2bf6d51bf1107669976e77cacc0ff *tests/testthat/test2.R

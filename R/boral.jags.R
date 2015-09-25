@@ -30,7 +30,7 @@
 ## 10) Similarly, all normal and lognormal responses are now parameterized in terms of standard deviation instead of variance.
 
 
-## TODO: 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem?; 2) Calculate proprtion of deviance explained based on marginal or conditional log-likelihood? 3) Allow options for weakly informative priors in terms t/Cauchy and half-t distributions; 4) draw coefficients as random effects, or reduce rank them? HARD!!!; 5) allow missing data?; 7) allow model selection on traits.coefs using SSVS, and extend hypparams so that the fixed effects case can be subsumed within the random effects case;  8) create a simulate function that accesses create.life from a boral fit.
+## TODO: 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem?; 2) Calculate proprtion of deviance explained based on marginal or conditional log-likelihood? 3) Allow options for weakly informative priors in terms t/Cauchy and half-t distributions; 4) draw coefficients as random effects, or reduce rank them? HARD!!!; 5) allow missing data?; 7) allow model selection on traits.coefs using SSVS, with a possible extension of hypparams 
 ##############
 #   rm(list = ls())
 #   library(R2jags); 
@@ -94,17 +94,24 @@ boral <- function(y, ...) UseMethod("boral")
 ## Model is g(mu_{ij}) = row + beta0 + LV_i*theta_j + X_i*beta_j
 boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, family, trial.size = 1, num.lv = 0, row.eff = "none", n.burnin = 10000, n.iteration = 40000, n.thin = 30, save.model = FALSE, seed = 123, calc.ics = TRUE, hypparams = c(100, 20, 100, 50), ssvs.index = -1, do.fit = TRUE, model.name = NULL, ...) {
 
-	if(is.null(dim(y))) { cat("Converting y into a one column matrix.\n"); y <- matrix(y, ncol = 1) }
-	if(!is.null(X) & is.null(dim(X))) { cat("Converting X into a one column matrix\n"); X <- matrix(X, ncol = 1) }
-	if(!is.null(traits) & is.null(dim(traits))) { cat("Converting traits into a one column matrix\n"); traits <- matrix(traits, ncol = 1) }
-	if(length(hypparams) != 4) { stop("hypparams must be a vector of four elements. Please see boral help file as to what the elements correspond to.\n") }
- 	if(!is.null(which.traits)) { print("Current version of boral ignores does not support the ssvs.index argument when which.traits is supplied. Sorry!"); ssvs.index <- -1 }
+	if(is.null(dim(y))) { 
+		cat("Converting y into a one column matrix.\n"); y <- matrix(y, ncol = 1) }
+	if(!is.null(X) & is.null(dim(X))) { 
+		cat("Converting X into a one column matrix\n"); X <- matrix(X, ncol = 1) }
+	if(!is.null(traits) & is.null(dim(traits))) { 
+		cat("Converting traits into a one column matrix\n"); traits <- matrix(traits, ncol = 1) }
+	if(length(hypparams) != 4) { 
+		stop("hypparams must be a vector of four elements. Please see boral help file as to what the elements correspond to.\n") }
+ 	if(!is.null(which.traits)) { 
+		print("Current version of boral ignores does not support the ssvs.index argument when which.traits is supplied. Sorry!"); ssvs.index <- -1 }
 	if(!is.null(X)) { if(!is.matrix(X)) X <- as.matrix(X) }
+	if(!is.null(X)) { if(any(apply(X,2,function(x) all(x == 1)))) { 
+		stop("No intercept column should be included in X") } }
 	if(!is.null(traits)) { if(!is.matrix(traits)) traits <- as.matrix(traits) }
     
     
-	if(num.lv == 1) warnings("We won't stop you, but one latent variable is unlikely to be successful in capturing between column correlation!")
-	if(num.lv > 5) warnings("We won't stop you, but please consider if you really want more than five latent variables in the model!")
+	if(num.lv == 1) warning("We won't stop you, but one latent variable is unlikely to be successful in capturing between column correlation!")
+	if(num.lv > 5) warning("We won't stop you, but please consider if you really want more than five latent variables in the model!")
 	
 	
 	if(length(family) != ncol(y) & length(family) != 1) { stop("Number of elements in family must either one or the # of columns in y") }
@@ -125,16 +132,21 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	if(!is.null(X)) { num.X <- ncol(X) } else { num.X <- 0 }
 	if(!is.null(traits)) { num.traits <- ncol(traits) } else { num.traits <- 0 }
 	
-	if(num.X == 0 & num.traits > 0) stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please set num.X > 0.") 
- 	if(num.traits > 0 & is.null(which.traits)) stop("If num.traits > 0, then please supply which.traits to inform what traits are regressed against which covariates.") 
- 	if(!is.null(which.traits) & ((num.X+1) != length(which.traits))) stop("which.traits should have equal to 1+length(ncol(X))") 
+	if(num.X == 0 & num.traits > 0) 
+		stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please supply X.") 
+ 	if(num.traits > 0 & is.null(which.traits)) 
+		stop("If traits are supplied, then please also supply which.traits to inform what traits are regressed against which covariates.") 
+ 	if(!is.null(which.traits) & ((num.X+1) != length(which.traits))) 
+		stop("which.traits should have equal to 1+length(ncol(X))") 
  	if(!is.null(which.traits)) { if(any(sapply(which.traits,length) > num.traits)) stop("Each element in the list which.traits should have at most ncol(traits) elements.") }
  	#if(is.null(which.traits)) { which.traits <- vector("list",num.X+1); for(k in 1:length(num.X+1)) which.traits[[k]] <- 0 } 
 
 	
-	if(!(length(ssvs.index) %in% c(1, ncol(X)))) stop("Number of elements in ssvs.index must either be one or the # of columns in X.")
+	if(!(length(ssvs.index) %in% c(1, ncol(X)))) 
+		stop("Number of elements in ssvs.index must either be one or the # of columns in X.")
 	if(length(ssvs.index) == 1 & num.X > 0) ssvs.index <- rep(ssvs.index, ncol(X))
-	if(any(ssvs.index < -1)) stop("Elements of ssvs.index can only take values in -1, 0, or any positive integer; please see help file for guide.")
+	if(any(ssvs.index < -1)) 
+		stop("Elements of ssvs.index can only take values in -1, 0, or any positive integer; please see help file for guide.")
 	
 	
 	if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
@@ -150,18 +162,20 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	if(all(family != "ordinal")) { num.ord.levels <- 0; }
 	if(any(family == "ordinal")) { num.ord.levels <- max(y[, family == "ordinal"]); }
 	if(all(family != "multinom")) { num.multinom.levels <- 0; index.multinom.cols <- NULL }
-	if(any(family == "multinom")) { 
-		num.multinom.levels <- apply(y[, family == "multinom"], 2, max)
-		index.multinom.cols <- which(family == "multinom") 
-		}
+# 	if(any(family == "multinom")) { 
+# 		num.multinom.levels <- apply(y[, family == "multinom"], 2, max)
+# 		index.multinom.cols <- which(family == "multinom") 
+# 		}
 
 		
 	n <- nrow(y); p <- ncol(y)
  	#n.chains <- 1; ## Run one chain only to avoid arbitrary rotation problems
 
  	
- 	if(num.lv > 0) make.jagsboralmodel(family, num.X, num.traits, which.traits, row.eff, complete.trial.size, n, p, hypparams, ssvs.index, model.name)
-	if(num.lv == 0)  make.jagsboralnullmodel(family, num.X, num.traits, which.traits, row.eff, complete.trial.size, n, p, hypparams, ssvs.index, model.name)
+ 	if(num.lv > 0) 
+		make.jagsboralmodel(family, num.X, num.traits, which.traits, row.eff, complete.trial.size, n, p, hypparams, ssvs.index, model.name)
+	if(num.lv == 0)  
+		make.jagsboralnullmodel(family, num.X, num.traits, which.traits, row.eff, complete.trial.size, n, p, hypparams, ssvs.index, model.name)
  	if(!do.fit) { 
 		cat("JAGS model file created only. Thank you, come again!\n")
 		return() }
@@ -284,18 +298,19 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 #  		}
 
 		
-  	## For any multinomial columns, set the corresponding rows in X.coefs to zero
-	if(any(family == "multinom") & num.X > 0) {
-		for(k in index.multinom.cols) {
-			sel.multinom.col <- grep(paste("X.params\\[", k, ",+", sep = ""), colnames(combined.fit.mcmc))
-			combined.fit.mcmc[, sel.multinom.col] <- 0 }
-		}
+#   	## For any multinomial columns, set the corresponding rows in X.coefs to zero
+# 	if(any(family == "multinom") & num.X > 0) {
+# 		for(k in index.multinom.cols) {
+# 			sel.multinom.col <- grep(paste("X.params\\[", k, ",+", sep = ""), colnames(combined.fit.mcmc))
+# 			combined.fit.mcmc[, sel.multinom.col] <- 0 }
+# 		}
 
 		
  	## Make output beautiful
 	if(is.null(colnames(y))) colnames(y) <- 1:ncol(y); if(is.null(rownames(y))) rownames(y) <- 1:nrow(y)
 	if(num.X > 0) { if(is.null(colnames(X))) colnames(X) <- 1:ncol(X); if(is.null(rownames(X))) rownames(X) <- 1:nrow(X) }
-	if(num.traits > 0) { if(is.null(colnames(traits))) colnames(X) <- 1:ncol(traits); if(is.null(rownames(traits))) rownames(X) <- 1:nrow(traits) }
+	if(num.traits > 0) { 
+		if(is.null(colnames(traits))) colnames(X) <- 1:ncol(traits); if(is.null(rownames(traits))) rownames(X) <- 1:nrow(traits) }
 
 		
 	out.fit <- list(lv.coefs.median = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, median), nrow = p), lv.coefs.iqr = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = p), lv.coefs.mean = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, mean), nrow = p), lv.coefs.sd = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, sd), nrow = p))
@@ -439,13 +454,15 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
  	
 ################	
 lvsplot <- function(x, jitter = FALSE, a = 1, biplot = TRUE, ind.spp = NULL, alpha = 0.5, main = NULL, est = "median", ...) {
- 	if(x$num.lv > 2) stop("Manual plotting required for plotting beyond 2 latent variables")
+ 	if(x$num.lv > 2) stop("Manual plotting required for plotting beyond 2 latent variables.")
  	if(x$num.lv == 0) stop("No latent variables to plot.")
  
  	n <- nrow(x$lv.median); p <- nrow(x$lv.coefs.median)
  	if(!is.null(ind.spp)) { if(ind.spp > p) { ind.spp <- p } }
-	if(biplot == TRUE & !is.null(ind.spp)) { cat("Only the first", ind.spp, "`most important' latent variable coefficients included in biplot\n") }
-	if(biplot == TRUE & is.null(ind.spp)) { ind.spp <- p; cat("All latent variable coefficients included in biplot\n") }
+	if(biplot == TRUE & !is.null(ind.spp)) { 
+		cat("Only the first", ind.spp, "`most important' latent variable coefficients included in biplot\n") }
+	if(biplot == TRUE & is.null(ind.spp)) { 
+		ind.spp <- p; cat("All latent variable coefficients included in biplot\n") }
 
  	par(cex = a, cex.axis = a, cex.lab = a+0.5, mar = c(5,5,3,1), mfrow = c(1,1), las = 1, cex.main = a+0.5, ...) 
  
@@ -578,10 +595,10 @@ summary.boral <- function(object, est = "median", ...) {
  	gather.output$ssvs.index <- object$ssvs.index
  
  
-	if(any(object$ssvs.index == 0)) gather.output$ssvs.indcoefs.prob = round(object$ssvs.indcoefs.mean,3)
-	if(any(object$ssvs.index > 0)) gather.output$ssvs.gpcoefs.prob = round(object$ssvs.gpcoefs.mean,3) 
+	if(any(object$ssvs.index == 0)) gather.output$ssvs.indcoefs.prob <- round(object$ssvs.indcoefs.mean,3)
+	if(any(object$ssvs.index > 0)) gather.output$ssvs.gpcoefs.prob <- round(object$ssvs.gpcoefs.mean,3) 
 
-	if(object$calc.ics) gather.output$ics = object$ics
+	if(object$calc.ics) gather.output$ics <- object$ics
  	class(gather.output) <- "summary.boral"
  	gather.output 
  	}
@@ -589,7 +606,7 @@ summary.boral <- function(object, est = "median", ...) {
  			
 plot.boral <- function(x, est = "median", jitter = FALSE, a = 1, ...) {
  	if(all(x$family %in% c("ordinal","multinom"))) 
- 		stop("Residuals are not defined, and therefore residual analysis cannot be performed, if all columns of y are ordinal")
+ 		stop("Residuals are not defined, and therefore residual analysis cannot be performed, if all columns of y are ordinal.")
  	get.mus <- fitted.boral(x, est = est)$out
  	get.etas <- get.mus
  	get.ds.res <- ds.residuals(object = x, est = est)$residuals

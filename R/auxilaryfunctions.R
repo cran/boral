@@ -10,13 +10,17 @@
 #  cutoffs = cw.cutoffs
 #, X.multinom.coefs = NULL
 calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coefs = NULL, row.coefs = NULL, lv, cutoffs = NULL, powerparam = NULL) {
-	if(is.null(lv) | is.null(lv.coefs)) stop("lv and lv.coefs must be given. Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")
-	if(length(family) != ncol(y) & length(family) != 1) { stop("Number of elements in family is either 1 or equal to # of columns in y") }
+	if(is.null(lv) | is.null(lv.coefs)) 
+		stop("lv and lv.coefs must be given. Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")
+	if(length(family) != ncol(y) & length(family) != 1) { 
+		stop("Number of elements in family is either 1 or equal to # of columns in y") }
 	if(length(family) == 1) complete.family <- rep(family,ncol(y))
 	if(length(family) > 1) complete.family <- family
 
-	if(any(complete.family == "ordinal") & is.null(cutoffs)) stop("Ordinal data requires cutoffs to be supplied") 
-	if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) stop("Common power parameter for tweedie must be between 1 and 2.") 
+	if(any(complete.family == "ordinal") & is.null(cutoffs)) 
+		stop("Ordinal data requires cutoffs to be supplied") 
+	if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) 
+		stop("Common power parameter for tweedie must be between 1 and 2.") 
 	#if(any(complete.family == "multinom") & is.null(X.multinom.coefs)) stop("Multinomial data requires X.multinom.coefs to be supplied.") 
 
 	n <- nrow(y); p <- ncol(y); num.lv <- ncol(lv)
@@ -70,15 +74,18 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 ## lv.coefs still need to be provided though at it contains the spp effects, and species-specific dispersion parameters
 # median.marglogl <- calc.logLik.lv0(y, X, complete.family, trial.size, lv.coefs = lv.coefs.mat, X.coefs = cw.X.coefs, row.eff = row.eff, row.params = cw.row.coefs, cutoffs = cw.cutoffs, powerparam = cw.powerparam)
 calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.coefs = NULL, row.eff = "none", row.params = NULL, cutoffs = NULL, powerparam = NULL) {
-	if(is.null(lv.coefs)) stop("lv.coefs must be given, as it contains the column-specific intercepts.")
-	if(length(family) != ncol(y) & length(family) != 1) { stop("Number of elements in family is either 1 or equal to # of columns in y") }
+	if(is.null(lv.coefs)) 
+		stop("lv.coefs must be given, as it contains the column-specific intercepts.")
+	if(length(family) != ncol(y) & length(family) != 1) { 
+		stop("Number of elements in family is either 1 or equal to # of columns in y") }
 	if(length(family) == 1) complete.family <- rep(family, ncol(y))
 	if(length(family) > 1) complete.family <- family
     
 	n <- nrow(y); p <- ncol(y)
 	logl <- 0
 	logl.comp <- matrix(0, n, p)
-	if(any(complete.family == "ordinal") & is.null(cutoffs)) stop("Ordinal data requires cutoffs to be supplied")
+	if(any(complete.family == "ordinal") & is.null(cutoffs)) 
+		stop("Ordinal data requires cutoffs to be supplied")
 	if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) 
 		stop("Common power parameter for tweedie must be between 1 and 2.")
 	if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
@@ -191,7 +198,8 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 	n <- nrow(y); p <- ncol(y)
 	loglik <- 0
 	loglik.comp <- numeric(n)
-	if(length(family) != ncol(y) & length(family) != 1) { stop("Number of elements in family is either 1 or equal to # of columns in y") }
+	if(length(family) != ncol(y) & length(family) != 1) { 
+		stop("Number of elements in family is either 1 or equal to # of columns in y") }
 	if(length(family) == 1) complete.family <- rep(family, ncol(y))
 	if(length(family) > 1) complete.family <- family
 	if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
@@ -207,8 +215,10 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 	if(row.eff == "random") {
 		if(length(row.params) != 1) stop("If the row effects are random, then row.params should contain the standard deviation of this random effects normal distribution") }
 
-	if(any(complete.family == "ordinal") & is.null(cutoffs)) stop("Ordinal data requires cutoffs to be supplied")
-	if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) stop("Common power parameter for tweedie must be between 1 and 2.")
+	if(any(complete.family == "ordinal") & is.null(cutoffs)) 
+		stop("Ordinal data requires cutoffs to be supplied")
+	if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) 
+		stop("Common power parameter for tweedie must be between 1 and 2.")
 	#if(any(complete.family == "multinom") & is.null(X.multinom.coefs)) stop("Multinomial data requires X.multinom.coefs to be supplied.") 
 
 	if(is.null(X.mc)) { X.mc <- cbind(1, rmvnorm(2000, rep(0, num.lv))) }
@@ -285,13 +295,17 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 	n <- max(nrow(true.lv), nrow(X))
 	s <- max(nrow(lv.coefs), nrow(X.coefs), length(cutoffs))
 	if(is.null(dim(lv.coefs))) { lv.coefs <- as.matrix(lv.coefs) }
-	if((is.null(n) | is.null(s)) & is.null(manual.dim)) stop("Sorry, but boral cannot determine the number of rows and columns for the response matrix. Please supply manual.dim as vector containing n and p.")
+	if((is.null(n) | is.null(s)) & is.null(manual.dim)) 
+		stop("Sorry, but boral cannot determine the number of rows and columns for the response matrix. Please supply manual.dim as vector containing n and p.")
 	if((is.null(n) | is.null(s)) & !is.null(manual.dim)) { n <- manual.dim[1]; s <- manual.dim[2] }
 	
-	if((is.null(X) & !is.null(X.coefs)) | (!is.null(X) & is.null(X.coefs))) stop("If there are covariates to be included, then both X and X.coefs must be specified.")
+	if((is.null(X) & !is.null(X.coefs)) | (!is.null(X) & is.null(X.coefs))) 
+		stop("If there are covariates to be included, then both X and X.coefs must be specified.")
 
-	if((is.null(traits) & !is.null(traits.coefs)) | (!is.null(traits) & is.null(traits.coefs))) stop("If there are traits to be included, then both traits and traits.coefs must be specified.")
-	if(!is.null(traits.coefs)) print("Since trait.coefs has been supplied, then X.coefs will be ignored (X.coefs will instead be drawn as random effects based off trait.coefs)")
+	if((is.null(traits) & !is.null(traits.coefs)) | (!is.null(traits) & is.null(traits.coefs))) 
+		stop("If there are traits to be included, then both traits and traits.coefs must be specified.")
+	if(!is.null(traits.coefs)) 
+		warning("Since trait.coefs has been supplied, then X.coefs will be ignored (X.coefs will instead be drawn as random effects based off trait.coefs)")
 
 
 	if(length(family) != s & length(family) != 1)
@@ -303,12 +317,14 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 		stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of rows in lv.coefs/X.coefs/second number in manual dim. The latter will assume the specified trial size for all rows labelled binomial in the family argument.")
 	if(length(trial.size) == 1) trial.size <- rep(trial.size, s)
 		
-	if(any(family == "ordinal") & is.null(cutoffs)) stop("cutoffs (an ascending vector of intercepts for proportional odds regression) must be supplied if any columns are ordinal data.")
+	if(any(family == "ordinal") & is.null(cutoffs)) 
+		stop("cutoffs (an ascending vector of intercepts for proportional odds regression) must be supplied if any columns are ordinal data.")
 	if(!is.null(cutoffs)) {
 		num.ord.levels <- length(cutoffs) + 1
 		cutoffs <- sort(cutoffs)
 		print("Sorting cutoffs...just in case") }
-	if(any(family == "tweedie") & is.null(powerparam)) stop("Common powerparam must be supplied if any columns are tweedie data (Var = dispersion*mu^powerparam)")
+	if(any(family == "tweedie") & is.null(powerparam)) 
+		stop("Common powerparam must be supplied if any columns are tweedie data (Var = dispersion*mu^powerparam)")
 
 	
 	if(row.eff == FALSE) row.eff = "none"; 
@@ -447,6 +463,7 @@ fitted.boral <- function(object, est = "median",...) {
 	X <- object$X; y <- object$y
 	fitted.out <- matrix(NA,n,p)
 	rownames(fitted.out) <- rownames(y); colnames(fitted.out) <- colnames(y)
+
 	if(any(object$family == "ordinal")) { 
 		fitted.ordinal.probs <- array(NA,dim=c(n,p,object$num.ord.levels)) 
 		dimnames(fitted.ordinal.probs) <- list(r = rownames(y), c = colnames(y), levels = 1:object$num.ord.levels) } 
@@ -660,7 +677,7 @@ get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none",
 # 	marg.bic2 <- -2 * median.marglogl$logLik - marg.num.params * log(2 * pi) - log(det(cov(get.bic2.det) + 0.001))
 # 	rm(get.bic2.det)
 
-	out.list <- list(waic = waic.out, eaic = eaic, ebic = ebic,aic.median = marg.aic, bic.median = marg.bic, all.cond.logLik = all.cond.logl, cond.num.params = cond.num.params, marg.num.params = marg.num.params)
+	out.list <- list(waic = waic.out, eaic = eaic, ebic = ebic, aic.median = marg.aic, bic.median = marg.bic, all.cond.logLik = all.cond.logl, cond.num.params = cond.num.params, marg.num.params = marg.num.params)
 	
 	if(more.measures) {
 		cat("Calculating additional information criteria...")
@@ -674,7 +691,8 @@ get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none",
 ## Calculates marginal logl for all samples to produce a proper AIC and BIC
 ## Calculates WAIC based on the marginal likelihood; DIC based on the marginal likelihood
 get.more.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none", num.lv, fit.mcmc, verbose = TRUE) {
-	if (num.lv == 0) stop("For boral models with no latent variables, the marginal and conditional likelihoods are equivalent, and there is nothing to gain from using get.more.measures")
+	if (num.lv == 0) 
+		stop("For boral models with no latent variables, the marginal and conditional likelihoods are equivalent, and there is nothing to gain from using get.more.measures")
 	if(length(family) != ncol(y) & length(family) != 1) { stop("Number of elements in family is either 1 or equal to # of columns in y") }
 	if(length(family) == 1) complete.family <- rep(family, ncol(y))
 	if(length(family) > 1) complete.family <- family
@@ -695,6 +713,7 @@ get.more.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "n
 	for(t in 1:nrow(fit.mcmc)) {
 		if(verbose == TRUE & t%%100 == 0) cat("Onto mcmc sample", t, "\n")
 		lv.coefs.mat <- matrix(fit.mcmc[t, grep("all.params", colnames(fit.mcmc))], nrow = p)
+		
 		if(row.eff == "none") cw.row.coefs <- NULL
 		if(row.eff == "fixed") cw.row.coefs <- fit.mcmc[t, grep("row.params", colnames(fit.mcmc))]
 		if(row.eff == "random") { cw.row.coefs <- fit.mcmc[t, grep("row.ranef.sigma", colnames(fit.mcmc))] }
@@ -840,10 +859,14 @@ get.residual.cor <- function(object, est = "median", prob = 0.95) {
 make.jagsboralmodel <- function(family, num.X = 0, num.traits = 0, which.traits = NULL, row.eff = "none", trial.size = 1, n, p, hypparams = c(100, 20, 100, 50), ssvs.index = -1, model.name = NULL) {
 	if(row.eff == FALSE) row.eff = "none"; if(row.eff == TRUE) row.eff = "fixed"
 
- 	if(num.X == 0 & num.traits > 0) stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please set num.X > 0.") 
- 	if(num.traits > 0 & is.null(which.traits)) stop("If num.traits > 0, then please supply which.traits to inform what traits are regressed against which covariates.") 
- 	if(!is.null(which.traits) & ((num.X+1) != length(which.traits))) stop("which.traits should have equal to 1+num.X") 
- 	if(!is.null(which.traits) & any(sapply(which.traits,length) > num.traits)) stop("Each element in the list which.traits should have at most num.traits elements.") 
+ 	if(num.X == 0 & num.traits > 0) 
+		stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please set num.X > 0.") 
+ 	if(num.traits > 0 & is.null(which.traits)) 
+		stop("If num.traits > 0, then please supply which.traits to inform what traits are regressed against which covariates.") 
+ 	if(!is.null(which.traits) & ((num.X+1) != length(which.traits))) 
+		stop("which.traits should be a list with length 1+num.X.") 
+ 	if(!is.null(which.traits) & any(sapply(which.traits,length) > num.traits)) 
+		stop("Each element in the list which.traits should have at most num.traits elements.") 
  	if(is.null(which.traits)) { which.traits <- vector("list",num.X+1); for(k in 1:length(num.X+1)) which.traits[[k]] <- 0 } 
 
 	
@@ -1063,10 +1086,14 @@ make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.tr
 	if(row.eff == FALSE) row.eff = "none"; 
 	if(row.eff == TRUE) row.eff = "fixed"
 		
- 	if(num.X == 0 & num.traits > 0) stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please set num.X > 0.") 
- 	if(num.traits > 0 & is.null(which.traits)) stop("If num.traits > 0, then please supply which.traits to inform what traits are regressed against each covariate.") 
- 	if(!is.null(which.traits) & ((num.X+1) != length(which.traits))) stop("which.traits should have equal to 1+num.X") 
- 	if(!is.null(which.traits) & any(sapply(which.traits,length) > num.traits)) stop("Each element in the list which.traits should have at most num.traits elements.") 
+ 	if(num.X == 0 & num.traits > 0) 
+		stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please set num.X > 0.") 
+ 	if(num.traits > 0 & is.null(which.traits)) 
+		stop("If num.traits > 0, then please supply which.traits to inform what traits are regressed against each covariate.") 
+ 	if(!is.null(which.traits) & ((num.X+1) != length(which.traits))) 
+		stop("which.traits should be a list with length 1+num.X.") 
+ 	if(!is.null(which.traits) & any(sapply(which.traits,length) > num.traits)) 
+		stop("Each element in the list which.traits should have at most num.traits elements.") 
  	if(is.null(which.traits)) { which.traits <- vector("list",num.X+1); for(k in 1:length(num.X+1)) which.traits[[k]] <- 0 } 
 
  	

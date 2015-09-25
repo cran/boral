@@ -3,7 +3,7 @@
 \alias{boral.default}
 \alias{print.boral}
 \title{Fitting boral (Bayesian Ordination and Regression AnaLysis) models}
-\description{Bayesian ordination and regression models for analyzing multivariate data in ecology. Three "types" of models may be fitted: 1) With covariates and no latent variables, boral fits independent response GLMs; 2) With no covariates, boral fits a purely latent variable model; 3) With covariates and latent variables, boral fits correlated response GLMs.}
+\description{Bayesian ordination and regression models for analyzing multivariate data in ecology. Three "types" of models may be fitted: 1) With covariates and no latent variables, boral fits independent response GLMs; 2) With no covariates, boral fits a pure latent variable model; 3) With covariates and latent variables, boral fits correlated response GLMs.}
 
 \usage{
 boral(y, ...)
@@ -97,7 +97,7 @@ where \eqn{probit(\cdot)} is the probit function, \eqn{P(y_{ij} \le k)} is the c
 The parameterization above is useful for modeling ordinal in ecology. When ordinal responses are recorded, usually the same scale is applied to all species e.g., level 1 = not there, level 2 = a bit there, level 3 = lots there, level 4 = everywhere! The quantity \eqn{\tau_k} can thus be interpreted as this common scale, while \eqn{\beta_{0j}} allows for deviations away from these to account for differences in species prevalence. Admittedly, the current implementation of boral for ordinal data can be quite slow. 
 
 
-\bold{Purely latent variable models:} If no explantory variables are included and \code{num.lv} > 0, boral fits a purely latent variable model to perform model-based unconstrained ordination (Hui et al., 2014),
+\bold{Pure latent variable models:} If no explantory variables are included and \code{num.lv} > 0, boral fits a pure latent variable model to perform model-based unconstrained ordination (Hui et al., 2014),
 
 \deqn{g(\mu_{ij}) = \alpha_i + \beta_{0j} + \bm{z}^T_i\bm{\theta}_j,}
 
@@ -159,7 +159,7 @@ Finally, note using information criterion (and possibly residual analysis) shoul
 
 
 \section{Why is only one MCMC chain run?}{
-Much like the \code{MCMCfactanal} function in the \code{MCMCpack} package (Martin et al., 2011) for conducting factor analysis, which is a special case of the purely latent variable model with Gaussian responses, boral deliberately runs only one MCMC chain. This runs contrary to the recommendation of most Bayesian analyses, where the advice is to run multiple MCMC chains and check convergence using (most commonly) the Gelman-Rubin statistic or ``Rhat'' (Gelman et al., 2013). The main reason for this is that, in the context of MCMC sampling, the latent variable model is invariant to a switch of the sign, i.e. \eqn{\bm{z}^T_i\bm{\theta}_j = (-\bm{z})^T_i(-\bm{\theta}_j)}, and so is actually unidentifiable. This is similar to well-known problem of label switching that occurs during the course of MCMC sampling for mixture models (see for instance, Section 4.9, McLachlan and Peel, 2004), and is due to the fact that the sign of the latent variables (ordination coordinates) is inherently arbitrary.
+Much like the \code{MCMCfactanal} function in the \code{MCMCpack} package (Martin et al., 2011) for conducting factor analysis, which is a special case of the pure latent variable model with Gaussian responses, boral deliberately runs only one MCMC chain. This runs contrary to the recommendation of most Bayesian analyses, where the advice is to run multiple MCMC chains and check convergence using (most commonly) the Gelman-Rubin statistic or ``Rhat'' (Gelman et al., 2013). The main reason for this is that, in the context of MCMC sampling, the latent variable model is invariant to a switch of the sign, i.e. \eqn{\bm{z}^T_i\bm{\theta}_j = (-\bm{z})^T_i(-\bm{\theta}_j)}, and so is actually unidentifiable. This is similar to well-known problem of label switching that occurs during the course of MCMC sampling for mixture models (see for instance, Section 4.9, McLachlan and Peel, 2004), and is due to the fact that the sign of the latent variables (ordination coordinates) is inherently arbitrary.
 
 As a result of this sign-switching problem, it means that different MCMC chains can produce latent variables and corresponding coefficients values that, while having similar magnitudes, will be different in sign. Consequently, combining MCMC chains and checking Rhats, computing posterior means and medians etc...becomes inappropriate (in principle, one way to resolve this problem would be to post-process the MCMC chains and deal with sign switching, but this is really hard!). Therefore, to alleviate this issue together, boral chooses to only run one MCMC chain.
 

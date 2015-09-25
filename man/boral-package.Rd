@@ -2,7 +2,7 @@
 \alias{boral-package}
 \docType{package}
 \title{Bayesian Ordination and Regression AnaLysis (boral)}
-\description{boral is a package offering Bayesian model-based approaches for analyzing multivariate data in ecology. Estimation is performed using Bayesian/Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). Three ``types" of models may be fitted: 1) With covariates and no latent variables, boral fits independent response GLMs such that the columns of \code{y} are assumed to be independent; 2) With no covariates, boral fits a purely latent variable model (Skrondal and Rabe-Hesketh, 2004) to perform model-based unconstrained ordination (Hui et al., 2014); 3) With covariates and latent variables, boral fits correlated response GLMs, with latent variables accounting for any residual correlation between the columns of \code{y}.}
+\description{boral is a package offering Bayesian model-based approaches for analyzing multivariate data in ecology. Estimation is performed using Bayesian/Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). Three ``types" of models may be fitted: 1) With covariates and no latent variables, boral fits independent response GLMs such that the columns of \code{y} are assumed to be independent; 2) With no covariates, boral fits a pure latent variable model (Skrondal and Rabe-Hesketh, 2004) to perform model-based unconstrained ordination (Hui et al., 2014); 3) With covariates and latent variables, boral fits correlated response GLMs, with latent variables accounting for any residual correlation between the columns of \code{y}.}
 
 \details{
 \tabular{ll}{
