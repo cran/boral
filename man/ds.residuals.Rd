@@ -1,7 +1,7 @@
 \name{ds.residuals}
 \alias{ds.residuals}
 \title{Dunn-Smyth Residuals for a boral model}
-\description{Calculates the Dunn-Smyth residuals for a fitted boral model or, if some of the responses are ordinal, a table of agreement between predicted and true levels.}
+\description{Calculates the Dunn-Smyth residuals for a fitted boral model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
 
 \usage{ds.residuals(object, est = "median")}
 
@@ -14,18 +14,19 @@
 \details{
 Details regarding Dunn-Smyth residuals, based on the randomized quantile residuals of Dunn and Smyth (1996), can be found in \code{plot.manyglm} function in the \code{mvabund} package (Wang et al., 2012) where they are implemented in all their glory. Due their inherent stochasticity, Dunn-Smyth residuals will be slightly different each time this function is run. As with other types of residuals, Dunn-Smyth residuals can be used in the context of residual analysis. 
 
-For ordinal responses, a single table of agreement between the predicted levels (as based on the class with the highest probability) and true levels is returned. The table pools the results over all columns assumed to be ordinal.
+For ordinal responses, a single confusion matrix between the predicted levels (as based on the class with the highest probability) and true levels is aso returned. The table pools the results over all columns assumed to be ordinal.
 
 The Dunn-Smyth residuals are calculated based on a point estimate of the parameters, as determined by the argument \code{est}. A fully Bayesian approach would calculate the residuals by averaging over the posterior distribution of the parameters i.e., ergodically average over the MCMC samples. In general however, the results (as in the trends seen in residual analysis) from either approach should be very similar.
 }
 
 \value{
-A list with potentially \code{NULL} elements, containing \code{agree.ordinal} which is a single table of agreement for ordinal columns, and \code{residuals} which contains Dunn-Smyth residuals.
+A list containing \code{agree.ordinal} which is a single confusion matrix for ordinal columns, and \code{residuals} which contains Dunn-Smyth residuals.
 }
 
 \references{
 \itemize{
 \item Dunn, P. K., and Smyth, G. K. (1996). Randomized quantile residuals. Journal of Computational and Graphical Statistics, 5, 236-244.
+
 \item Wang, Y. et al. (2012). mvabund-an R package for model-based analysis of multivariate abundance data. Methods in Ecology and Evolution, 3, 471-474.
 }
 }

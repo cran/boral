@@ -22,8 +22,11 @@ DIC value for the jags model.
 \references{
 \itemize{
 \item Gelman et al. (2013). Bayesian data analysis. CRC press.
+
 \item Millar, R. B. (2009). Comparison of hierarchical Bayesian models for overdispersed count data using DIC and Bayes' factors. Biometrics, 65, 962-969.
+
 \item Ntzoufras, I. (2011). Bayesian modeling using WinBUGS (Vol. 698). John Wiley & Sons.
+
 \item Spiegelhalter, et al. (2002). Bayesian measures of model complexity and fit. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 64, 583-639.
 }
 }

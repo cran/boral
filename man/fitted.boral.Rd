@@ -20,7 +20,7 @@ This fitted values here are calculated based on a point estimate of the paramete
 }
 
 \value{
-A list with potential \code{NULL} elements in it, containing \code{ordinal.probs} which is an array with dimensions (no. of rows of \code{y}) x (no. of rows of \code{y}) x (no. of levels) containing the predicted probabilities for ordinal columns, and \code{out} which is a matrix of the same dimension as the original response matrix \code{y} containing the fitted values.
+A list containing \code{ordinal.probs} which is an array with dimensions (no. of rows of \code{y}) x (no. of rows of \code{y}) x (no. of levels) containing the predicted probabilities for ordinal columns, and \code{out} which is a matrix of the same dimension as the original response matrix \code{y} containing the fitted values. For ordinal columns, the "fitted values" are defined as the level/class that had the highest fitted probability. 
 }
 
 \author{

@@ -3,7 +3,7 @@
 \title{Plot the latent variables from an boral model} 
 \description{Construct a 1-D index plot or 2-D scatterplot of the latent variables, and their corresponding coefficients (i.e. a biplot), from a fitted boral model.}
 
-\usage{lvsplot(x, jitter = FALSE, a = 1, biplot = TRUE, ind.spp = NULL, 
+\usage{lvsplot(x, jitter = FALSE, biplot = TRUE, ind.spp = NULL, 
 	alpha = 0.5, main = NULL, est = "median",...) 
 	}
 	
@@ -12,9 +12,7 @@
   \item{x}{An object for class "boral".}
 
   \item{jitter}{If \code{jitter = TRUE}, then some jittering is applied so that points on the plots do not overlap exactly (which can often occur with discrete data, small sample sizes, and if some sites are identical in terms species co-occurence). Please see \code{\link{jitter}} for its implementation.}
-     
-  \item{a}{Default parameter used in cex. Graphical options are adjusted as \cr \code{par(cex = a, cex.axis = a, cex.lab = a+0.5, cex.main = a+0.5, ...)}. Defaults to 1.}
-        
+             
   \item{biplot}{If \code{biplot = TRUE}, then a biplot is construct such that both the latent variables \emph{and} their corresponding coefficients are plotted. Otherwise, only the latent variable scores are plotted. Defaults to \code{TRUE}.}
 
   \item{ind.spp}{Controls the number of latent variable coefficients to plot if \code{biplot = TRUE}. If \code{ind.spp} is an integer, then only the first \code{ind.spp} "most important" latent variable coefficients are included in the biplot, where "most important" means the latent variable coefficients with the largests L2-norms. Defaults to \code{NULL}, in which case all latent variable coefficients are included in the biplot.}
@@ -25,7 +23,7 @@
 
   \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}), which are then treated as estimates and the ordinations based off. Default is posterior median.}
 
-  \item{...}{Additional graphical options to be included in \code{par}.}
+   \item{...}{Additional graphical options to be included in. These include values for \cr \code{cex, cex.lab, cex.axis, cex.main, lwd}, and so on.}
 }
 
 \details{
@@ -42,19 +40,24 @@ As with correspondence analysis, the relative scaling of the latent variables an
 For latent variable models, we are generally interested in "symmetric plots" that place the latent variables and their coefficients on the same scale. In principle, this is achieved by setting \code{alpha = 0.5}, the default value, although sometimes this needs to be tweaked slighlty to a value between 0.45 and 0.55 (see also the \code{corresp} function in the \code{MASS} package that also produces symmetric plots, as well as Section 5.4, Borcard et al., 2011 for more details on scaling).
 }
 
-\author{
-Francis K.C. Hui \email{fhui28@gmail.com}
-}
-
 \references{
 \itemize{
 \item Borcard et al. (2011). Numerical Ecology with R. Springer.
+
 \item Gabriel, K. R. (1971). The biplot graphic display of matrices with application to principal component analysis. Biometrika, 58, 453-467.
+
 \item Hill, M. O. (1974). Correspondence analysis: a neglected multivariate method. Applied statistics, 23, 340-354.
+
 \item Kruskal, J. B. (1964). Nonmetric multidimensional scaling: a numerical method. Psychometrika, 29, 115-129.
+
 \item Legendre, P. and Legendre, L. (2012). Numerical ecology, Volume 20. Elsevier.
+
 \item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, in review.
 }
+}
+
+\author{
+Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \examples{
@@ -63,9 +66,15 @@ data(spider)
 y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
 
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+
+     
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     n.burnin = 10, n.iteration = 100, n.thin = 1,
-	row.eff = "fixed", calc.ics = FALSE)
+	row.eff = "fixed", calc.ics = FALSE,
+     mcmc.control = example.mcmc.control)
 
 lvsplot(spider.fit.nb) 
 }

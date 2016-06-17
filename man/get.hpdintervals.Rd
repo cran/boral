@@ -47,7 +47,9 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \section{Warnings}{
 \itemize{
 \item HPD intervals tend to be quite wide, and inference is somewhat tricky with them. This is made more difficult by the multiple comparison problem due to the construction one interval for each parameter!
+
 \item Be very careful with interpretation of coefficients and HPD intervals if different columns of \code{y} have different distributions!
+
 \item HPD intervals for the cutoffs in proportional odds regression may be poorly estimated for levels with few data.
 }
 }
@@ -70,7 +72,7 @@ spider.fit.nb$hpdintervals
 ## Example 2 - model with two latent variable, site effects, 
 ## 	and environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
-	num.lv = 2, row.eff = "fixed", save.model = TRUE, hypparams = c(100,20,100,50))
+	num.lv = 2, row.eff = "fixed", save.model = TRUE)
 
 ## Returns a list with components corresponding to values described above.
 spider.fit.nb2$hpdintervals 

@@ -3,6 +3,7 @@ export(boral,
 	calc.condlogLik,
 	calc.logLik.lv0,
 	calc.marglogLik,
+	coefsplot,
 	create.life,
 	ds.residuals,
 	fitted.boral, 
@@ -42,7 +43,7 @@ importFrom(stats, dpois, ppois, qpois, rpois)
 importFrom(stats, dunif, runif, punif, qunif)
 importFrom(stats, rWishart)
 importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor, simulate)
-importFrom(graphics,abline,axis,layout,legend,lines,matplot,par,points,plot,text)
+importFrom(graphics,abline,axis,layout,legend,lines,matplot,par,points,plot,text,mtext,segments)
 importFrom(grDevices,palette, rainbow)
 
 

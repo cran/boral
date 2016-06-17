@@ -5,7 +5,10 @@
 
 \usage{make.jagsboralnullmodel(family, num.X = 0, num.traits = 0, 
    which.traits = NULL, row.eff = "none", trial.size = 1, n, p, 
-   hypparams = c(100,20,100,50), ssvs.index = -1, model.name = NULL)}
+   model.name = NULL, 
+   prior.control = list(type = c("normal","normal","normal","uniform"), 
+	hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6))
+	}
 
 \arguments{
 
@@ -16,13 +19,15 @@
  All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
 }
 
-\item{num.X}{Number of columns in the model matrix \code{X}. Defaults to 0, in which case it is assumed that no covariates are included in the model.}
+\item{num.X}{Number of columns in the model matrix \code{X}. Defaults to 0, in which case it is assumed that no covariates are included in the model. Recall that no intercept should be included in \code{X}.}
 
-\item{num.traits}{Number of columns in the model matrix \code{traits}. Defaults to 0, in which case it is assumed no traits are included in model.}
+\item{num.traits}{Number of columns in the model matrix \code{traits}. Defaults to 0, in which case it is assumed no traits are included in model. Recall that no intercept should be included in \code{traits}.}
 
-\item{which.traits}{A list of length equal to (number of columns in \code{X} + 1), informing which columns of \code{traits} the column-specific intercepts and each of the column-specific regression coefficients should be regressed against. The first element in the list applies to the column-specific intercept, while the remaining elements apply to the regression coefficients. Each element of \code{which.traits} is a vector indicating which traits are to be used. For example, if \code{which.traits[[2]] = c(2,3)}, then the regression coefficients corresponding to the first column in \code{X} are regressed against the second and third columns of \code{traits}. If \cr \code{which.traits[[2]] = 0}, then the regression coefficients are treated as independent. 
-
-Defaults to \code{NULL}, in conjunction with \code{num.traits = 0}).} 
+  \item{which.traits}{A list of length equal to (number of columns in \code{X} + 1), informing which columns of \code{traits} the column-specific intercepts and each of the column-specific regression coefficients should be regressed against. The first element in the list applies to the column-specific intercept, while the remaining elements apply to the regression coefficients. Each element of \code{which.traits} is a vector indicating which traits are to be used. 
+  
+  For example, if \code{which.traits[[2]] = c(2,3)}, then the regression coefficients corresponding to the first column in \code{X} are regressed against the second and third columns of \code{traits}. If \code{which.traits[[2]] = 0}, then the regression coefficients for each column are treated as independent. Please see help file below for more details.
+  
+  Defaults to \code{NULL}, in conjunction with \code{traits = NULL}).}
 
 \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown standard deviation. Defaults to "none". } 
 
@@ -32,13 +37,29 @@ Defaults to \code{NULL}, in conjunction with \code{num.traits = 0}).}
 
   \item{p}{The number of columns in the response matrix \code{y}.}
 
- \item{hypparams}{Vector of four hyperparameters used in the set up of prior distributions. The first element is the variance for the normal priors of all column-specific intercepts, row effects, and cutoff points for ordinal data. It also controls the maximum of the uniform prior for the standard deviation of the random effects normal distribution, if \code{row.eff = "random"}. The second element is the variance for the normal priors of all latent variable coefficients (ignored if \code{num.lv = 0}). The third element is the variance for the normal priors of all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also controls the maximum of the uniform prior for the standard deviation of the normally distributed random effects (please see section on \emph{Including species traits} below). The fourth element controls the maximum of the uniform prior used for dispersion parameters, \eqn{\phi}. Note the common power parameter in the tweedie distribution is assumed to have uniform prior from 1 to 2. Note that if all columns of \code{y} are assumed to be ordinal responses, a sum-to-zero constraint is imposed on \eqn{\beta_{0j}} for model identifiability.}
-
- \item{ssvs.index}{Indices to be used for Stochastic Search Variable Selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer exceeding 1 (SSVS is performed on collectively all coefficients on this covariate/s.) Defaults to -1, in which case no model selection is performed on the fitted model at all. 
- 
- This argument is only read if \code{X.eff = TRUE}, and is necessary to establish the prior distributions used for any explanatory variables. Please see the \code{\link{boral}} help file for more information regarding the implementation of SSVS.}
-
  \item{model.name}{Name of the text file that the JAGS model is written to. Defaults to NULL, in which case the default of "jagsboralmodel.txt" is used.}
+
+ \item{prior.control}{A list of parameters for controlling the prior distributions. These include:
+	\itemize{
+		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients (ignored if \code{num.lv = 0}); 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see section \emph{Including species traits} in the help file for \code{\link{boral}} for more information); 4) priors for any dispersion parameters. 
+		
+		Note the common power parameter in the tweedie distribution is assumed to have uniform prior from 1 to 2. Also, if all columns of \code{y} are assumed to be ordinal responses, a sum-to-zero constraint is imposed on \eqn{\beta_{0j}} for model identifiability.
+		
+		For elements 1-3, the prior distributions currently available include: I) normal priors with the variance controlled by the \code{hypparams} argument, II) Cauchy priors with variance \code{(scale^2)} controlled by the \code{hypparams} argument. Gelman, et al. (2008) considers using Cauchy priors with \code{scale = 2.5} as weakly informative priors for regression coefficients. III) uniform priors with minimum values given by \code{-hypparams} and maximum values given by \code{+hypparams}. For element 4, the prior distributions currently available include: I) uniform prior with minimum zero and maximum controlled by \code{hypparams[4]}, II) half-Cauchy prior with variance \code{(scale^2)} controlled by the \code{hypparams[4]} argument. 
+		
+		Defaults to the vector \code{c("normal","normal","normal","uniform")}. 
+
+		\item \emph{hypparams:} Vector of four hyperparameters used in the set up of prior distributions. In order, these are: 1) affects the prior distribution for all column-specific intercepts, row effects, and cutoff points for ordinal data. If \code{row.eff = "random"}, this also controls the maximum of the uniform prior for the standard deviation of the random effects normal distribution; 2) affects the prior distribution for all latent variable coefficients (ignored if \code{num.lv = 0}); 3) affects the prior distribution for column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also affects the prior distribution for the trait regression coefficients, and controls the maximum of the uniform prior for the standard deviation of the normally distributed random effects; 4) affects the prior distribution used for any dispersion parameters. 
+		
+		Defaults to the vector \code{c(100, 20, 100, 50)}. 
+		
+		\item \emph{ssvs.index:} Indices to be used for stochastic search variable selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer exceeding 1 (SSVS is performed on collectively all coefficients on this covariate/s.) 
+		
+		This argument is only read if \code{X.eff = TRUE}. Please see the \code{\link{boral}} help file for more information regarding the implementation of SSVS.	Defaults to -1, in which case no model selection is performed on the fitted model at all. 
+
+		\item \emph{ssvs.g:} Multiplicative, shrinkage factor for SSVS, which controls the strength of the "spike" in the SSVS mixture prior. In summary, if the coefficient is included in the model, the "slab" prior is a normal distribution with mean zero and variance given by \code{hypparams}, while if the coefficient is not included in the model, the "spike" prior is normal distribution with mean zero and variance given by \code{hypparams*ssvs.g}. Please see the \code{\link{boral}} help file for more information regarding the implementation of SSVS. Defaults to 1e-6.  		
+		}
+	}
 
  }
 
@@ -53,6 +74,12 @@ When running the main function \code{\link{boral}}, setting \code{save.model = T
 \value{
 A text file is created, containing the JAGS model to be called by the boral function for entering into jags. This file is automatically deleted once boral has finished running unless \code{save.model = TRUE}.}
 
+\references{
+\itemize{
+\item Gelman, et al. (2008). A weakly informative default prior distribution for logistic and other regression models. The Annals of Applied Statistics, 2, 1360-1383.
+}
+}
+
 \author{
 Francis K.C. Hui \email{fhui28@gmail.com}
 }
@@ -61,7 +88,6 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \code{\link{make.jagsboralmodel}} for writing boral model JAGS scripts with one or more latent variables.}
 
 \examples{
-\dontrun{
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -69,14 +95,14 @@ n <- nrow(y); p <- ncol(y);
 
 ## Create a boral "null" model JAGS script, where distributions alternative 
 ## between Poisson and negative distributions 
-##   across the rows of y...why not?
+##   across the rows of y.
 make.jagsboralnullmodel(family = rep(c("poisson","negative.binomial"),length=p), 
      num.X = ncol(spider$x), row.eff = "fixed", n = n, p = p)
 
      
 ## Create a boral "null" model JAGS script, where distributions are all negative 
 ## 	binomial distributions and covariates will be included!
-make.jagsboralnullmodel(family = rep("negative.binomial",length=p), 
+make.jagsboralnullmodel(family = "negative.binomial", 
      num.X = ncol(spider$x), n = n, p = p, model.name = "myawesomeordnullmodel.txt")
 
      
@@ -88,13 +114,13 @@ data(antTraits)
 y <- antTraits$abun
 X <- as.matrix(antTraits$env)
 ## Include only traits 1, 2, and 5, plus an intercept
-traits <- as.matrix(cbind(1,antTraits$traits[,c(1,2,5)]))
+traits <- as.matrix(antTraits$traits[,c(1,2,5)])
 ## Please see help file for boral regarding the use of which.traits
 which.traits <- vector("list",ncol(X)+1)
 for(i in 1:length(which.traits)) which.traits[[i]] <- 1:ncol(traits)
 
+\dontrun{
 fit.traits <- boral(y, X = X, traits = traits, which.traits = which.traits, 
-	family = "negative.binomial", num.lv = 0, do.fit = FALSE, 
-	model.name = "anttraits.txt")     
+	family = "negative.binomial", num.lv = 0, model.name = "anttraits.txt")     
 }
 }

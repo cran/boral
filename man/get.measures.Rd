@@ -67,8 +67,11 @@ Also, the use of information criterion in the presence of variable selection usi
 \references{
 \itemize{
 \item Carlin, B. P., and Louis, T. A. (2011). Bayesian methods for data analysis. CRC Press.
+
 \item Gelman et al. (2013). Understanding predictive information criteria for Bayesian models. Statistics and Computing, 1-20.
+
 \item Millar, R. B. (2009). Comparison of hierarchical Bayesian models for overdispersed count data using DIC and Bayes' factors. Biometrics, 65, 962-969.
+
 \item Watanabe, S. (2010). Asymptotic equivalence of Bayes cross validation and widely applicable information criterion in singular learning theory. The Journal of Machine Learning Research, 11, 3571-3594.
 }
 }
