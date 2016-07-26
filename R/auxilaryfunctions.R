@@ -791,7 +791,7 @@ get.more.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "n
 get.enviro.cor <- function(object, est = "median", prob = 0.95) {
 	fit.mcmc <- object$jags.model$BUGSoutput
 	if(is.null(fit.mcmc)) stop("MCMC samples not found")
-	fit.mcmc <- mcmc(object$jags.model$BUGSoutput$sims.matrix, start = 1, thin = object$n.thin)
+	fit.mcmc <- mcmc(object$jags.model$BUGSoutput$sims.matrix, start = 1, thin = object$mcmc.control$n.thin)
 	y <- object$y; X <- object$X
 	
 	if(length(grep("X.params", colnames(fit.mcmc))) == 0) stop("Cannot find MCMC sample corresponding to coefficients for X.")
@@ -835,7 +835,7 @@ get.enviro.cor <- function(object, est = "median", prob = 0.95) {
 get.residual.cor <- function(object, est = "median", prob = 0.95) {
 	fit.mcmc <- object$jags.model$BUGSoutput
 	if(is.null(fit.mcmc)) stop("MCMC samples not found")
-	fit.mcmc <- mcmc(object$jags.model$BUGSoutput$sims.matrix, start = 1, thin = object$n.thin)
+	fit.mcmc <- mcmc(object$jags.model$BUGSoutput$sims.matrix, start = 1, thin = object$mcmc.control$n.thin)
 	y <- object$y; X <- object$X
 	num.lv <- object$num.lv
 

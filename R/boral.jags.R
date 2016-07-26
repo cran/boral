@@ -29,6 +29,8 @@
 ## 9) A coefsplot function has been created which makes caterpillar plots of the separate spp coefficients corresponding to X.
 ## 10) Calculate Dunn-Symth residuals for ordinal data, which in turn are used in residual analysis
 
+## Changes from v1.0
+## Fixed bug in get.residual.cor and get.enviro.cor
 
 ## TODO: 
 ## 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem?; 
@@ -38,8 +40,9 @@
 ## 5) add a row id to allow a random effect based on that!
 ## 6) Allows traits for ordinal regression
 ## 7) allow for multiple chains, but don't check convergence on the LVs and their loadings (the code is close to be complete there); 
+## 8) Change message for NB for that it identifies species with problem
 ## 9) Extend lvsplot to include a which argument for which axis if lv > 2 (see Suggestions from BobOHara - email.txt and R code).
-
+## 10) help file needs to be amended to expicitly state halfnormal and halfcauchy, uniform etc..
 
 
 ##############

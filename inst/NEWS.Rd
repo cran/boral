@@ -2,7 +2,7 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 1.0}{
+\section{CHANGES IN boral VERSION 1.0 and 1.0.1}{
 This list below is written in terms of what is deemed to be most important to least important changes =D
   \itemize{
 	\item In the main \code{boral} function, the \code{trait} argument should now be a matrix which does NOT include an intercept column. This makes it now consistent with the \code{X} argument. An if statement has been created within the main function to check this.
@@ -28,6 +28,9 @@ This list below is written in terms of what is deemed to be most important to le
 	\item The function \code{create.life} now has an \code{save.params} argument, which allows the user to (additionally) return the parameters of the "true model" used for simulating the multivariate response matrix. This argument is useful mainly when \code{traits} and \code{traits.coefs} are supplied, as \code{lv.coefs[,1]} and \code{X.coefs} are overwritten in such a scenario; please see the help file for \code{create.life} for more information. When \code{save.params = TRUE}, then a list is returned containing the simulated response matrix as well as the parameters of the true model. Defaults to FALSE.
 
 	\item A \code{num.lv} argument is now required for \code{make.jagsboralmodel}. Note the function is typically not used directly by the user. Defaults to \code{num.lv = 2}. 
+	
+	\item Fixed bug in \code{get.enviro.cor} and \code{get.residual.cor} functions. Thanks to Marcio Leite for picking this up!
+	
 	}
 
 	

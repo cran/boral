@@ -1,8 +1,8 @@
-63c6f461bdab0fb4999efd66f824ea8c *DESCRIPTION
+0cbaa91ca064d31f44e63a3c5c61fc3a *DESCRIPTION
 49330db5e59df3c828f595c09377a5d6 *NAMESPACE
-cf8f8a5df16d7de63ad8196b53dcd887 *R/auxilaryfunctions.R
-3f02679221257671b3e1dd888551642d *R/boral.jags.R
-c868240a716e438d32b5e6fb118c178e *inst/NEWS.Rd
+a9a5722e26dda7a1ba7353ae8a89c5ac *R/auxilaryfunctions.R
+8103f43afa601bf54de0f22c3021f701 *R/boral.jags.R
+3f7ce519fd779db5888d9547a5e9d8bb *inst/NEWS.Rd
 2101138d713a0779a56ee6afee7d86dd *man/boral-package.Rd
 b25a0340a57dcdb3decf0608dd1eff5a *man/boral.Rd
 fb312461d64faf9010bd5be71cc5b9f5 *man/calc.condlogLik.Rd
