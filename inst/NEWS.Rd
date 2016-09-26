@@ -2,38 +2,37 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 1.0 and 1.0.1}{
-This list below is written in terms of what is deemed to be most important to least important changes =D
+\section{CHANGES IN boral VERSION 1.1}{
+This list below is written in terms of what is deemed to be most important to least important changes =P
   \itemize{
-	\item In the main \code{boral} function, the \code{trait} argument should now be a matrix which does NOT include an intercept column. This makes it now consistent with the \code{X} argument. An if statement has been created within the main function to check this.
-
-	\item In the main \code{boral} function, the arguments \code{hypparams} and \code{ssvs.index} are now nested under a new argument called \code{prior.control}, which is a list argument. This argument also includes an element called \code{type}, which allows for different prior distributions, as discussed in the next point.
-
-	\item A new function \code{coefsplot} has been created, which can be used to construct horizontal line or "caterpillar plots" for column-specific regression coefficients corresponding to covariates \code{X} (if applicable). These plots consist of a symbol marking a point estimate (posterior median by default), and a line based on the limits of the HPD intervals. 
-
-	\item Both the \code{lvsplot} and \code{plot.boral} functions no longer have an argument for \code{a}. Instead, all graphical options are now controlled externally and/or through the \code{...} argument.
-
-	\item As requested by several users, the range of prior distributions has been expanded, slightly. Specifically, there is now a \code{type} argument nested, within the \code{prior.control} list argument, that requires a vector of four elements. These four elements are closely related to the four respective elements in \code{prior.control$hypparams}. By default, \code{prior.control$type = c("normal","normal","normal","uniform")}, which coincides with the priors used in all version of boral up until now. 	
-	The first three elements of \code{prior.control$type} can also take string values \code{"uniform"}, for a uniform prior, and \code{"cauchy"} for a Cauchy prior. 
-	The fourth element of \code{prior.control$type} can now also take string values \code{"halfnormal"}, for a half-normal prior, and \code{"halfnormal"} for a half-Cauchy prior. Please see the help file for the \code{boral} function for more detail on these priors.
+	\item{The way row effects can be incorporated has now been expanded slightly. Whereas all previous versions of \code{boral} only permitted for a single, unique site effect for each row, one can use the \code{row.ids} argument to specify site effects that cover multiple rows. For instance, if the first five rows in the dataset are replications from a site 1, the next five rows are replications from site 2 and so on, then one can specify \code{row.ids = matrix(c(1,1,1,1,1,2,2,2,2,2,...), ncol = 1)} to include a ``site effect". 
 	
-	\item In addition to the changes above, there now a \code{ssvs.g} argument that is also available with \code{prior.control} list argument. This is used to control the shrinkage factor, i.e. strength of the spike, in Stochastic Search Variable Selection (SSVS). Please see the SSVS section in the help file for the \code{boral} function for more detail. Defaults to \code{prior.control$ssvs.g = 1e-6}.
+	Also, multiple row effects can now be included to reflect a nested or hierarchical structures in the rows of the data. This nesting is reflected in how the user specifies \code{row.ids}, in particular, by having more than one column in the matrix. For instance, if \code{y} is structured such that the first five rows are creeks nested within region 1, the second five rows are creeks nested within region 2 and so on, and one wanted to included a effect effect of creek nested within region, then one can specify \code{row.ids = cbind(c(1,2,3,4,5,6,7,8,...), c(1,1,1,1,1,2,2,2,2,2,...))}, such that the first column is the effect for creek and the second is the effect of region.
+	
+	One still has to specify whether to include the effects as fixed and random via the \code{row.eff} argument. Arguably though, all nested designs should be using random effects. Please note that at the moment, if multiple random row effects are included, then one can only set them all to be fixed effects or all to be random.}
+	
+	\item{Even though it is permitted as outlined above, the \code{calc.logLik.lv0} and \code{calc.marglogLik} currently does not permit the calculation of log-likelihoods when the row effects are random and are more complicated than a single, unique random effect for each row. Put simply, it is just too complicated to marginalize over random effects structures in general. Sorry! Please note the \code{get.measures} and \code{get.more.measures} functions for calculating information criteria have now also been modified to reflect this.}
 
-	\item In the main \code{boral} function, the arguments \code{n.burnin, n.iteration, n.thin} and \code{seed} are now all nested under a new argument called \code{mcmc.control}, which is a list argument (not to be confused with the \code{prior.control} argument!). The default values for these four arguments remain the same as in the previous version of boral.
-	
-	\item Dunn-Smyth residuals are now available for ordinal responses as well. This is now produced in addition to the single table of agreement ("confusion matrix") in the \code{ds.residuals} function. Fitted values are also produced for ordinal responses (using the \code{fitted} function); these fitted values are simply defined as the level with the highest fitted probability. 
-	
-	\item Both the above modifications to Dunn-Smyth residuals and fitted values have a flow-on effect to the \code{plot} function, which now also performs residual analysis for ordinal responses. 
+	\item{The function \code{lvsplot} now has two additional arguments. The first is called \code{return.vals}. If \code{return.vals = TRUE}, then the \emph{scaled} latent variables scores and corresponding scaled coefficients are returned (based on the value of \code{alpha} used). This is useful is the user wants to construct their own custom model-based ordinations.}
 
-	\item The function \code{create.life} now has an \code{save.params} argument, which allows the user to (additionally) return the parameters of the "true model" used for simulating the multivariate response matrix. This argument is useful mainly when \code{traits} and \code{traits.coefs} are supplied, as \code{lv.coefs[,1]} and \code{X.coefs} are overwritten in such a scenario; please see the help file for \code{create.life} for more information. When \code{save.params = TRUE}, then a list is returned containing the simulated response matrix as well as the parameters of the true model. Defaults to FALSE.
+	\item{The second new argument added to \code{lvsplot} is called \code{which.lvs}. This now allows model-based ordinations in cases where the fitted boral model contains more than two latent variables. In which case, \code{which.lvs} can be used to specify which latent variables (ordination axes to plot). By default, the first two axes are plotted i.e., \code{which.lvs = c(1,2)}. Please note this argument is ignored if the fitted boral model only contains one latent variables.}
 
-	\item A \code{num.lv} argument is now required for \code{make.jagsboralmodel}. Note the function is typically not used directly by the user. Defaults to \code{num.lv = 2}. 
+	\item{If the number of ordinal responses exceeds 2, the species intercepts \eqn{\beta_{0j}} are now drawn as a random intercept from a normal distribution with mean zero and standard deviation given by \code{ordinal.ranef.sigma}. The random intercepts represent species-specific deviations from the common cutoffs i.e., the \eqn{\tau_k}'s. Previously, the intercepts were estimated as fixed effect but with a sum to zero constraint in these case of ordinal response. The change to a random intercept is in preparation for future updates when traits will be allowed for ordinal responses.}
 	
-	\item Fixed bug in \code{get.enviro.cor} and \code{get.residual.cor} functions. Thanks to Marcio Leite for picking this up!
+	\item{A loophole has been closed! Specifically, the functions \code{get.measures} and \code{get.more.measures} now formally prevent calculation of marginal log-likelihood based information criteria in general cases where the random effects are complicated e.g., traits are included such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects, when more than two columns are ordinal responses, or when more than one row effect is included (such that \code{row.ids} is more than just a one column matrix). The conditional log-likelihood based information criteria from \code{get.measures} are still calculated in such case though.}
 	
+	\item{Help files for main boral function, \code{make.jagsboralmodel} and \code{make.jagsboralnullmodel} have been corrected/update to specifically state the types of priors now available.}
+
+	\item{The error message in the case where there are issues with MCMC sampling for the negative binomial overdispersion parameter has been updated, and is hopefully more informative now.}
+
+	\item{The \code{more.measures} argument has now been scrapped from the \code{get.measures} function for computing some information criteria.}
+
+	\item{Fixed a bug in the \code{calc.logLik.lv0} function.}
+
+	\item{The \code{calc.condlogLik} function now accepts \code{lv = NULL} i.e., fitted boral models that do not have any latent variables included.}
+
+	\item{For future clarity, the \code{X.mc} argument in \code{calc.marglogLik} function has been renamed \code{lv.mc}.}
 	}
 
 	
 }
-
-%

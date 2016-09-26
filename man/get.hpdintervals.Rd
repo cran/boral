@@ -4,7 +4,8 @@
 \description{Calculates the lower and upper bounds of the highest posterior density intervals for parameters and latent variables in a fitted boral model.}
 
 \usage{
-get.hpdintervals(y, X = NULL, traits = NULL, fit.mcmc, num.lv, prob = 0.95)
+get.hpdintervals(y, X = NULL, traits = NULL, row.ids = NULL, 
+	fit.mcmc, num.lv, prob = 0.95)
 }
 
 \arguments{
@@ -14,7 +15,9 @@ get.hpdintervals(y, X = NULL, traits = NULL, fit.mcmc, num.lv, prob = 0.95)
   
   \item{traits}{The matrix of species traits used in the boral model. Defaults to \code{NULL}, in which case it is assumed no traits were included.}  
 
-\item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see help file for the main boral function for details. Defaults to \code{NULL}, in which case iti assumed no random effects were included in the model.}    
+
+ \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
   
   \item{num.lv}{The number of latent variables used in the boral model. If zero, then HPD intervals will not be produced for latent variables.}   
 
@@ -28,8 +31,8 @@ The function uses the \code{HPDinterval} function from the \code{coda} package t
 \value{
 \item{lv.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the column-specific intercepts, latent variable coefficients, and dispersion parameters if appropriate.}
 \item{lv.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for the latent variables.}
-\item{row.coefs.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for row effects.}
-\item{row.sigma.lower/upper}{Two scalars corresponding to the lower and upper bounds of the HPD interval for the standard deviation of the normal distribution for the row effects, if they were assumed to be random.}
+\item{row.coefs.lower/upper}{A list with each element containing two vectors corresponding to the lower and upper bounds of the HPD intervals for row effects. The number of elements in the list should equal the number of row effects included in the model i.e., \code{ncol(row.ids)}.}
+\item{row.sigma.lower/upper}{A list with each element containing two scalars corresponding to the lower and upper bounds of the HPD interval for the standard deviation of the normal distribution for the row effects, if they were assumed to be random. The number of elements in the list should equal the number of row effects included in the model i.e., \code{ncol(row.ids)}.}
 \item{X.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for coefficients relating to the model matrix \code{X}.}
 \item{traits.coefs.hpd.lower/upper}{Two matrices corresponding to the lower and upper bounds of the HPD intervals for coefficients and standard deviation relating to the traits matrix \code{traits}.}
 \item{cutoffs.hpd.lower/upper}{Two vectors corresponding to the lower and upper bounds of the HPD intervals for common cutoffs in proportional odds regression.}

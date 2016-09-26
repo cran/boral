@@ -1,17 +1,18 @@
 \name{lvsplot}
 \alias{lvsplot}
 \title{Plot the latent variables from an boral model} 
-\description{Construct a 1-D index plot or 2-D scatterplot of the latent variables, and their corresponding coefficients (i.e. a biplot), from a fitted boral model.}
+\description{Construct a 1-D index plot or 2-D scatterplot of the latent variables, and their corresponding coefficients i.e., a biplot, from a fitted boral model.}
 
-\usage{lvsplot(x, jitter = FALSE, biplot = TRUE, ind.spp = NULL, 
-	alpha = 0.5, main = NULL, est = "median",...) 
+\usage{
+lvsplot(x, jitter = FALSE, biplot = TRUE, ind.spp = NULL, alpha = 0.5, 
+	main = NULL, est = "median", which.lvs = c(1,2), return.vals = FALSE, ...) 
 	}
 	
 	
 \arguments{
   \item{x}{An object for class "boral".}
 
-  \item{jitter}{If \code{jitter = TRUE}, then some jittering is applied so that points on the plots do not overlap exactly (which can often occur with discrete data, small sample sizes, and if some sites are identical in terms species co-occurence). Please see \code{\link{jitter}} for its implementation.}
+  \item{jitter}{If \code{jitter = TRUE}, then some jittering is applied so that points on the plots do not overlap exactly (which can often occur with discrete data, small sample sizes, and if some sites are identical in terms species co-occurence). Please see \code{\link{jitter}} for its implementation. Defaults to \code{FALSE}.}
              
   \item{biplot}{If \code{biplot = TRUE}, then a biplot is construct such that both the latent variables \emph{and} their corresponding coefficients are plotted. Otherwise, only the latent variable scores are plotted. Defaults to \code{TRUE}.}
 
@@ -23,11 +24,15 @@
 
   \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}), which are then treated as estimates and the ordinations based off. Default is posterior median.}
 
-   \item{...}{Additional graphical options to be included in. These include values for \cr \code{cex, cex.lab, cex.axis, cex.main, lwd}, and so on.}
+  \item{which.lvs}{A vector of length two, indicating which latent variables (ordination axes) to plot which \code{x} is an object with two or more latent variables. The argument is ignored is \code{x} only contains one latent variables. Defaults to \code{which.lvs = c(1,2)}.}
+
+  \item{return.vals}{If \code{return.vals = TRUE}, then the \emph{scaled} latent variables scores and corresponding scaled coefficients are returned (based on the value of \code{alpha} used). This is useful is the user wants to construct their own custom model-based ordinations. Defaults to \code{FALSE}.}
+
+  \item{...}{Additional graphical options to be included in. These include values for \cr \code{cex, cex.lab, cex.axis, cex.main, lwd}, and so on.}
 }
 
 \details{
-This function allows an ordination plot to be constructed, based on either the posterior medians and posterior means of the latent variables respectively depending on the choice of \code{est}. The latent variables are labeled using the row index of the response matrix \code{y}. 
+This function allows an ordination plot to be constructed, based on either the posterior medians and posterior means of the latent variables respectively depending on the choice of \code{est}. The latent variables are labeled using the row index of the response matrix \code{y}. If the fitted model contains more than two latent variables, then one can specify which latent variables i.e., ordination axes, to plot based on the \code{which.lvs} argument. This can prove useful (to check) if certain sites are outliers on one particular ordination axes.
 
 If the fitted model did not contain any covariates, the ordination plot can be interpreted in the exactly same manner as unconstrained ordination plots constructed from methods such as Nonmetric Multi-dimensional Scaling (NMDS, Kruskal, 1964) and Correspondence Analysis (CA, Hill, 1974). With multivariate abundance data for instance, where the response matrix \code{y} consists of \eqn{n} sites and \eqn{p} species, the ordination plots can be studied to look for possible clustering of sites, location and/or dispersion effects, an arch pattern indicative of some sort species succession over an environmental gradient, and so on.
 

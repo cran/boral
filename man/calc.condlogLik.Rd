@@ -1,12 +1,12 @@
 \name{calc.condlogLik}
 \alias{calc.condlogLik}
 \title{Conditional log-likelihood for an boral model}
-\description{Calculates the conditional log-likelihood for a set of parameter estimates from an boral model, whereby everything is treated as "fixed effects" (including latent variables, row effects, and so on).}
+\description{Calculates the conditional log-likelihood for a set of parameter estimates from an boral model, where everything is treated as "fixed effects" including latent variables, row effects, and so on.}
 
 \usage{
 calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 
-	X.coefs = NULL, row.coefs = NULL, lv, cutoffs = NULL, 
-     powerparam = NULL)
+	X.coefs = NULL, row.coefs = NULL, row.ids = NULL,
+	lv = NULL, cutoffs = NULL, powerparam = NULL)
 }
 
 \arguments{
@@ -27,9 +27,11 @@ calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
   \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{row.coefs}{ Row effect estimates for the boral model. Even if they were estimated as random effects, the conditional log-likelihood is defined conditional on these estimates i.e., they are (also) treated as ``fixed effects". Defaults to NULL, in which case it is assumed there are no row effects in the model.} 
+  \item{row.coefs}{Row effect estimates for the boral model. The conditional likelihood is defined conditional on these estimates i.e., they are also treated as ``fixed effects". Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
 
-  \item{lv}{Latent variables "estimates" from the boral model, which the conditional log-likelihood is based on. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the conditional log-likelihood.}
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see the help file for the main boral function for details. Defaults to \code{NULL}, so that if \code{row.coefs = NULL} then the argument is ignored, otherwise if \code{row.coefs} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.coefs} and \code{row.ids} are consistent in terms of arguments supplied.}    
+
+ \item{lv}{Latent variables "estimates" from the boral model, which the conditional likelihood is based on. Defaults to \code{NULL}, in which case it is assumed no latent variables were included in the model.}
 
   \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \code{y} are ordinal responses. Defaults to \code{NULL}.}
 
@@ -44,26 +46,24 @@ For an \eqn{n x p} response matrix \code{y}, suppose we fit an boral model with 
 
 where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\bm{z}_i} are the latent variables and \eqn{\bm{\theta}_j} are the coefficients relating to them, \eqn{\beta_{0j}} are column-specific intercepts, and \eqn{\ldots} denotes anything else included in the model, such as row effects, regression coefficients related \code{X} and \code{traits}, etc...
 
-The key difference between this and the marginal likelihood (see \code{\link{calc.marglogLik}}) is that the conditional log-likelihood treats everything as "fixed effects", while the marginal log-likelihood treats the latent variables and row effects (if \code{row.eff = "random"} as random and integrates over them.
+The key difference between this and the marginal likelihood (see \code{\link{calc.marglogLik}}) is that the conditional likelihood treats everything as "fixed effects" i.e., conditions on them. These include the latent variables \eqn{\bm{z}_i} and other parameters that were included in the model as random effects e.g., row effects if \code{row.eff = "random"}, regression coefficients related to \code{X} if traits were included in the model (see the section titled ``Including species traits" in the main \code{boral} fitting function), and so on.
+
+The conditional DIC, WAIC, EAIC, and EBIC returned from \code{\link{get.measures}} are based on the conditional likelihood calculated from this function. Additionally, \code{\link{get.measures}} returns the conditional likelihood evaluated at all MCMC samples of a fitted boral model.
 }
 
 
 \value{
 A list with the following components:
 \item{logLik}{Value of the conditional log-likelihood.}
-\item{logLik.comp}{A vector of the log-likelihood values for each row of \code{y}, \cr such that \code{sum(logLik.comp) = logLik}.}
+\item{logLik.comp}{A matrix of the log-likelihood values for each element in \code{y}, \cr such that \code{sum(logLik.comp) = logLik}.}
 }
 
 \author{
 Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
-\note{
-The conditional DIC, WAIC, EAIC, and EBIC returned from \code{\link{get.measures}} are based on the conditional log-likelihood calculated from this function. Additionally, \code{\link{get.measures}} returns the conditional log-likelihood evaluated at all MCMC samples of a fitted boral model.
-}
-
 \seealso{
-\code{\link{get.measures}} for some information criteria based on the conditional log-likelihood; \code{\link{calc.marglogLik}} for calculation of the marginal log-likelihood; \code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables.
+\code{\link{get.measures}} for some information criteria based on the conditional log-likelihood; \code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables; \code{\link{calc.marglogLik}} for calculation of the marginal log-likelihood; 
 }
 
 \examples{
@@ -84,18 +84,18 @@ fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix)
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
      2,median),nrow=p)
-site.coef.median <- apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
-     2,median)
+site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
+     2,median))
 lvs.mat <- matrix(apply(fit.mcmc[,grep("lvs",colnames(fit.mcmc))],2,median),nrow=n)
 
-## Caculate the conditional log-likelihood at the posterior median
+## Calculate the conditional log-likelihood at the posterior median
 calc.condlogLik(y, family = "negative.binomial", 
-     lv.coefs =  coef.mat, row.coefs = site.coef.median, lv = lvs.mat)
+     lv.coefs = coef.mat, row.coefs = site.coef, lv = lvs.mat)
 
 
-## Example 2 - model with two latent variables and environmental covariates
+## Example 2 - model with no latent variables and environmental covariates
 X <- scale(spider$x)
-spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", num.lv = 2, 
+spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", num.lv = 0, 
      save.model = TRUE, calc.ics = FALSE)
 
 ## Extract all MCMC samples
@@ -106,10 +106,9 @@ coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
      2,median),nrow=p)
 X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.params",colnames(fit.mcmc))],
 	2,median),nrow=p)
-lvs.mat <- matrix(apply(fit.mcmc[,grep("lvs",colnames(fit.mcmc))],2,median),nrow=n)
 
-## Caculate the log-likelihood at the posterior median
+## Calculate the log-likelihood at the posterior median
 calc.condlogLik(y, X = X, family = "negative.binomial", 
-	lv.coefs =  coef.mat, X.coefs = X.coef.mat, lv = lvs.mat)
-	}
+	lv.coefs =  coef.mat, X.coefs = X.coef.mat)
+}
 }

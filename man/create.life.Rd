@@ -7,7 +7,7 @@
 \usage{ 
 create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, 
      traits = NULL, traits.coefs = NULL, family, row.eff = "none", 
-     row.params = NULL, trial.size = 1, cutoffs = NULL, 
+     row.params = NULL, row.ids = NULL, trial.size = 1, cutoffs = NULL, 
      powerparam = NULL, manual.dim = NULL, save.params = FALSE)
 
 \method{simulate}{boral}(object, nsim = 1, seed = NULL, est = "median", ...)   
@@ -18,7 +18,7 @@ create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL,
 
   \item{nsim}{Number of multivariate response matrices to simulate. Defaults to 1.}
 
- \item{seed}{Seed for dataset simulation. Defaults to NULL, in which case no seed is set.}
+ \item{seed}{Seed for dataset simulation. Defaults to \code{NULL}, in which case no seed is set.}
 
   \item{est}{A choice of either the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
 
@@ -51,6 +51,8 @@ create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL,
 
   \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is the standard deviation for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see the help file for the main boral function for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
+
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
   \item{cutoffs}{A vector of common common cutoffs for proportional odds regression when any of \code{family} is ordinal. They should be increasing order. Defaults to \code{NULL}.}
@@ -59,7 +61,7 @@ create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL,
 
   \item{manual.dim}{A vector of length 2, containing the number of rows (\eqn{n}) and columns (\eqn{p}) for the multivariate response matrix. This is a "backup" argument only required when \code{create.life} can not determine how many rows or columns the multivariate response matrix should be.}
 
-  \item{save.params}{A logical value indicating whether to save the parameters used in the "true model" for generating the response. If TRUE, then all parameters provided as input and/or generated (e.g. when \code{traits} and \code{traits.coefs} are supplied then \code{X.coefs} is generated internally; please see \code{traits.coefs} argument above) are returned in addition to the simulated multivariate response matrix. Defaults to FALSE.}
+  \item{save.params}{If \code{save.params = TRUE}, then all parameters provided as input and/or generated (e.g. when \code{traits} and \code{traits.coefs} are supplied then \code{X.coefs} is generated internally; please see \code{traits.coefs} argument above) are returned, in addition to the simulated multivariate response matrix. Defaults to \code{FALSE}.}
     
   \item{...}{Not used.}
 }
@@ -85,7 +87,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \examples{
-## Example 1 - Simulate a response matrix of normally distributed data
+## Example 1a - Simulate a response matrix of normally distributed data
 library(mvtnorm)
 
 ## 30 rows (sites) with two latent variables 
@@ -103,7 +105,18 @@ sim.y <- create.life(true.lv, lv.coefs, X, X.coefs, family = "normal")
 fit.boral <- boral(sim.y, X = X, family = "normal", num.lv = 2)
 
 summary(fit.boral)
+
 }
+
+## Example 1b - Include a nested random row effect
+## 30 subregions nested within six regions
+row.ids <- cbind(1:30, rep(1:6,each=5))
+## Subregion has a small std deviation; region has a larger one
+true.row.sigma <- list(ID1 = 0.5, ID2 = 2)
+
+sim.y <- create.life(true.lv, lv.coefs, X, X.coefs, row.eff = "random",
+	row.params = true.row.sigma, row.ids = row.ids, family = "normal",
+	save.params = TRUE)
 
 
 ## Example 2 - Simulate a response matrix of ordinal data

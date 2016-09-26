@@ -5,7 +5,7 @@
 
 \usage{
 get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none", 
-	num.lv, fit.mcmc, more.measures = FALSE)
+	row.ids = NULL, num.lv, fit.mcmc)
 }
 
 \arguments{
@@ -24,15 +24,15 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
   
   \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown standard deviation. Defaults to "none". } 
   
-  \item{num.lv}{The number of latent variables used in the fitted boral model.}
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see the help file for the main boral function for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \code{row.eff = "fixed"} or \code{"random"}, then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
+
+ \item{num.lv}{The number of latent variables used in the fitted boral model.}
   
   \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
-
-  \item{more.measures}{A logical value indicating whether to run \code{\link{get.more.measures}} to obtain additional information criteria.}    
 }
 
 \details{
-The following information criteria are currently implemented: 1) Widely Applicable Information Criterion (WAIC, Watanabe, 2010) based on the conditional log-likelihood; 2) expected AIC (EAIC, Carlin and Louis, 2011); 3) expected BIC (EBIC, Carlin and Louis, 2011); 4) AIC (using the marginal likelihood) evaluated at the posterior median; 5) BIC (using the marginal likelihood) evaluated at the posterior median.
+The following information criteria are currently calculated, when permitted: 1) Widely Applicable Information Criterion (WAIC, Watanabe, 2010) based on the conditional log-likelihood; 2) expected AIC (EAIC, Carlin and Louis, 2011); 3) expected BIC (EBIC, Carlin and Louis, 2011); 4) AIC (using the marginal likelihood) evaluated at the posterior median; 5) BIC (using the marginal likelihood) evaluated at the posterior median.
 
 1) WAIC has been argued to be more natural and extension of AIC to the Bayesian and hierarchical modeling context (Gelman et al., 2013), and is based on the conditional log-likelihood calculated at each of the MCMC samples. 
 
@@ -40,11 +40,9 @@ The following information criteria are currently implemented: 1) Widely Applicab
 
 4 & 5) AIC and BIC take the form -2*(marginal log-likelihood) + penalty*(no. of parameters in the model), where the log-likelihood is evaluated at the posterior median. If the parameter-wise posterior distributions are unimodal and approximately symmetric, these will produce similar results to an AIC and BIC where the log-likelihood is evaluated at the posterior mode. EAIC applies a penalty of 2, while EBIC applies a penalty of \eqn{log(n)}.
 
-In our very limited experience, if information criteria are to be used for model selection between boral models, we found BIC at the posterior median tends to perform best. WAIC, AIC, and DIC (see \code{\link{get.dic}}) tend to over select the number of latent variables. For WAIC and DIC, part of this overfitting could be due to the fact both criteria are calculated from the conditional rather than the marginal log-likelihood (see Millar, 2009).  
-
 Intuitively, comparing boral models with and without latent variables (using information criteria such as those returned) amounts to testing whether the columns of the response matrix \code{y} are correlated. With multivariate abundance data for example, where \code{y} is a matrix of \eqn{n} sites and \eqn{p} species, comparing models with and without latent variables tests whether there is any evidence of correlation between species.
 
-Note that if traits are included in the model, then the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are now random effects. However, currently the calculation of all information criteria do not take this into account! 
+Please note that criteria 4 and 5 are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), or more than one random row effect is included (such that \code{row.ids} contains more than one column), then criteria 4 and 5 are will not calculated. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; see the details in the help files for \code{calc.logLik.lv0} and \code{calc.marglogLik}.
 }
 
 \value{
@@ -52,10 +50,14 @@ A list with the following components:
 \item{waic}{WAIC based on the conditional log-likelihood.}
 \item{eaic}{EAIC based on the mean of the conditional log-likelihood.}
 \item{ebic}{EBIC based on the mean of the conditional log-likelihood.}
+\item{all.cond.logLik}{The conditional log-likelihood evaluated at all MCMC samples. This is done via repeated application of \code{\link{calc.condlogLik}}.}
+\item{cond.num.params}{Number of estimated parameters used in the fitted model, when all parameters are treated as "fixed" effects.}
+\item{do.marglik.ics}{A boolean indicating whether marginal log-likelihood based information criteria are calculated.}
+
+If \code{do.marglik.ics = TRUE}, then we also have:
 \item{aic.median}{AIC (using the marginal log-likelihood) evaluated at the posterior median.}
 \item{bic.median}{BIC (using the marginal log-likelihood) evaluated at the posterior median.}
-\item{all.cond.logLik}{The conditional log-likelihood evaluated at all MCMC samples. This is done via repeated application of \code{\link{calc.condlogLik}}.}
-\item{num.params}{Number of estimated parameters used in the fitted model.}
+\item{marg.num.params}{Number of estimated parameters used in the fitted model, when all parameters are treated as "fixed" effects.}
 }
 
 \section{Warning}{
@@ -70,8 +72,6 @@ Also, the use of information criterion in the presence of variable selection usi
 
 \item Gelman et al. (2013). Understanding predictive information criteria for Bayesian models. Statistics and Computing, 1-20.
 
-\item Millar, R. B. (2009). Comparison of hierarchical Bayesian models for overdispersed count data using DIC and Bayes' factors. Biometrics, 65, 962-969.
-
 \item Watanabe, S. (2010). Asymptotic equivalence of Bayes cross validation and widely applicable information criterion in singular learning theory. The Journal of Machine Learning Research, 11, 3571-3594.
 }
 }
@@ -81,7 +81,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \note{
-When a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRUE}, then this function is applied with \code{more.measures = FALSE}, and the information criteria are returned as part of the model output. 
+When a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRUE}, then this function is applied and the information criteria are returned as part of the model output. 
 }
 
 \seealso{

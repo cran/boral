@@ -3,7 +3,8 @@
 \title{Caterpillar plots of the regression coefficients from a boral model} 
 \description{Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in \code{X} fitted in the boral model.}
 
-\usage{coefsplot(covname, x, labely = NULL, est = "median", ...) 
+\usage{
+coefsplot(covname, x, labely = NULL, est = "median", ...) 
 	}
 	
 \arguments{
@@ -19,7 +20,7 @@
 }
 
 \details{
-For each species (column of \code{y}), the horizontal line or "caterpillar" is constructed by first marking the point estimate (posterior mean or median) with an "x" symbol. Then the line is construced based on the lower and upper limits of the highest posterior density (HPD) intervals as found in \code{x$hpdintervals}. By default these intervals of 95\% HPD intervals. To complete the plot, a vertical dotted line is drawn to denote the zero value. All HPD intervals that include zero are colored grey, while HPD intervals that exclude zero are colored black. 
+For each species (column of \code{y}), the horizontal line or "caterpillar" is constructed by first marking the point estimate (posterior mean or median) with an "x" symbol. Then the line is construed based on the lower and upper limits of the highest posterior density (HPD) intervals as found in \code{x$hpdintervals}. By default these intervals of 95\% HPD intervals. To complete the plot, a vertical dotted line is drawn to denote the zero value. All HPD intervals that include zero are colored gray, while HPD intervals that exclude zero are colored black. 
 
 The graph is probably better explained by, well, plotting it using the toy example below =P
 
@@ -58,7 +59,7 @@ spider.fit.nb <- boral(y, X = X, family = "negative.binomial",
 	num.lv = 2, mcmc.control = example.mcmc.control)
 
 
-## Do separate line plots for all the coeffcients of X
+## Do separate line plots for all the coefficients of X
 par(mfrow=c(2,3), mar = c(5,6,1,1))
 sapply(colnames(spider.fit.nb$X), coefsplot, 
 	spider.fit.nb)

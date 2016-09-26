@@ -5,8 +5,8 @@
 
 \usage{
 calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 
-     X.coefs = NULL, row.eff = "none", row.params = NULL, num.lv, 
-     X.mc = NULL, cutoffs = NULL, powerparam = NULL)
+     X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL,
+     num.lv, lv.mc = NULL, cutoffs = NULL, powerparam = NULL)
 }
 
 \arguments{
@@ -31,9 +31,11 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
   \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is standard deviation for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
-  \item{num.lv}{The number of latent variables used in the boral model. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the marginal log-likelihood.}
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see the help file for the main boral function for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
 
-  \item{X.mc}{A matrix used for performing the Monte Carlo integration. Defaults to \code{NULL}, in which case a matrix is generated within the function.}
+ \item{num.lv}{The number of latent variables used in the boral model. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the log-likelihood.}
+
+  \item{lv.mc}{A matrix used for performing the Monte Carlo integration. Defaults to \code{NULL}, in which case a matrix is generated within the function.}
 
   \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \code{y} are ordinal responses. Defaults to \code{NULL}.}
 
@@ -45,20 +47,20 @@ For an \eqn{n x p} response matrix \code{y}, suppose we fit an boral model with 
 
 \deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p f(y_{ij} | \bm{z}_i, \beta_{0j}, \bm{\theta}_j, \ldots) f(\bm{z}_i) d\bm{z}_i), }
 
-where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\beta_{0j}} are the column-specific intercepts, \eqn{\bm{\theta}_j} are the column-specific latent variable coefficients, and \eqn{\ldots} generically denotes anything else included in the model, e.g. row effects, dispersion parameters etc... The quantity \eqn{f(\bm{z}_i)} denotes the distribution of the latent variable, which is assumed to be standard multivariate Gaussian.
+where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\beta_{0j}} are the column-specific intercepts, \eqn{\bm{\theta}_j} are the column-specific latent variable coefficients, and \eqn{\ldots} generically denotes anything else included in the model, e.g. row effects, dispersion parameters etc... The quantity \eqn{f(\bm{z}_i)} denotes the distribution of the latent variable, which is assumed to be standard multivariate Gaussian. Standard Monte Carlo integration is used for calculating the marginal likelihood. If \code{lv.mc = NULL}, the function automatically generates a matrix as \cr \code{lv.mc <- cbind(1, rmvnorm(2000, rep(0,num.lv)))}. If there is a need to apply this function numerous times, we recommend a matrix be inserted into \code{lv.mc} to speed up computation.
 
-If the row effects are assumed to be random (\code{row.eff = "random"}), then the log-likelihood is calculated by integrating over these as well,
+The key difference between this and the conditional likelihood (see \code{calc.condlogLik}) is that the marginal likelihood treats the latent variables as "random effects" and integrates over them, whereas the conditional likelihood treats the latent variables as "fixed effects". 
+
+Please note the function is written conditional on all regression coefficients. Therefore, if traits are included in the model, in which case the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} become random effects instead (please see section titled ``Including species traits" in the main \code{boral} function), then the calculation of the log-likelihood does NOT take this into account, i.e. does not marginalize over them!
+
+Likewise if more than two columns are ordinal responses, then the regression coefficients \eqn{\beta_{0j}} corresponding to these columns become random effects, and the calculation of the log-likelihood also does NOT take this into account, i.e. does not marginalize over them!
+
+In the special case where \eqn{\alpha_i} is a random row effect, then the log-likelihood is calculated by integrating over this as well,
 
 \deqn{\log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \bm{z}_i, \beta_{0j}, \bm{\theta}_j, \alpha_i, \ldots)) f(\bm{z}_i) f(\alpha_i) d\bm{z}_i d\alpha_i ),
 } 
      
-where \eqn{f(\alpha_i)} is the random effects distribution with standard deviation given by \code{row.params}.
-
-The key difference between this and the conditional likelihood (see \code{calc.condlogLik}) is that the marginal log-likelihood treats the latent variables as "random effects" and integrates over them, whereas the conditional log-likelihood treats the latent variables as "fixed effects". 
-
-Monte Carlo integration is used for calculating the marginal log-likelihood. If \code{X.mc = NULL}, the function automatically generates a matrix as \cr \code{X.mc <- cbind(1, rmvnorm(2000, rep(0,num.lv)))}. If there is need to apply this function numerous times, we recommend a matrix be inserted into \code{X.mc} to speed up computation.
-
-Note that if traits are included in the model, then the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are now random effects. However, currently the calculation of the marginal log-likelihood does NOT take this into account, i.e. does not marginalize over them!
+where \eqn{f(\alpha_i)} is the random effects distribution with mean zero and standard deviation given by the \code{row.params}. The integration is performed using standard Monte Carlo integration. Beyond this however, for more complicated random row effects structures the function currently does not permit the calculation of the log-likelihood in such cases, as the integration over these random effects becomes too complicated to perform in such case. Sorry!
 }
 
 \value{
@@ -72,7 +74,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \note{
-The AIC and BIC at posterior median returned from \code{\link{get.measures}} are all based on the marginal log-likelihood calculated from this function. Additionally, \code{\link{get.more.measures}} returns even more information criteria based on the marginal log-likelihood. As mentioned in the details though, these information criteria do not take into acocunt that traits are included in the model!
+The AIC and BIC at posterior median returned from \code{\link{get.measures}} are all based on the marginal log-likelihood calculated from this function. Additionally, \code{\link{get.more.measures}} returns even more information criteria based on the marginal log-likelihood. As mentioned in the details though, these information criteria do not take into account that traits are included in the model!
 }
 
 \seealso{
@@ -97,12 +99,12 @@ fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix)
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
      2,median),nrow=p)
-site.coef.median <- apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
-     2,median)
+site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
+     2,median))
      
-## Caculate the marginal log-likelihood at the posterior median
+## Calculate the marginal log-likelihood at the posterior median
 calc.marglogLik(y, family = "negative.binomial",
-	lv.coefs = coef.mat, row.eff = "fixed", row.params = site.coef.median, 
+	lv.coefs = coef.mat, row.eff = "fixed", row.params = site.coef, 
 	num.lv = 2)
 
 	
@@ -120,7 +122,7 @@ coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
 X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.params",colnames(fit.mcmc))],
 	2,median),nrow=p)
 
-## Caculate the log-likelihood at the posterior median
+## Calculate the log-likelihood at the posterior median
 calc.marglogLik(y, X = spider$x, family = "negative.binomial", 
 	lv.coefs = coef.mat, X.coefs = X.coef.mat, num.lv = 2)	
 }
