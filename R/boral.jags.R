@@ -26,6 +26,7 @@
 ## 8) Allow SSVS for selecting traits?
 ## 9) Reformat output so that instead of a separate element for mean,median,IQR,sd; present it as a 4 column array or vector
 ## 10) Make manual calculation of HPD intervals easier
+## Make sure you test all dontrun examples before building package!!!
 
 ##############
 # library(R2jags); 
@@ -34,9 +35,9 @@
 # library(coda); 
 # library(MASS)
 # library(fishMod)
-# source("/home/fhui/Documents/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral11/R/auxilaryfunctions.R")
-# source("/home/fhui/Documents/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral11/R/makejagsscriptfunctions.R")
-# source("/home/fhui/Documents/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral11/R/unseenfunctions.R")
+# source("/media/fhui/LEXAR/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral111/R/auxilaryfunctions.R")
+# source("/media/fhui/LEXAR/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral111/R/makejagsscriptfunctions.R")
+# source("/media/fhui/LEXAR/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral111/R/unseenfunctions.R")
 
 
 # n = 60; p <- 30
@@ -47,10 +48,11 @@
 # family = "tweedie"
 # num.lv = 0; row.eff = "none"; n.burnin = 10000; n.iteration = 40000; n.thin = 30; save.model = TRUE; seed = 1; calc.ics = TRUE; trial.size = NULL; hypparams = c(50,20,50,50); 
 # 
+# y = sim.y$resp; family = "ordinal"; num.lv = 2; mcmc.control = example.mcmc.control; traits = NULL; which.traits = NULL; save.model = TRUE; calc.ics = TRUE; row.eff = "none"; trial.size = 1; prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6); do.fit = TRUE; model.name = NULL; row.ids = NULL
+
+
 boral <- function(y, ...) UseMethod("boral")
 
-
-# y = simy; X = as.matrix(X[,-1]); traits = traits[,-1]; family = "binomial"; num.lv = 2; save.model = TRUE; calc.ics = FALSE; mcmc.control = list(n.burnin = 200, n.thin = 10, n.iteration = 1500); row.eff = "none"; trial.size = 1; prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6); do.fit = TRUE; model.name = NULL
 
 ## Model is g(mu_{ij}) = row + beta0 + LV_i*theta_j + X_i*beta_j
 boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, family, trial.size = 1, num.lv = 0, row.eff = "none", row.ids = NULL, save.model = FALSE, calc.ics = TRUE, mcmc.control = list(n.burnin = 10000, n.iteration = 40000, n.thin = 30, seed = 123), prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6), do.fit = TRUE, model.name = NULL, ...) {
@@ -195,7 +197,9 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	if(num.X > 0) jags.data <- c("X", jags.data)
 	if(num.traits > 0) jags.data <- c("traits", jags.data)
 	if(any(family == "ordinal")) { ones <- matrix(1, n, p); jags.data <- c(jags.data, "ones") }
-	if(row.eff != "none") { n.ID <- apply(cbind(1:n, rep(1:7,each=4)),2,function(x) length(unique(x))); jags.data <- c(jags.data, "row.ids", "n.ID") }
+	if(row.eff != "none") { 
+		n.ID <- apply(row.ids, 2, function(x) length(unique(x)))
+		jags.data <- c(jags.data, "row.ids", "n.ID") }
 	
 	
 	jags.params <- c("all.params")
@@ -435,7 +439,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	out.fit$X <- X; out.fit$traits <- traits; out.fit$y <- y
 	out.fit$row.eff <- row.eff; out.fit$row.ids <- row.ids
 
-	out.fit$family <- family; if(all(family == "bernoulli")) out.fit$family <- rep("binomial",p)
+	out.fit$family <- family; if(all(family == "bernoulli")) out.fit$family <- rep("binomial",p) ## Switch it back to binomial for compatibility
 	out.fit$num.lv <- num.lv
 	out.fit$num.X <- num.X; out.fit$num.traits <- num.traits
 	out.fit$which.traits <- which.traits

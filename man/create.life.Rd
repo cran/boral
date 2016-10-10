@@ -134,7 +134,7 @@ sim.y <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs,
      family = "ordinal", cutoffs = true.ordinal.cutoffs, save.params = TRUE) 
 
 \dontrun{
-fit.boral <- boral(y = sim.y, family = "ordinal", num.lv = 2)
+fit.boral <- boral(y = sim.y$resp, family = "ordinal", num.lv = 2)
 }
 
 \dontrun{

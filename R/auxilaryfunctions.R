@@ -1,8 +1,8 @@
 ##########
 ## Auxilary functions
 ##########
-.onAttach <- function(...){
-packageStartupMessage("If you recently updated boral, please check news(package = \"boral\") for the updates in the latest version.", appendLF=TRUE)
+.onAttach <- function(...) {
+	packageStartupMessage("If you recently updated boral, please check news(package = \"boral\") for the updates in the latest version.", appendLF=TRUE)
 }
 
 
@@ -45,7 +45,6 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 	n <- nrow(y); p <- ncol(y); 
 	num.lv <- 0; if(!is.null(lv)) num.lv <- ncol(lv)
 	loglik <- 0; loglik.comp <- matrix(NA, nrow = n, ncol = p) 
-	if(is.null(row.coefs)) row.coefs <- rep(0,n)
 
 	if(length(trial.size) == 1) complete.trial.size <- rep(trial.size,ncol(y))
 	if(length(trial.size) > 1) complete.trial.size <- trial.size
@@ -58,7 +57,7 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 	index.multinom.cols <- which(complete.family == "multinom")
 	for(j in 1:p) {
 		species.etas <- all.etas[,j]
-		if(is.null(row.coefs)) for(k in 1:ncol(row.ids)) species.etas <- species.etas + row.coefs[[k]][row.ids[,k]]
+		if(!is.null(row.coefs)) { for(k in 1:ncol(row.ids)) species.etas <- species.etas + row.coefs[[k]][row.ids[,k]] }
 		
 		if(complete.family[j] == "binomial") 
 			loglik.comp[,j] <- dbinom(as.vector(unlist(y[,j])), complete.trial.size[j], pnorm(species.etas), log = TRUE)
@@ -79,7 +78,7 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 			if(complete.family[j] == "tweedie") 
 			loglik.comp[,j] <- dTweedie(as.vector(unlist(y[,j])), mu = exp(species.etas), phi = lv.coefs[j,ncol(lv.coefs)]+1e-6, p = powerparam, LOG = TRUE) 
 		if(complete.family[j] == "ordinal") { 
-			get.probs <- ordinal.conversion.spp(n = n, lv = lv, lv.coefs.j = lv.coefs[j,], num.lv = num.lv, row.coefs = row.coefs, row.ids = row.ids, X = X, X.coefs.j = X.coefs[j,], cutoffs = cutoffs); 	
+			get.probs <- ordinal.conversion.spp(n = n, lv = lv, lv.coefs.j = lv.coefs[j,], num.lv = num.lv, row.coefs = row.coefs, row.ids = row.ids, X = X, X.coefs.j = X.coefs[j,], cutoffs = cutoffs); 
 			for(i in 1:n) { loglik.comp[i,j] <- log(get.probs[i,as.vector(y[i,j])]+1e-5) } }	
 # 		if(complete.family[j] == "multinom") { 
 # 			if(!is.null(X.multinom.coefs)) spp.etas <- matrix(rep(species.etas,dim(X.multinom.coefs)[3]),nrow=n) + as.matrix(X)%*%X.multinom.coefs[which(index.multinom.cols == j),,]
@@ -122,6 +121,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
 		}
 	if(row.eff == "fixed") { row.coefs <- row.params }
+	if(row.eff == "none") { row.coefs <- NULL }
 
 
 	if(any(complete.family == "ordinal") & is.null(cutoffs)) 
@@ -140,7 +140,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 		for(j in 1:p) {
 			eta <- lv.coefs[j, 1]
 			if(!is.null(X.coefs)) eta <- eta + as.matrix(X) %*% X.coefs[j, ]
-			if(is.null(row.coefs)) for(k in 1:ncol(row.ids)) eta <- eta + row.coefs[[k]][row.ids[,k]]
+			if(!is.null(row.coefs)) { for(k in 1:ncol(row.ids)) eta <- eta + row.coefs[[k]][row.ids[,k]] }
 
 			if(complete.family[j] == "poisson") logl.comp[, j] <- (dpois(as.vector(unlist(y[, j])), lambda = exp(eta), log = TRUE))
 			if(complete.family[j] == "binomial") logl.comp[, j] <- (dbinom(as.vector(unlist(y[, j])), complete.trial.size[j], prob = pnorm(eta), log = TRUE))
@@ -225,7 +225,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 ## Furthermore, note also that since it takes it X.coefs and lv.coefs, then: 1) marginalization is not done over the spp coefs it traits is not NULL; 2) marginalization is not done over the spp intercepts if > 2 are ordinal and hence the beta_{0j} are random effects...TOO DAMN HARD!
 # lv.coefs = lv.coefs.mat; X.coefs = cw.X.coefs; row.coefs = cw.row.coefs; lv.mc = NULL; cutoffs = cw.cutoffs; X.multinom.coefs = NULL
 calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL, num.lv, lv.mc = NULL, cutoffs = NULL, powerparam = NULL) {
-	if(num.lv == 0) stop("Please use calc.loglik.lv0 to calculate likelihood in borla models with no latent variables.")
+	if(num.lv == 0) stop("Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")
 	if(is.null(lv.coefs)) stop("lv.coefs must be given. Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")
     
 	if(length(family) != ncol(y) & length(family) != 1) { 
@@ -354,7 +354,7 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 	if((is.null(traits) & !is.null(traits.coefs)) | (!is.null(traits) & is.null(traits.coefs))) 
 		stop("If traits is supplied, then traits.coefs must also be supplied.")
 	if(!is.null(traits.coefs)) 
-		print("Since trait.coefs has been supplied, then X.coefs will be ignored (X.coefs will instead be drawn as random effects based off trait.coefs)")
+		message("Since trait.coefs has been supplied, then X.coefs will be ignored (X.coefs will instead be drawn as random effects based off trait.coefs)")
 	if(!is.null(traits)) { 
 		if(!is.matrix(traits)) traits <- as.matrix(traits) 
 		if(any(apply(traits,2,function(x) all(x == 1)))) { stop("No intercept column should be included in traits. It will be included automatically") } 
@@ -375,7 +375,8 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 	if(!is.null(cutoffs)) {
 		num.ord.levels <- length(cutoffs) + 1
 		cutoffs <- sort(cutoffs)
-		print("Sorting cutoffs...just in case") }
+		message("Sorting cutoffs...just in case") 
+		}
 	if(any(family == "tweedie") & is.null(powerparam)) 
 		stop("Common powerparam must be supplied if any columns are tweedie data (Var = dispersion*mu^powerparam)")
 
@@ -455,7 +456,7 @@ ds.residuals <- function(object, est = "median") {
 	mus <- fitted.boral(object, X, est = est)
 
 	if(any(object$family == "ordinal")) {
-		print("One or more columns of y have ordinal responses. Constructing a single confusion matrix for these.")
+		message("One or more columns of y have ordinal responses. Constructing a single confusion matrix for these.")
 		true.resp <- as.matrix(y[,which(object$family == "ordinal")])
 		pred.resp <- matrix(NA,n,ncol(true.resp)) 
 		}
@@ -679,7 +680,7 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
 		if(length(grep("ordinal.ranef.sigma", names(hpd.lower))) > 0) { 
 			final.list$ordinal.sigma.lower <- hpd.lower[grep("ordinal.ranef.sigma", names(hpd.lower))]
 			final.list$ordinal.sigma.upper <- hpd.upper[grep("ordinal.ranef.sigma", names(hpd.upper))]
-			names(final.list$row.sigma.lower) <- names(final.list$row.sigma.upper) <- "Species-specific random intercept sigma for ordinal responses"
+			names(final.list$ordinal.sigma.lower) <- names(final.list$ordinal.sigma.upper) <- "Species-specific random intercept sigma for ordinal responses"
 			}
 		}
 				
@@ -694,7 +695,7 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
 	
 ## Calculates conditional WAIC, EAIC, EBIC. 
 ## Also calculate the marginal likelihood at component medians, and bases a AIC and BIC on this. Note this in cases were calc.marglogl and calc.logLik.lv0 actually produce a sensible result
-get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none", row.ids = NULL, num.lv, fit.mcmc) {
+get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", row.ids = NULL, num.lv, fit.mcmc) {
 	do.marglik.ics <- TRUE
 
 	if(length(family) != ncol(y) & length(family) != 1) stop("Number of elements in family is either 1 or equal to # of columns in y")
@@ -749,9 +750,12 @@ get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none",
 	all.cond.logl <- rowSums(all.lppd)
 	waic.out <- -2 * sum(log(colMeans(exp(all.lppd), na.rm = TRUE))) + 2 * sum(apply(all.lppd, 2, var, na.rm = TRUE))
 	cond.num.params <- sum(cw.params$lv.coefs != 0) + n*num.lv + ## LVs and loadings
-		sum(apply(row.ids,2,function(x) length(unique(x))))*as.numeric(row.eff != "none") + ## row effects
 		sum(cw.params$X.coefs != 0)*as.numeric(!is.null(X)) + ## X.coefs
 		any(complete.family == "ordinal")*sum(cw.params$cutoffs != 0) + (1 - is.null(cw.params$powerparam)) ## other parameters
+	if(row.eff != "none") { 
+		cond.num.params <- cond.num.params + sum(sapply(cw.params$row.coefs,length)) 
+		} ## row effects
+
 	eaic <- -2*mean(all.cond.logl, na.rm = TRUE) + 2*cond.num.params
 	ebic <- -2*mean(all.cond.logl, na.rm = TRUE) + log(n*p)*cond.num.params
 	out.list <- list(waic = waic.out, eaic = eaic, ebic = ebic, all.cond.logLik = all.cond.logl, cond.num.params = cond.num.params, do.marglik.ics = do.marglik.ics)
@@ -783,9 +787,12 @@ get.measures <- function (y, X = NULL, family, trial.size = 1, row.eff = "none",
 			median.marglogl <- calc.logLik.lv0(y, X, complete.family, trial.size, lv.coefs = params.median$lv.coefs, X.coefs = params.median$X.coefs, row.eff = row.eff, row.ids = row.ids, row.params = params.median$row.coefs, cutoffs = params.median$cutoffs, powerparam = params.median$cw.powerparam)	
 
 		marg.num.params <- sum(params.median$lv.coefs != 0) + ## Loadings 
-			sum(apply(row.ids,2,function(x) length(unique(x))))*as.numeric(row.eff == "fixed") + ncol(row.ids)*as.numeric(row.eff == "random") + ## row effects
-			sum(params.median$X.coefs != 0)*as.numeric(!is.null(X)) +  ## X coefs
+			sum(params.median$X.coefs != 0)*as.numeric(!is.null(X)) + ## X coefs
 			any(complete.family == "ordinal")*sum(params.median$cutoffs != 0) + (1 - is.null(params.median$powerparam)) ## other parameters
+		if(row.eff != "none") { 
+			marg.num.params <- marg.num.params + sum(sapply(params.median$row.coefs,length)) 
+			} ## row effects
+
 		marg.aic <- -2 * median.marglogl$logLik + 2 * marg.num.params
 		marg.bic <- -2 * median.marglogl$logLik + log(n*p) * marg.num.params
 		
@@ -814,7 +821,8 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
 	if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
 		stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of columns in y. The latter will assume the specified trial size for all rows labelled binomial in the family argument.")
 
-	if(row.eff == FALSE) row.eff <- "none"; if(row.eff == TRUE) row.eff <- "fixed"
+	if(row.eff == FALSE) row.eff <- "none"
+	if(row.eff == TRUE) row.eff <- "fixed"
 	if(!is.null(row.ids)) {
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != nrow(y)) stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
@@ -863,9 +871,9 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
 
 	## Calculate AIC, BIC at posterior mode	
 	marg.num.params <- sum(cw.params$lv.coefs != 0) + ## Loadings 
-		sum(apply(row.ids,2,function(x) length(unique(x))))*as.numeric(row.eff == "fixed") + ncol(row.ids)*as.numeric(row.eff == "random") + ## row effects
 		sum(cw.params$X.coefs != 0)*as.numeric(!is.null(X)) +  ## X coefs
-		any(complete.family == "ordinal")*sum(cw.params$cutoffs != 0) + (1 - is.null(cw.params$powerparam)) ## other parameters
+		any(complete.family == "ordinal")*sum(cw.params$cutoffs != 0) + (1 - is.null(cw.params$powerparam)) ## other parameters	
+	if(row.eff != "none") { marg.num.params <- marg.num.params + sum(sapply(cw.params$row.coefs,length)) } ## row effects
 	bic1 <- -2 * max(rowSums(all.marg.logl)) + log(n)*marg.num.params
 	aic1 <- -2 * max(rowSums(all.marg.logl)) + 2*marg.num.params
 	

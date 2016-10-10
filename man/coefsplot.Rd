@@ -49,14 +49,9 @@ data(spider)
 y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
 
-## NOTE: The values below MUST NOT be used in a real application;
-## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
-     n.thin = 1)
-
 X <- scale(spider$x)
 spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 2, mcmc.control = example.mcmc.control)
+	num.lv = 2)
 
 
 ## Do separate line plots for all the coefficients of X

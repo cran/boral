@@ -96,7 +96,7 @@ fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix)
 ## WATCH OUT! The following takes a very long time to run!
 get.more.measures(y, family = "negative.binomial", 
      num.lv = spider.fit.nb$num.lv, fit.mcmc = fit.mcmc, 
-     row.eff = "fixed")		
+     row.eff = "fixed", row.ids = spider.fit.nb$row.ids)		
 
 ## Illustrating what happens in a case where these criteria will 
 ## 	not be calculated.
@@ -110,7 +110,7 @@ for(i in 1:length(which.traits)) which.traits[[i]] <- 1:ncol(traits)
 
 fit.traits <- boral(y, X = X, traits = traits, num.lv = 2, 
 	which.traits = which.traits, family = "negative.binomial", 
-	calc.ics = FALSE, mcmc.control = example.mcmc.control, save.model = TRUE)
+	calc.ics = FALSE, save.model = TRUE)
      
 ## Extract MCMC samples
 fit.mcmc <- mcmc(fit.traits$jags.model$BUGSoutput$sims.matrix)

@@ -11,9 +11,9 @@ ordinal.conversion.spp <- function(n, lv = NULL, lv.coefs.j = NULL, num.lv = NUL
 		etas[,k] <- rep(cutoffs[k],n) - lv.coefs.j[1]
 		if(!is.null(lv)) etas[,k] <- etas[,k] - as.matrix(lv)%*%lv.coefs.j[2:(num.lv+1)]
 		if(!is.null(row.coefs)) { 
-			if(est == "median") for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]]$median[row.ids[,k2]] 
-			if(est == "mean") for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]]$mean[row.ids[,k2]] 
-			if(est == "ignore") for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]][row.ids[,k2]] 
+			if(est == "median") { for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]]$median[row.ids[,k2]] } 
+			if(est == "mean") { for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]]$mean[row.ids[,k2]] }
+			if(est == "ignore") { for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]][row.ids[,k2]] }
 			}
 		if(!is.null(X)) etas[,k] <- etas[,k] - as.matrix(X)%*%X.coefs.j ## Don't forget the negative sign!
 		}
@@ -243,7 +243,7 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 			
 		if(complete.family[j] == "ordinal") {
 			resp.family.script <- c(resp.family.script, paste("\t\t prob[i,", which(index.ord.cols == j), ",1] <- phi(alpha[1]-eta[i,", j, "]-all.params[", j, ",1])", sep = ""))
-			resp.family.script <- c(resp.family.script, paste("\t\t for(k in 2:(num.ord.levels-1)) { \t\t\t prob[i,", which(index.ord.cols == j), ",k] <- phi(alpha[k]-eta[i,", j, "]-all.params[", j, ",1]) - phi(alpha[k-1]-eta[i,", j, "]-all.params[", j, ",1]) }", sep = ""))
+			resp.family.script <- c(resp.family.script, paste("\t\t for(k in 2:(num.ord.levels-1)) { prob[i,", which(index.ord.cols == j), ",k] <- phi(alpha[k]-eta[i,", j, "]-all.params[", j, ",1]) - phi(alpha[k-1]-eta[i,", j, "]-all.params[", j, ",1]) }", sep = ""))
 			resp.family.script <- c(resp.family.script, paste("\t\t prob[i,", which(index.ord.cols == j), ",num.ord.levels] <- 1-phi(alpha[num.ord.levels-1]-eta[i,", j, "]-all.params[", j, ",1])", sep = ""))
 			resp.family.script <- c(resp.family.script, paste("\t\t y[i,", j, "] ~ dcat(prob[i,", which(index.ord.cols == j), ",])\n", sep = ""))
 			}
