@@ -1,6 +1,9 @@
 \name{get.measures}
+
 \alias{get.measures}
+
 \title{Information Criteria for boral models}
+
 \description{Calculates some information criteria for an boral model, which could be used for model selection.}
 
 \usage{
@@ -15,16 +18,14 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
   
   \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
-  For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi\mu^2}, where \eqn{\phi} is the column-specific dispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi^2}, where \eqn{\phi} is the column-specific standard deviation. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
-
- All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
-}
+  Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
+  }
   
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
   
   \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown standard deviation. Defaults to "none". } 
   
- \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see the help file for the main boral function for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \code{row.eff = "fixed"} or \code{"random"}, then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
  \item{num.lv}{The number of latent variables used in the fitted boral model.}
   
@@ -42,7 +43,7 @@ The following information criteria are currently calculated, when permitted: 1) 
 
 Intuitively, comparing boral models with and without latent variables (using information criteria such as those returned) amounts to testing whether the columns of the response matrix \code{y} are correlated. With multivariate abundance data for example, where \code{y} is a matrix of \eqn{n} sites and \eqn{p} species, comparing models with and without latent variables tests whether there is any evidence of correlation between species.
 
-Please note that criteria 4 and 5 are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), or more than one random row effect is included (such that \code{row.ids} contains more than one column), then criteria 4 and 5 are will not calculated. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; see the details in the help files for \code{calc.logLik.lv0} and \code{calc.marglogLik}.
+Please note that criteria 4 and 5 are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), or more than one random row effect is included (such that \code{row.ids} contains more than one column), then criteria 4 and 5 are will not calculated. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; please see the details in \code{calc.logLik.lv0} and \code{calc.marglogLik}.
 }
 
 \value{
@@ -89,18 +90,25 @@ When a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRU
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+     
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
 spider.fit.pois <- boral(y, family = "poisson", 
-	num.lv = 2, row.eff = "random")
+	num.lv = 2, row.eff = "random",
+	mcmc.control = example.mcmc.control)
 
 spider.fit.pois$ics ## Returns information criteria
 
 spider.fit.nb <- boral(y, family = "negative.binomial", 
-	num.lv = 2, row.eff = "random")
+	num.lv = 2, row.eff = "random",
+	mcmc.control = example.mcmc.control)
 
 spider.fit.nb$ics ## Returns the information criteria 
 }

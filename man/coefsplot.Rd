@@ -1,6 +1,9 @@
 \name{coefsplot}
+
 \alias{coefsplot}
+
 \title{Caterpillar plots of the regression coefficients from a boral model} 
+
 \description{Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in \code{X} fitted in the boral model.}
 
 \usage{
@@ -29,7 +32,7 @@ Thanks to Robert O'Hara for suggesting and providing the original code for this 
 
 
 \value{
-	If SSVS was applied individually to each coefficient of \code{X} when fitting the boral model, then the posterior probabilities of including the specified covariate are printed out i.e., those from \code{x$ssvs.indcoefs.mean}.
+	If SSVS was applied individually to each coefficient of \code{X} when fitting the boral model, then the posterior probabilities of including the specified covariate are printed out i.e., \cr those from \code{x$ssvs.indcoefs.mean}.
 	}
 
 \seealso{
@@ -44,6 +47,11 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -51,7 +59,7 @@ n <- nrow(y); p <- ncol(y);
 
 X <- scale(spider$x)
 spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 2)
+	num.lv = 2, mcmc.control = example.mcmc.control)
 
 
 ## Do separate line plots for all the coefficients of X

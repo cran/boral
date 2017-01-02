@@ -1,32 +1,33 @@
 ##############
 ## Latent Variable Ordination and Regression using MCMC 
-## Site effects fitted as fixed effects
 ## NB parameterized as V = mu + phi*mu^2
-## Ordinal data handled as propotional odds regression, with same cutoff points for all spp. 
+## Ordinal data handled as propotional odds regression, with common cutoff points for all spp, but spp intercepts included as random effects; This should make sense if the same ordinal scale is applied to all species
 ## Multinomial regression is available, but CURRENTLY NOT ALLOWED DUE TO COMPUTATION TIME
-## This should make sense if the same ordinal scale is applied to all species
 
-## Changes from v1.0
-## 1) help file needs to be amended to expicitly state halfnormal and halfcauchy, uniform etc..
-## 2) Change message for NB so that it identifies species with problem
-## 3) lvsplot now has the option of returns scaled lvs and loadings and lvs, as well as plotting them; it is based on the argument return.vals
-## 4) If the number of ordinal responses exceeds 2, the species intercepts are now drawn as a random intercept from a normal distribution with sigma = ordinal.ranef.sigma, representing species-specific deviations from the common cutoffs. Previously, the intercepts were estimated as fixed effect but with a sum to zero constraint.
-## 5) lvsplot now includes a which.lvs argument, which allows model-based ordinations in cases where num.lv > 2, choosing the axes of interest to plot 
-## 6) more.measures now scrapped from get.measures function
-## 7) calc.condlogLik now accepts lv = NULL, so that the log-likelihood can be calculated for models with no latent variables. In the case of models with no row effects and/or no random row effects, this should return the same answers as calc.logLik.lv0
-## 8) get.measures and get.more.measures now formally prevent calculation of marginal log-likelihood based information criterion when the random effects are complicated e.g., traits included so that beta_{0j} drawn as ranef, and when ordinal spp-intercepts are ranefs.
-## 9) Multiple row effects now permitted
+## Changes from v1.1 (news files to be updated!)
+## 1) 0-1 line on qqplots for Dunn Smyth residuals is now replaced with a general qqline
+## 2) Help files for boral reformatted to move some to a separate sub help file, analogous to how mgcv does things =D
+## 3) hpdintervals reformatted to simplify output
+## 4) traits are now allows for ordinal regression. The exception is if you have a single ordinal column, in which case the intercept for this is forced to be zero by parameter identifiability reasons.
+
 
 ## TODO: 
-## 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale problem?; 
+## 0) Reformat output for boral so that instead of a separate element for mean,median,IQR,sd; present it as a 4 column array or vector. Without forcing all users to adopt this, the only simple way of doing this is to create a function that reformats boral output?
+## 1) correct problems with increasing number of LVs causing increase in covariance and variance i.e., scale proborla outblem?; 
 ## 2) Construct predict functions; see predictfunctions.R 
+## 3) Consider switching to weakly informative priors by default?
 ## 4) Reduce rank species coefficients to get constrained ordination? HARD!!!
-## 6) Allows traits for ordinal regression
+## 5) Draw species coefficients as random effects. In principle, the current function could allow this if you require users to manually include an intercept into traits. Then if only an intercept column is included for traits, the species coefs for each covariate are draw from a common mean. 
 ## 7) allow for multiple chains, but don't check convergence on the LVs and their loadings. Also cannot combined chains for LV and loadings unless you post process them, which is annoying. Thanks about how to parallelize JAGS if you can get this going though
 ## 8) Allow SSVS for selecting traits?
-## 9) Reformat output so that instead of a separate element for mean,median,IQR,sd; present it as a 4 column array or vector
-## 10) Make manual calculation of HPD intervals easier
+
 ## Make sure you test all dontrun examples before building package!!!
+## example(topic = "about.ssvs", package = "boral", run.dontrun=TRUE)
+## example(topic = "about.traits", package = "boral", run.dontrun=TRUE)
+## example(topic = "boral", package = "boral", run.dontrun=TRUE)
+## example(topic = "calc.condlogLik", package = "boral", run.dontrun=TRUE)
+## etc...
+
 
 ##############
 # library(R2jags); 
@@ -35,9 +36,11 @@
 # library(coda); 
 # library(MASS)
 # library(fishMod)
-# source("/media/fhui/LEXAR/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral111/R/auxilaryfunctions.R")
-# source("/media/fhui/LEXAR/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral111/R/makejagsscriptfunctions.R")
-# source("/media/fhui/LEXAR/Maths/UNSWPHD/Miscellaneous/Rpackage-boral/boral111/R/unseenfunctions.R")
+# library(abind)
+# source("auxilaryfunctions.R")
+# source("makejagsboralmodel.R")
+# source("makejagsboralnullmodel.R")
+# source("unseenfunctions.R")
 
 
 # n = 60; p <- 30
@@ -56,6 +59,7 @@ boral <- function(y, ...) UseMethod("boral")
 
 ## Model is g(mu_{ij}) = row + beta0 + LV_i*theta_j + X_i*beta_j
 boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, family, trial.size = 1, num.lv = 0, row.eff = "none", row.ids = NULL, save.model = FALSE, calc.ics = TRUE, mcmc.control = list(n.burnin = 10000, n.iteration = 40000, n.thin = 30, seed = 123), prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6), do.fit = TRUE, model.name = NULL, ...) {
+	new.format <- FALSE
 
 	if(is.null(dim(y))) { 
 		message("Converting y into a one column matrix."); 
@@ -110,9 +114,8 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	if(any(family == "ordinal")) {
 		if(sum(y[, family == "ordinal"] == 0) > 0) 
 			stop("For ordinal data, please shift minimum level to 1.")
-		message("It is assumed all ordinal columns have the same number of levels; please see help file as to the motivation behind this.")
-		message("boral may take a ridiculously long time to fit ordinal data models. Apologies in advance!") 
-		if(!is.null(traits)) stop("Current version of boral does not allow traits for ordinal responses. Sorry!")
+ 		if(!is.null(traits) & (sum(family == "ordinal") == 1)) 
+			message("The intercept for the single ordinal response is set to zero and not regressed traits for parameter identifiability reasons.")
 		}
 	
 	
@@ -128,7 +131,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != nrow(y)) 
 			stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
+		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 		
 		
@@ -154,7 +157,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	
 	
 	if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
-        stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of columns in y. The latter will assume the specified trial size for all rows labelled binomial in the family argument.")
+        stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of columns in y.")
 	if(any(family == "binomial") & length(trial.size) == 1) {
 		complete.trial.size <- rep(0, ncol(y))
 		complete.trial.size[which(family == "binomial")] <- trial.size 
@@ -204,15 +207,15 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	
 	jags.params <- c("all.params")
 	if(num.lv > 0) jags.params <- c(jags.params, "lvs")
-	if(row.eff != "none") jags.params <- c(jags.params, paste("row.params.ID",1:ncol(row.ids),sep=""))
-	if(row.eff == "random") jags.params <- c(jags.params, paste("row.ranef.sigma.ID",1:ncol(row.ids),sep=""))
+	if(row.eff != "none") jags.params <- c(jags.params, paste0("row.params.ID",1:ncol(row.ids)))
+	if(row.eff == "random") jags.params <- c(jags.params, paste0("row.ranef.sigma.ID",1:ncol(row.ids)))
 	if(num.X > 0 & any(family != "multinom")) jags.params <- c(jags.params, "X.params")
 	#if(num.X > 0 & any(family == "multinom")) jags.params <- c(jags.params, "X.multinom.params")
 	if(num.traits > 0) jags.params <- c(jags.params, "traits.int", "traits.params", "sigma.trait")
 	if(any(family == "tweedie")) jags.params <- c(jags.params, "powerparam")
 	if(any(family == "ordinal")) jags.params <- c(jags.params, "alpha", "ordinal.ranef.sigma")
-	if(any(prior.control$ssvs.index == 0)) jags.params <- c(jags.params, paste("probindX", which(prior.control$ssvs.index == 0), sep = ""))
-	if(any(prior.control$ssvs.index > 0)) jags.params <- c(jags.params, paste("probGpX", unique(prior.control$ssvs.index[prior.control$ssvs.index > 0]), sep = ""))
+	if(any(prior.control$ssvs.index == 0)) jags.params <- c(jags.params, paste0("probindX", which(prior.control$ssvs.index == 0)))
+	if(any(prior.control$ssvs.index > 0)) jags.params <- c(jags.params, paste0("probGpX", unique(prior.control$ssvs.index[prior.control$ssvs.index > 0])))
 	
 	
 	jags.inits <- function() {
@@ -292,95 +295,166 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
  	if(num.traits > 0) { 
  		if(is.null(colnames(traits))) colnames(traits) <- 1:ncol(traits); if(is.null(rownames(traits))) rownames(traits) <- 1:nrow(traits) }
 
-		
-	out.fit <- list(lv.coefs.median = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, median), nrow = p), lv.coefs.iqr = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = p), lv.coefs.mean = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, mean), nrow = p), lv.coefs.sd = matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, sd), nrow = p))
-	rownames(out.fit$lv.coefs.median) <- rownames(out.fit$lv.coefs.iqr) <- rownames(out.fit$lv.coefs.mean) <- rownames(out.fit$lv.coefs.sd) <- colnames(y)
 
+	lv.coefs.arr <- abind(
+		matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, median), nrow = p),
+		matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, mean), nrow = p),
+		matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = p),
+		matrix(apply(combined.fit.mcmc[, grep("all.params", colnames(combined.fit.mcmc))], 2, sd), nrow = p), 
+		along = 3)
 	
-	if(num.lv > 0) { 
-		out.fit$lv.median = matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, median), nrow = n)
-		out.fit$lv.iqr = matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, IQR), nrow = n)
-		out.fit$lv.mean = matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, mean), nrow = n)
-		out.fit$lv.sd = matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, sd), nrow = n)
-		rownames(out.fit$lv.median) <- rownames(out.fit$lv.iqr) <- rownames(out.fit$lv.mean) <- rownames(out.fit$lv.sd) <- rownames(y)
-		colnames(out.fit$lv.median) <- colnames(out.fit$lv.iqr) <- colnames(out.fit$lv.mean) <- colnames(out.fit$lv.sd) <- paste("LV", 1:num.lv, sep = "")
+	out.fit <- list()
+
+	if(num.lv > 0) {
+		lv.arr <- abind(
+			matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, median), nrow = n),
+			matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, mean), nrow = n),
+			matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, IQR), nrow = n),
+			matrix(apply(combined.fit.mcmc[, grep("lvs", colnames(combined.fit.mcmc))], 2, sd), nrow = n),
+			along = 3)
+		dimnames(lv.arr) <- list(rows = rownames(y), lvs = paste0("LV", 1:num.lv), type = c("median","mean","iqr","sd"))
 		
-		if(ncol(out.fit$lv.coefs.median) == (num.lv+2)) colnames(out.fit$lv.coefs.median) <- colnames(out.fit$lv.coefs.iqr) <- colnames(out.fit$lv.coefs.mean) <- colnames(out.fit$lv.coefs.sd) <- c("beta0", paste("theta", 1:num.lv, sep = ""), "Dispersion") 
-		if(ncol(out.fit$lv.coefs.median) == (num.lv+1)) colnames(out.fit$lv.coefs.median) <- colnames(out.fit$lv.coefs.iqr) <- colnames(out.fit$lv.coefs.mean) <- colnames(out.fit$lv.coefs.sd) <- c("beta0", paste("theta", 1:num.lv, sep = "")) 
+		if(new.format) { out.fit$lv <- lv.arr }
+		if(!new.format) { 
+			out.fit$lv.median <- lv.arr[,,1]; out.fit$lv.mean <- lv.arr[,,2]; 
+			out.fit$lv.iqr <- lv.arr[,,3]; out.fit$lv.sd <- lv.arr[,,4]
+			}
+			
+		if(dim(lv.coefs.arr)[2] == (num.lv+2)) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0", paste0("theta", 1:num.lv), "Dispersion"), type = c("median","mean","iqr","sd"))
+		if(dim(lv.coefs.arr)[2] == (num.lv+1)) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0", paste0("theta", 1:num.lv)), type = c("median","mean","iqr","sd"))
 		}
+		
 	if(num.lv == 0) {
-		if(ncol(out.fit$lv.coefs.median) == 2) colnames(out.fit$lv.coefs.median) <- colnames(out.fit$lv.coefs.iqr) <- colnames(out.fit$lv.coefs.mean) <- colnames(out.fit$lv.coefs.sd) <- c("beta0", "Dispersion") 
-		if(ncol(out.fit$lv.coefs.median) == 1) colnames(out.fit$lv.coefs.median) <- colnames(out.fit$lv.coefs.iqr) <- colnames(out.fit$lv.coefs.mean) <- colnames(out.fit$lv.coefs.sd) <- c("beta0") 
+		if(dim(lv.coefs.arr)[2] == 2) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0", "Dispersion"), type = c("median","mean","iqr","sd"))
+		if(dim(lv.coefs.arr)[2] == 1) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0"), type = c("median","mean","iqr","sd"))
 		}	
-	
+	if(new.format) { out.fit$lv.coefs <- lv.coefs.arr }
+	if(!new.format) { 
+		out.fit$lv.coefs.median <- lv.coefs.arr[,,1]; out.fit$lv.coefs.mean <- lv.coefs.arr[,,2]
+		out.fit$lv.coefs.iqr <- lv.coefs.arr[,,3]; out.fit$lv.coefs.sd <- lv.coefs.arr[,,4]
+		}
 	
 	if(row.eff != "none") {
 		out.fit$row.coefs <- vector("list", ncol(row.ids))
 		names(out.fit$row.coefs) <- colnames(row.ids)
 		for(k in 1:ncol(row.ids)) {
-			out.fit$row.coefs[[k]] <- list(median = apply(combined.fit.mcmc[, grep(paste("row.params.ID",k,sep=""), colnames(combined.fit.mcmc))], 2, median), iqr = apply(combined.fit.mcmc[, grep(paste("row.params.ID",k,sep=""), colnames(combined.fit.mcmc))], 2, IQR), mean = apply(combined.fit.mcmc[, grep(paste("row.params.ID",k,sep=""), colnames(combined.fit.mcmc))], 2, mean), sd = apply(combined.fit.mcmc[, grep(paste("row.params.ID",k,sep=""), colnames(combined.fit.mcmc))], 2, median))
-			
-			names(out.fit$row.coefs[[k]]$median) <- names(out.fit$row.coefs[[k]]$iqr) <- names(out.fit$row.coefs[[k]]$mean) <- names(out.fit$row.coefs[[k]]$sd) <- 1:n.ID[k]
+			row.coefs.arr <- cbind(
+				apply(combined.fit.mcmc[, grep(paste0("row.params.ID",k), colnames(combined.fit.mcmc))], 2, median), 
+				apply(combined.fit.mcmc[, grep(paste0("row.params.ID",k), colnames(combined.fit.mcmc))], 2, mean), 
+				apply(combined.fit.mcmc[, grep(paste0("row.params.ID",k), colnames(combined.fit.mcmc))], 2, IQR), 
+				apply(combined.fit.mcmc[, grep(paste0("row.params.ID",k), colnames(combined.fit.mcmc))], 2, sd))
+			rownames(row.coefs.arr) <- 1:n.ID[k]; colnames(row.coefs.arr) <- c("median","mean","iqr","sd")
+				
+			if(new.format) { out.fit$row.coefs[[k]] <- row.coefs.arr }
+			if(!new.format) { 
+				out.fit$row.coefs[[k]] <- list(median = row.coefs.arr[,1], mean = row.coefs.arr[,2], iqr = row.coefs.arr[,3], sd = row.coefs.arr[,4])
+				}
 			}
 	
 		if(row.eff == "random") {
 			out.fit$row.sigma <- vector("list", ncol(row.ids))
 			names(out.fit$row.sigma) <- colnames(row.ids)
 			for(k in 1:ncol(row.ids)) {
-				out.fit$row.sigma[[k]] <- list(median = median(combined.fit.mcmc[, grep(paste("row.ranef.sigma.ID",k,sep=""), colnames(combined.fit.mcmc))]), iqr = IQR(combined.fit.mcmc[, grep(paste("row.ranef.sigma.ID",k,sep=""), colnames(combined.fit.mcmc))]), mean = mean(combined.fit.mcmc[, grep(paste("row.ranef.sigma.ID",k,sep=""), colnames(combined.fit.mcmc))]), sd = sd(combined.fit.mcmc[, grep(paste("row.ranef.sigma.ID",k,sep=""), colnames(combined.fit.mcmc))]))
+				row.sigma.vec <- c(
+					median(combined.fit.mcmc[, grep(paste0("row.ranef.sigma.ID",k), colnames(combined.fit.mcmc))]),
+					mean(combined.fit.mcmc[, grep(paste0("row.ranef.sigma.ID",k), colnames(combined.fit.mcmc))]),
+					IQR(combined.fit.mcmc[, grep(paste0("row.ranef.sigma.ID",k), colnames(combined.fit.mcmc))]),
+					sd(combined.fit.mcmc[, grep(paste0("row.ranef.sigma.ID",k), colnames(combined.fit.mcmc))]))
+				names(row.sigma.vec) <- c("median","mean","iqr","sd")
 				
-				names(out.fit$row.sigma[[k]]$median) <- names(out.fit$row.sigma[[k]]$iqr) <- names(out.fit$row.sigma[[k]]$mean) <- names(out.fit$row.sigma[[k]]$sd) <- paste("Row random effects sigma for", colnames(row.ids)[k])
-				}			
+				if(new.format) { out.fit$row.sigma[[k]] <- row.sigma.vec }
+				if(!new.format) { 
+					out.fit$row.sigma[[k]] <- list(median = row.sigma.vec[1], mean = row.sigma.vec[2], iqr = row.sigma.vec[3], sd = row.sigma.vec[4])				
+					}
+				}
 			}
 		}
-
 		
 	if(num.X > 0) {
-		out.fit$X.coefs.median <- matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, median), nrow = p)
-		out.fit$X.coefs.iqr <- matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = p)
-		out.fit$X.coefs.mean <- matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, mean), nrow = p)
-		out.fit$X.coefs.sd <- matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, sd), nrow = p)
-		rownames(out.fit$X.coefs.median) <- rownames(out.fit$X.coefs.iqr) <- rownames(out.fit$X.coefs.mean) <- rownames(out.fit$X.coefs.sd) <- colnames(y)
-		colnames(out.fit$X.coefs.median) <- colnames(out.fit$X.coefs.iqr) <- colnames(out.fit$X.coefs.mean) <- colnames(out.fit$X.coefs.sd) <- colnames(X)
-		
-		if(any(prior.control$ssvs.index == 0) & num.traits == 0) {
-			out.fit$ssvs.indcoefs.mean <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 
-                2, mean), nrow = p)
-			rownames(out.fit$ssvs.indcoefs.mean) <- colnames(y)
-			colnames(out.fit$ssvs.indcoefs.mean) <- colnames(X)[which(prior.control$ssvs.index == 0)]
-			out.fit$ssvs.indcoefs.sd <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 2, sd), nrow = p)
-			rownames(out.fit$ssvs.indcoefs.sd) <- colnames(y)
-			colnames(out.fit$ssvs.indcoefs.sd) <- colnames(X)[which(prior.control$ssvs.index == 0)]
-			}
-		if(any(prior.control$ssvs.index == 0) & num.traits > 0) {
-			out.fit$ssvs.indcoefs.mean <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 2, mean), ncol = ncol(traits), byrow = TRUE)
-			out.fit$ssvs.indcoefs.mean[out.fit$ssvs.indcoefs.mean == 2] <- NA 
-			rownames(out.fit$ssvs.indcoefs.mean) <- colnames(X)
-			colnames(out.fit$ssvs.indcoefs.mean) <- colnames(traits)
+		X.coefs.arr <- abind(
+			matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, median), nrow = p),
+			matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, mean), nrow = p),
+			matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = p),
+			matrix(apply(combined.fit.mcmc[, grep("X.params", colnames(combined.fit.mcmc))], 2, sd), nrow = p),
+			along = 3)
+		dimnames(X.coefs.arr) <- list(cols = colnames(y), X = colnames(X), type = c("median","mean","iqr","sd"))
 
-			out.fit$ssvs.indcoefs.sd <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 2, sd), ncol = ncol(traits), byrow = TRUE)
-			out.fit$ssvs.indcoefs.sd[out.fit$ssvs.indcoefs.mean == 0] <- NA 
-			rownames(out.fit$ssvs.indcoefs.sd) <- colnames(X)
-			colnames(out.fit$ssvs.indcoefs.sd) <- colnames(traits)
+		if(new.format) { out.fit$X.coefs <- X.coefs.arr }
+		if(!new.format) { 
+			out.fit$X.coefs.median <- X.coefs.arr[,,1]; out.fit$X.coefs.mean <- X.coefs.arr[,,2]
+			out.fit$X.coefs.iqr <- X.coefs.arr[,,3]; out.fit$X.coefs.sd <- X.coefs.arr[,,4]
+			}
+				
+		if(any(prior.control$ssvs.index == 0) & num.traits == 0) {
+			ssvs.indcoefs.arr <- array(0, dim = c(p, sum(prior.control$ssvs.index == 0), 2))
+			ssvs.indcoefs.arr[,,1] <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 
+                2, mean), nrow = p)
+			ssvs.indcoefs.arr[,,2] <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 
+                2, sd), nrow = p)
+			dimnames(ssvs.indcoefs.arr) <- list(cols = colnames(y), X = colnames(X)[which(prior.control$ssvs.index == 0)], type = c("mean","sd"))
+                
+			if(new.format) { out.fit$ssvs.indcoefs <- ssvs.indcoefs.arr }
+			if(!new.format) { 
+				out.fit$ssvs.indcoefs.mean <- ssvs.indcoefs.arr[,,1]; out.fit$ssvs.indcoefs.sd <- ssvs.indcoefs.arr[,,2]
+				}
+			}
+		if(any(prior.control$ssvs.index == 0) & num.traits > 0) { ## Currently not used since SSVS not permitted on traits
+			ssvs.indcoefs.arr <- array(0, dim = c(p, num.traits, 2))
+			ssvs.indcoefs.arr[,,1] <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 2, mean), ncol = ncol(traits), byrow = TRUE)
+			ssvs.indcoefs.arr[,,1][ssvs.indcoefs.arr[,,1] == 2] <- NA 
+			ssvs.indcoefs.arr[,,2] <- matrix(apply(combined.fit.mcmc[, grep("probindX", colnames(combined.fit.mcmc))], 2, sd), ncol = ncol(traits), byrow = TRUE)
+			ssvs.indcoefs.arr[,,2][ssvs.indcoefs.arr[,,1] == 2] <- NA 
+			dimnames(ssvs.indcoefs.arr) <- list(cols = colnames(y), traits = colnames(traits), type = c("mean","sd"))
+				
+			if(new.format) { out.fit$ssvs.indcoefs <- ssvs.indcoefs.arr }
+			if(!new.format) { 
+				out.fit$ssvs.indcoefs.mean <- ssvs.indcoefs.arr[,,1]; out.fit$ssvs.indcoefs.sd <- ssvs.indcoefs.arr[,,2]
+				}
 			}
 		if(any(prior.control$ssvs.index > 0)) {
-			out.fit$ssvs.gpcoefs.mean <- apply(as.matrix(combined.fit.mcmc[, grep("probGpX", colnames(combined.fit.mcmc))]), 2, mean)
-			names(out.fit$ssvs.gpcoefs.mean) <- paste("Gp", unique(prior.control$ssvs.index[prior.control$ssvs.index > 0]), sep = "")
-			out.fit$ssvs.gpcoefs.sd <- apply(as.matrix(combined.fit.mcmc[, grep("probGpX", colnames(combined.fit.mcmc))]), 2, sd)
-			names(out.fit$ssvs.gpcoefs.sd) <- paste("Gp", unique(prior.control$ssvs.index[prior.control$ssvs.index > 0]), sep = "")
+			ssvs.gpcoefs.arr <- cbind(
+				apply(as.matrix(combined.fit.mcmc[, grep("probGpX", colnames(combined.fit.mcmc))]), 2, mean),
+				apply(as.matrix(combined.fit.mcmc[, grep("probGpX", colnames(combined.fit.mcmc))]), 2, sd))
+			rownames(ssvs.gpcoefs.arr) <- paste0("Gp", unique(prior.control$ssvs.index[prior.control$ssvs.index > 0]))	
+			colnames(ssvs.gpcoefs.arr) <- c("mean","sd")
+
+			if(new.format) { out.fit$ssvs.gpcoefs <- ssvs.gpcoefs.arr }
+			if(!new.format) { 
+				out.fit$ssvs.gpcoefs.mean <- ssvs.gpcoefs.arr[,1]; out.fit$ssvs.gpcoefs.sd <- ssvs.gpcoefs.arr[,2]
+				}
 			}
 		}
 		
 		
 	if(num.traits > 0) {
-		out.fit$traits.coefs.median <- cbind(apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, median), matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, median), nrow = num.X+1), apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, median))
-				
-		out.fit$traits.coefs.iqr <- cbind(apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, IQR), matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = num.X+1), apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, IQR))
-		out.fit$traits.coefs.mean <- cbind(apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, mean), matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, mean), nrow = num.X+1), apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, mean))
-		out.fit$traits.coefs.sd <- cbind(apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, sd), matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, sd), nrow = num.X+1), apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, sd))
-
-		rownames(out.fit$traits.coefs.median) <- rownames(out.fit$traits.coefs.iqr) <- rownames(out.fit$traits.coefs.mean) <- rownames(out.fit$traits.coefs.sd) <- c("beta0",colnames(X))
-		colnames(out.fit$traits.coefs.median) <- colnames(out.fit$traits.coefs.iqr) <- colnames(out.fit$traits.coefs.mean) <- colnames(out.fit$traits.coefs.sd) <- c("kappa0",colnames(traits),"sigma")
+		traits.coefs.arr <- array(0, dim = c(num.X+1, num.traits + 2, 4))
+		traits.coefs.arr[,,1] <- cbind(
+			apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, median), 
+			matrix(apply(combined.fit.mcmc[, grep("traits.params", colnames(combined.fit.mcmc))], 2, median), nrow = num.X+1), 
+			apply(combined.fit.mcmc[, grep("sigma.trait", colnames(combined.fit.mcmc))], 2, median))
+		traits.coefs.arr[,,2] <- cbind(
+			apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, mean), matrix(apply(combined.fit.mcmc[, 
+			grep("traits.params", colnames(combined.fit.mcmc))], 2, mean), nrow = num.X+1), apply(combined.fit.mcmc[, 
+			grep("sigma.trait", colnames(combined.fit.mcmc))], 2, mean))
+		traits.coefs.arr[,,3] <- cbind(
+			apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, IQR), matrix(apply(combined.fit.mcmc[, 
+			grep("traits.params", colnames(combined.fit.mcmc))], 2, IQR), nrow = num.X+1), apply(combined.fit.mcmc[, 
+			grep("sigma.trait", colnames(combined.fit.mcmc))], 2, IQR))
+		traits.coefs.arr[,,4] <- cbind(
+			apply(combined.fit.mcmc[, grep("traits.int", colnames(combined.fit.mcmc))], 2, sd), matrix(apply(combined.fit.mcmc[, 
+			grep("traits.params", colnames(combined.fit.mcmc))], 2, sd), nrow = num.X+1), apply(combined.fit.mcmc[, 
+			grep("sigma.trait", colnames(combined.fit.mcmc))], 2, sd))
+		dimnames(traits.coefs.arr) <- list(X.coefficients = c("beta0",colnames(X)), traits.coefficients =  c("kappa0",colnames(traits),"sigma"), type = c("median","mean","iqr","sd"))
+			
+		if(new.format) { out.fit$traits.coefs <- traits.coefs.arr }
+		if(!new.format) { 
+			out.fit$traits.coefs.median <- traits.coefs.arr[,,1]; out.fit$traits.coefs.mean <- traits.coefs.arr[,,2]
+			out.fit$traits.coefs.iqr <- traits.coefs.arr[,,3]; out.fit$traits.coefs.sd <- traits.coefs.arr[,,4]
+			}
 		}
 
 #   	if(num.X > 0 & any(family == "multinom")) {
@@ -393,29 +467,52 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 #   		}
 
 	if(any(family == "ordinal")) {
-		out.fit$cutoffs.median <- apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, median)
-		out.fit$cutoffs.iqr <- apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, IQR)
-		out.fit$cutoffs.mean <- apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, mean)
-		out.fit$cutoffs.sd <- apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, sd)
-		names(out.fit$cutoffs.median) <- names(out.fit$cutoffs.iqr) <- names(out.fit$cutoffs.mean) <- names(out.fit$cutoffs.sd) <- paste(1:(num.ord.levels - 1), "|", 2:num.ord.levels, sep = "") 
+		cutoffs.arr <- cbind(
+			apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, median),
+			apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, mean),
+			apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, IQR),
+			apply(combined.fit.mcmc[, grep("alpha", colnames(combined.fit.mcmc))], 2, sd))
+		rownames(cutoffs.arr) <- paste0(1:(num.ord.levels - 1), "|", 2:num.ord.levels) 
+		colnames(cutoffs.arr) <- c("median","mean","iqr","sd")
+			
+		if(new.format) { out.fit$cutoffs <- cutoffs.arr }
+		if(!new.format) { 
+			out.fit$cutoffs.median <- cutoffs.arr[,1]; out.fit$cutoffs.mean <- cutoffs.arr[,2]
+			out.fit$cutoffs.iqr <- cutoffs.arr[,3]; out.fit$cutoffs.sd <- cutoffs.arr[,4]
+			}
 
-		if(sum(family == "ordinal") > 2) {
-			out.fit$ordinal.sigma.median <- median(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))])
-			out.fit$ordinal.sigma.iqr <- IQR(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))])
-			out.fit$ordinal.sigma.mean <- mean(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))])
-			out.fit$ordinal.sigma.sd <- sd(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))])
-            
-			names(out.fit$ordinal.sigma.median) <- names(out.fit$ordinal.sigma.iqr) <- names(out.fit$ordinal.sigma.mean) <- names(out.fit$ordinal.sigma.sd) <- "Species-specific random intercept sigma for ordinal responses" 
+		if(sum(family == "ordinal") > 1 & is.null(traits)) { ## If there are traits, then ordinal random intercept is either zero (if there is only 1 ordinal column, or has the sigma.trait (if there are >1 ordinal columns)
+			ordinal.sigma.vec <- c(
+				median(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))]),
+				mean(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))]),
+				IQR(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))]),
+				sd(combined.fit.mcmc[, grep("ordinal.ranef.sigma", colnames(combined.fit.mcmc))]))
+			names(ordinal.sigma.vec) <- c("median","mean","iqr","sd")
+
+			if(new.format) { out.fit$ordinal.sigma <- ordinal.sigma.vec }
+			if(!new.format) { 
+				out.fit$ordinal.sigma.median <- ordinal.sigma.vec[1]; out.fit$ordinal.sigma.mean <- ordinal.sigma.vec[2]
+				out.fit$ordinal.sigma.iqr <- ordinal.sigma.vec[3]; out.fit$ordinal.sigma.sd <- ordinal.sigma.vec[4]            
+				}
 			}
 		}
 
 	if(any(family == "tweedie")) {
-		out.fit$powerparam.median <- median(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))])
-		out.fit$powerparam.iqr <- IQR(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))])
-		out.fit$powerparam.mean <- mean(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))])
-		out.fit$powerparam.sd <- sd(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))])
-		names(out.fit$powerparam.median) <- names(out.fit$powerparam.iqr) <- names(out.fit$powerparam.mean) <- names(out.fit$powerparam.sd) <- "Common power parameter"
+		powerparam.vec <- c(
+			median(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))]),
+			mean(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))]),
+			IQR(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))]),
+			sd(combined.fit.mcmc[, grep("powerparam", colnames(combined.fit.mcmc))]))
+		names(powerparam.vec) <- c("median","mean","iqr","sd")
+			
+		if(new.format) { out.fit$powerparam <- powerparam.vec }
+		if(!new.format) { 
+			out.fit$powerparam.median <- powerparam.vec[1]; out.fit$powerparam.mean <- powerparam.vec[2]
+			out.fit$powerparam.iqr <- powerparam.vec[3]; out.fit$powerparam.sd <- powerparam.vec[4]
+			}
 		}
+	rm(list = ls(pattern = ".arr"))	
+		
 
 	#print(out.fit$lv.coefs.mean)
 	get.hpds <- get.hpdintervals(y, X, traits, row.ids = row.ids, combined.fit.mcmc, num.lv)
@@ -448,6 +545,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	out.fit$prior.control <- prior.control	
 	out.fit$num.ord.levels <- num.ord.levels
 	out.fit$mcmc.control <- mcmc.control
+	out.fit$format <- new.format 
 	#out.fit$n.chain <- out.fit$n.chains; 
 	#if(n.chains == 1) out.fit$geweke.diag <- gdiagnostic
 	
@@ -465,17 +563,17 @@ coefsplot <- function(covname, x, labely = NULL, est = "median", ...) {
 	if(!(covname %in% colnames(x$X.coefs.mean))) 
 		stop("covname not found among the covariates in the boral object x.")
 	
-	col.seq <- rep("black", length(x$hpdintervals$X.coefs.upper[,covname]))
-	col.seq[x$hpdintervals$X.coefs.lower[,covname] < 0 & x$hpdintervals$X.coefs.upper[,covname] > 0] <- "grey"
+	col.seq <- rep("black", length(x$hpdintervals$X.coefs[,covname,"lower"]))
+	col.seq[x$hpdintervals$X.coefs[,covname,"lower"] < 0 & x$hpdintervals$X.coefs[,covname,"upper"] > 0] <- "grey"
 	
 	At.y <- rev(1:nrow(x$X.coefs.median)) ## So that the graphs plots in the same order as rownames of x$X.coefs.median
 
 	if(est == "median")
-		plot(x = x$X.coefs.median[,covname], y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = covname, xlim = c(min(x$hpdintervals$X.coefs.lower[,covname]), max(x$hpdintervals$X.coefs.upper[,covname])), pch = "x", ...)
+		plot(x = x$X.coefs.median[,covname], y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = covname, xlim = c(min(x$hpdintervals$X.coefs[,covname,"lower"]), max(x$hpdintervals$X.coefs[,covname,"upper"])), pch = "x", ...)
 	if(est == "mean")
-		plot(x = x$X.coefs.mean[,covname], y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = covname, xlim = c(min(x$hpdintervals$X.coefs.lower[,covname]), max(x$hpdintervals$X.coefs.upper[,covname])), pch = "x", ...)
+		plot(x = x$X.coefs.mean[,covname], y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = covname, xlim = c(min(x$hpdintervals$X.coefs[,covname,"lower"]), max(x$hpdintervals$X.coefs[,covname,"upper"])), pch = "x", ...)
 
-	segments(x0 = x$hpdintervals$X.coefs.lower[,covname], y0 = At.y, x1 = x$hpdintervals$X.coefs.upper[,covname], y1 = At.y, col = col.seq, ...)  
+	segments(x0 = x$hpdintervals$X.coefs[,covname,"lower"], y0 = At.y, x1 = x$hpdintervals$X.coefs[,covname,"upper"], y1 = At.y, col = col.seq, ...)  
 	abline(v=0, lty=3)
 	
 	if(is.null(labely)) { axis(2, at=At.y, labels = rownames(x$X.coefs.mean), las=1, ...) } 
@@ -687,7 +785,7 @@ plot.boral <- function(x, est = "median", jitter = FALSE, ...) {
  
 	get.ds.res2 <- as.vector(unlist(get.ds.res))
  	qqnorm(get.ds.res2[is.finite(get.ds.res2)], main = "Normal Quantile Plot", ...)
- 	abline(0,1, ...)
+ 	qqline(y = get.ds.res2[is.finite(get.ds.res2)], ...)
  	
  	palette("default")
  	#par(.pardefault) 	

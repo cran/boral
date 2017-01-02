@@ -1,6 +1,9 @@
 \name{get.residual.cor}
+
 \alias{get.residual.cor}
+
 \title{Extract residual correlations from boral models}
+
 \description{Calculates the residual correlation from models that include latent variables.}
 
 \usage{
@@ -16,7 +19,7 @@ get.residual.cor(object, est = "median", prob = 0.95)
 }
 
 \details{
-In models with latent variables, the residual covariance matrix is calculated based on the matrix of latent variables regression coefficients formed by stacking the rows of \eqn{\bm{\theta}_j}. That is, if we denote \eqn{\bm{\Theta} = (\bm{\theta}_1 \ldots \bm{\theta}_p)'}, then the residual covariance and hence residual correlation matrix is calculated based on \eqn{\bm{\Theta}\bm{\Theta}'} (see also the help file for \code{\link{boral}}).
+In models with latent variables, the residual covariance matrix is calculated based on the matrix of latent variables regression coefficients formed by stacking the rows of \eqn{\bm{\theta}_j}. That is, if we denote \eqn{\bm{\Theta} = (\bm{\theta}_1 \ldots \bm{\theta}_p)'}, then the residual covariance and hence residual correlation matrix is calculated based on \eqn{\bm{\Theta}\bm{\Theta}'}.
 
 For multivariate abundance data, the inclusion of latent variables provides a parsimonious method of accounting for correlation between species. Specifically, the linear predictor,
 
@@ -55,6 +58,11 @@ Residual correlation matrices are reliably modeled only with two or more latent 
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+
 library(mvabund) ## Load a dataset from the mvabund package
 library(corrplot) ## For plotting correlations
 data(spider)
@@ -62,7 +70,7 @@ y <- spider$abun
 n <- nrow(y); p <- ncol(y); 
     
 spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", 
-	num.lv = 2, save.model = TRUE)
+	num.lv = 2, save.model = TRUE, mcmc.control = example.mcmc.control)
 
 res.cors <- get.residual.cor(spider.fit.nb)
 

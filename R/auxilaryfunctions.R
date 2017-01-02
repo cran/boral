@@ -37,7 +37,7 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != nrow(y)) 
 			stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
+		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 
 		
@@ -93,7 +93,7 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 ## Calculate logl for models with no latent variables
 ## Conditional and marginal log-likelihood are the same in such case, except that in the case of row.eff = "random" there is marginalization over the random row effect
 ## lv.coefs still need to be provided though at it contains the spp effects, and species-specific dispersion parameters
-## Furthermore, note also that since it takes it X.coefs and lv.coefs, then: 1) marginalization is not done over the spp coefs it traits is not NULL; 2) marginalization is not done over the spp intercepts if >= 2 are ordinal and hence the beta_{0j} are random effects...TOO DAMN HARD!
+## Furthermore, note also that since it takes it X.coefs and lv.coefs, then: 1) marginalization is not done over the spp coefs it traits is not NULL; 2) marginalization is not done over the spp intercepts if > 1 are ordinal and hence the beta_{0j} are random effects...TOO DAMN HARD!
 calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL, cutoffs = NULL, powerparam = NULL) {
 	if(is.null(lv.coefs)) 
 		stop("lv.coefs must be given, as it contains the column-specific intercepts.")
@@ -118,7 +118,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 			stop("calc.logLik.lv0 currently only permits a single, unique random intercept for each row...sorry!")
 		if(nrow(row.ids) != nrow(y)) 
 			stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
+		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 	if(row.eff == "fixed") { row.coefs <- row.params }
 	if(row.eff == "none") { row.coefs <- NULL }
@@ -222,7 +222,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 	
 ## Calculate marginal logl
 ## loglik = sum_{i=1}^n \log( \int \prod_{j=1}^s f(y_ij|z_i) f(z_i) dz_i )
-## Furthermore, note also that since it takes it X.coefs and lv.coefs, then: 1) marginalization is not done over the spp coefs it traits is not NULL; 2) marginalization is not done over the spp intercepts if > 2 are ordinal and hence the beta_{0j} are random effects...TOO DAMN HARD!
+## Furthermore, note also that since it takes it X.coefs and lv.coefs, then: 1) marginalization is not done over the spp coefs it traits is not NULL; 2) marginalization is not done over the spp intercepts if > 1 are ordinal and hence the beta_{0j} are random effects...TOO DAMN HARD!
 # lv.coefs = lv.coefs.mat; X.coefs = cw.X.coefs; row.coefs = cw.row.coefs; lv.mc = NULL; cutoffs = cw.cutoffs; X.multinom.coefs = NULL
 calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL, num.lv, lv.mc = NULL, cutoffs = NULL, powerparam = NULL) {
 	if(num.lv == 0) stop("Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")
@@ -251,7 +251,7 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 			stop("calc.marglogLik currently only permits a single, unique random intercept for each row...sorry!")
 		if(nrow(row.ids) != nrow(y)) 
 			stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
+		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 	if(row.eff == "fixed") { row.coefs <- row.params }
 
@@ -372,6 +372,8 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 		
 	if(any(family == "ordinal") & is.null(cutoffs)) 
 		stop("cutoffs (an ascending vector of intercepts for proportional odds regression) must be supplied if any columns are ordinal data.")
+	if(any(family == "ordinal")) 
+		index.ord.cols <- which(family == "ordinal")
 	if(!is.null(cutoffs)) {
 		num.ord.levels <- length(cutoffs) + 1
 		cutoffs <- sort(cutoffs)
@@ -395,7 +397,7 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != n) 
 			stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
+		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 	if(row.eff == "fixed") { row.coefs <- row.params }
 	if(row.eff == "random") {
@@ -416,10 +418,13 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 	if(!is.null(traits.coefs)) {
 		X.coefs <- matrix(0, s, ncol(X)) ## overwrite X.coefs
 		lv.coefs[,1] <- rnorm(s, cbind(1,traits)%*%traits.coefs[1,-ncol(traits.coefs)], sd = traits.coefs[1,ncol(traits.coefs)]) ## overwrite spp-specific intercepts
-		for(k in 1:ncol(X)) { 
+          if(any(family == "ordinal")) {
+               if(length(index.ord.cols) == 1) lv.coefs[index.ord.cols,1] <- 0 ## If there is just one ordinal column, then the random intercept for this column is zero for identifiability reasons
+               }
+		for(k in 1:ncol(X)) 
 			X.coefs[,k] <- rnorm(s, cbind(1,traits)%*%traits.coefs[k+1,-ncol(traits.coefs)], sd = traits.coefs[k+1,ncol(traits.coefs)])
-			}
-		eta <- eta + cbind(1,as.matrix(X))%*%t(cbind(lv.coefs[,1],X.coefs)) }
+		eta <- eta + cbind(1,as.matrix(X))%*%t(cbind(lv.coefs[,1],X.coefs)) 
+		}
 	
 	if(!is.null(row.coefs)) { for(k in 1:ncol(row.ids)) eta <- eta + row.coefs[[k]][row.ids[,k]] }
 	
@@ -435,7 +440,7 @@ create.life <- function (true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, tra
 		if(family[j] == "lnormal") sim.y[, j] <- rlnorm(n, meanlog = eta[, j], sdlog = (lv.coefs[j,ncol(lv.coefs)]))
 		if(family[j] == "tweedie") sim.y[, j] <- rTweedie(n, mu = exp(eta[, j]), phi = lv.coefs[j,ncol(lv.coefs)], p = powerparam)
 		if(family[j] == "ordinal") {
-			get.probs <- ordinal.conversion.spp(n = n, lv = true.lv,lv.coefs[j, ], num.lv = num.lv, row.coefs = row.coefs, row.ids = row.ids, X = X, X.coefs.j = X.coefs[j,], cutoffs = cutoffs, est = "ignore")
+			get.probs <- ordinal.conversion.spp(n = n, lv = true.lv, lv.coefs.j = lv.coefs[j, ], num.lv = num.lv, row.coefs = row.coefs, row.ids = row.ids, X = X, X.coefs.j = X.coefs[j,], cutoffs = cutoffs, est = "ignore")
 			for(i in 1:n) { sim.y[i, j] <- sample(1:num.ord.levels, 1, prob = get.probs[i,]) }
 			}
 		}
@@ -613,57 +618,68 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
 	get.int <- HPDinterval(fit.mcmc, prob = prob); 
 	hpd.lower <- get.int[,1]; hpd.upper <- get.int[,2]
 
-	final.list <- list(lv.coefs.lower = matrix(hpd.lower[grep("all.params",names(hpd.lower))], nrow=p), lv.coefs.upper = matrix(hpd.upper[grep("all.params",names(hpd.upper))], nrow=p))
-	rownames(final.list$lv.coefs.lower) <- rownames(final.list$lv.coefs.upper) <- colnames(y)
+	lv.coefs.arr <- abind(matrix(hpd.lower[grep("all.params",names(hpd.lower))], nrow=p), matrix(hpd.upper[grep("all.params",names(hpd.upper))], nrow=p), along = 3)	
 
+	final.list <- list()
+	
 	if(num.lv > 0) {
-		final.list$lv.lower = matrix(hpd.lower[grep("lvs", names(hpd.lower))], nrow=n)
-		final.list$lv.upper = matrix(hpd.upper[grep("lvs", names(hpd.upper))], nrow=n)
+		lv.arr <- abind(matrix(hpd.lower[grep("lvs", names(hpd.lower))], nrow=n), matrix(hpd.upper[grep("lvs", names(hpd.upper))], nrow=n), along = 3)
+		dimnames(lv.arr) <- list(rows = rownames(y), lvs = paste0("LV", 1:num.lv), type = c("lower","upper"))		
+		final.list$lv <- lv.arr
 
-		rownames(final.list$lv.lower) <- rownames(final.list$lv.upper) <- rownames(y)
-		colnames(final.list$lv.lower) <- colnames(final.list$lv.upper) <- paste("lv",1:num.lv,sep="")
-
-		if(ncol(final.list$lv.coefs.lower) == (num.lv+2)) colnames(final.list$lv.coefs.lower) <- colnames(final.list$lv.coefs.upper) <- c("beta0",paste("theta",1:num.lv,sep=""),"Dispersion")
-		if(ncol(final.list$lv.coefs.lower) == (num.lv+1)) colnames(final.list$lv.coefs.lower) <- colnames(final.list$lv.coefs.upper) <- c("beta0",paste("theta",1:num.lv,sep=""))
-		}		
-
-	if(num.lv == 0) { 
-		if(ncol(final.list$lv.coefs.lower) == 2) colnames(final.list$lv.coefs.lower) <- colnames(final.list$lv.coefs.upper) <- c("beta0","Dispersion")
-		if(ncol(final.list$lv.coefs.lower) == 1) colnames(final.list$lv.coefs.lower) <- colnames(final.list$lv.coefs.upper) <- c("beta0")
+		if(dim(lv.coefs.arr)[2] == (num.lv+2)) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0",paste0("theta",1:num.lv),"Dispersion"), type = c("lower","upper"))
+		if(dim(lv.coefs.arr)[2] == (num.lv+1)) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0",paste0("theta",1:num.lv)), type = c("lower","upper"))
 		}
-
+	if(num.lv == 0) { 
+		if(dim(lv.coefs.arr)[2] == 2) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0","Dispersion"), type = c("lower","upper"))
+		if(dim(lv.coefs.arr)[2] == 1) 
+			dimnames(lv.coefs.arr) <- list(cols = colnames(y), coefficients = c("beta0"), type = c("lower","upper"))
+		}
+	final.list$lv.coefs <- lv.coefs.arr
+	
 	if(length(grep("row.params", names(hpd.lower))) > 0) {
 		n.ID <- apply(row.ids, 2, function(x) length(unique(x)))
 		final.list$row.coefs <- vector("list", ncol(row.ids))
 		names(final.list$row.coefs) <- colnames(row.ids)
 		for(k in 1:ncol(row.ids)) {
-			final.list$row.coefs[[k]] <- list(lower = hpd.lower[grep(paste("row.params.ID",k,sep=""), names(hpd.lower))], upper = hpd.upper[grep(paste("row.params.ID",k,sep=""), names(hpd.upper))])
-			names(final.list$row.coefs[[k]]$lower) <- names(final.list$row.coefs[[k]]$upper) <- 1:n.ID[k]
+			row.coefs.arr <- cbind(
+					hpd.lower[grep(paste0("row.params.ID",k), names(hpd.lower))],
+					hpd.upper[grep(paste0("row.params.ID",k), names(hpd.upper))])
+			rownames(row.coefs.arr) <- 1:n.ID[k]; colnames(row.coefs.arr) <- c("lower","upper")
+			
+			final.list$row.coefs[[k]] <- row.coefs.arr
 			}
 
 		if(length(grep("row.ranef.sigma", names(hpd.lower))) > 0) { 
 			final.list$row.sigma <- vector("list", ncol(row.ids))
 			names(final.list$row.sigma) <- colnames(row.ids)
 			for(k in 1:ncol(row.ids)) {
-				final.list$row.sigma[[k]] <- list(lower = hpd.lower[grep(paste("row.ranef.sigma.ID",k,sep=""), names(hpd.lower))], upper = hpd.upper[grep(paste("row.ranef.sigma.ID",k,sep=""), names(hpd.upper))])
-				names(final.list$row.sigma[[k]]$lower) <- names(final.list$row.sigma[[k]]$upper) <- paste("Row random effects sigma for", colnames(row.ids)[k])
+				row.sigma.vec <- c(
+					hpd.lower[grep(paste0("row.ranef.sigma.ID",k), names(hpd.lower))],
+					hpd.upper[grep(paste0("row.ranef.sigma.ID",k), names(hpd.upper))])
+				names(row.sigma.vec) <- c("lower","upper")
+				
+				final.list$row.sigma[[k]] <- row.sigma.vec
 				}
 			}
 		}
 
 	if(length(grep("X.params", names(hpd.lower))) > 0) {
-		final.list$X.coefs.lower <- matrix(hpd.lower[grep("X.params", names(hpd.lower))],nrow=p)
-		final.list$X.coefs.upper <- matrix(hpd.upper[grep("X.params", names(hpd.upper))],nrow=p)
-		rownames(final.list$X.coefs.lower) <- rownames(final.list$X.coefs.upper) <- colnames(y)
-		colnames(final.list$X.coefs.lower) <- colnames(final.list$X.coefs.upper) <- colnames(X) 		
+		X.coefs.arr <- abind(matrix(hpd.lower[grep("X.params", names(hpd.lower))],nrow=p), matrix(hpd.upper[grep("X.params", names(hpd.upper))],nrow=p), along = 3)
+		dimnames(X.coefs.arr) <- list(cols = colnames(y), X = colnames(X), type = c("lower","upper"))
+	
+		final.list$X.coefs <- X.coefs.arr
 		}
 
 		
 	if(length(grep("traits.params", names(hpd.lower))) > 0) { ## If T.params exists, then X.params are regressed against traits
-		final.list$traits.coefs.lower <- cbind(hpd.lower[grep("traits.int", names(hpd.lower))], matrix(hpd.lower[grep("traits.params", names(hpd.lower))],nrow=ncol(X)+1), hpd.lower[grep("sigma.trait", names(hpd.lower))])
-		final.list$traits.coefs.upper <- cbind(hpd.upper[grep("traits.int", names(hpd.upper))], matrix(hpd.upper[grep("traits.params", names(hpd.upper))],nrow=ncol(X)+1), hpd.upper[grep("sigma.trait", names(hpd.upper))])
-		rownames(final.list$traits.coefs.lower) <- rownames(final.list$traits.coefs.upper) <- c("beta0",colnames(X))
-		colnames(final.list$traits.coefs.lower) <- colnames(final.list$traits.coefs.upper) <- c("kappa0",colnames(traits),"sigma")
+		traits.coefs.arr <- abind(cbind(hpd.lower[grep("traits.int", names(hpd.lower))], matrix(hpd.lower[grep("traits.params", names(hpd.lower))],nrow=ncol(X)+1), hpd.lower[grep("sigma.trait", names(hpd.lower))]), cbind(hpd.upper[grep("traits.int", names(hpd.upper))], matrix(hpd.upper[grep("traits.params", names(hpd.upper))],nrow=ncol(X)+1), hpd.upper[grep("sigma.trait", names(hpd.upper))]), along = 3)
+		dimnames(traits.coefs.arr) <- list(X.coefficients = c("beta0",colnames(X)), traits.coefficients = c("kappa0",colnames(traits),"sigma"), type = c("lower","upper"))
+					
+		final.list$traits.coefs <- traits.coefs.arr
 		}
 
 # 	if(length(grep("X.multinom.params", names(hpd.lower))) > 0) {
@@ -672,23 +688,27 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
 # 		}
 
 	if(length(grep("alpha", names(hpd.lower))) > 0) { ## If alpha exists, then cutoffs are there and some columns involved ordinal responses
-		final.list$cutoffs.lower <- hpd.lower[grep("alpha", names(hpd.lower))]
-		final.list$cutoffs.upper <- hpd.upper[grep("alpha", names(hpd.upper))]
-		num.ord.levels <- length(final.list$cutoffs.lower) + 1
-		names(final.list$cutoffs.lower) <- names(final.list$cutoffs.upper) <- paste(1:(num.ord.levels-1),"|",2:num.ord.levels,sep="") 
+		cutoffs.arr <- cbind(hpd.lower[grep("alpha", names(hpd.lower))], hpd.upper[grep("alpha", names(hpd.upper))])
+		num.ord.levels <- nrow(cutoffs.arr) + 1
+		rownames(cutoffs.arr) <- paste0(1:(num.ord.levels-1),"|",2:num.ord.levels)
+		colnames(cutoffs.arr) <- c("lower","upper")
+	
+		final.list$cutoffs <- cutoffs.arr
 
 		if(length(grep("ordinal.ranef.sigma", names(hpd.lower))) > 0) { 
-			final.list$ordinal.sigma.lower <- hpd.lower[grep("ordinal.ranef.sigma", names(hpd.lower))]
-			final.list$ordinal.sigma.upper <- hpd.upper[grep("ordinal.ranef.sigma", names(hpd.upper))]
-			names(final.list$ordinal.sigma.lower) <- names(final.list$ordinal.sigma.upper) <- "Species-specific random intercept sigma for ordinal responses"
+			ordinal.sigma.vec <- c(hpd.lower[grep("ordinal.ranef.sigma", names(hpd.lower))], hpd.upper[grep("ordinal.ranef.sigma", names(hpd.upper))])
+			names(ordinal.sigma.vec) <- c("lower","upper")
+			final.list$ordinal.sigma <- ordinal.sigma.vec
 			}
 		}
 				
 	if(length(grep("powerparams", names(hpd.lower))) > 0) { ## If powerparam exists, then power parameters are there and some columns involved tweedie responses
-		final.list$powerparam.lower <- hpd.lower[grep("powerparam", names(hpd.lower))]
-		final.list$powerparam.upper <- hpd.upper[grep("powerparam", names(hpd.upper))]
+		powerparam.vec <- c(hpd.lower[grep("powerparam", names(hpd.lower))], hpd.upper[grep("powerparam", names(hpd.upper))])
+		names(powerparam.vec) <- c("lower","upper")
+		final.list$powerparam <- powerparam.vec
 		}
 
+	rm(list = ls(pattern = ".arr"))
 	return(final.list) 
 	}
 
@@ -712,7 +732,7 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != nrow(y)) stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
 		if(row.eff == "random" && (ncol(row.ids) > 1 || length(unique(row.ids[,1])) != nrow(y))) do.marglik.ics <- FALSE
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
+		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 
 	if(length(grep("traits.params", colnames(fit.mcmc))) > 1) { do.marglik.ics <- FALSE }	
@@ -727,7 +747,7 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
 		cw.params <- list(lv.coefs = matrix(fit.mcmc[t, grep("all.params", colnames(fit.mcmc))], nrow = p))
 		if(row.eff != "none") {
 			cw.params$row.coefs <- vector("list", ncol(row.ids))
-			for(k in 1:ncol(row.ids)) cw.params$row.coefs[[k]] <- fit.mcmc[t, grep(paste("row.params.ID",k,sep=""), colnames(fit.mcmc))] 
+			for(k in 1:ncol(row.ids)) cw.params$row.coefs[[k]] <- fit.mcmc[t, grep(paste0("row.params.ID",k), colnames(fit.mcmc))] 
 			}
 		if(!is.null(X)) cw.params$X.coefs <- matrix(fit.mcmc[t, grep("X.params", colnames(fit.mcmc))], nrow = p) 
 		if(any(complete.family == "ordinal")) cw.params$cutoffs <- fit.mcmc[t, grep("alpha", colnames(fit.mcmc))] 
@@ -765,11 +785,11 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
 		params.median <- list(lv.coefs = matrix(apply(fit.mcmc[, grep("all.params", colnames(fit.mcmc))], 2, median), nrow = p))
 		if(row.eff == "fixed") {
 			params.median$row.coefs <- vector("list", ncol(row.ids))
-			for(k in 1:ncol(row.ids)) params.median$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste("row.params.ID",k,sep=""), colnames(fit.mcmc))], 2, median)
+			for(k in 1:ncol(row.ids)) params.median$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste0("row.params.ID",k), colnames(fit.mcmc))], 2, median)
 			}
 		if(row.eff == "random") {
 			params.median$row.coefs <- vector("list", ncol(row.ids))
-			for(k in 1:ncol(row.ids)) params.median$row.coefs[[k]] <- median(fit.mcmc[, grep(paste("row.ranef.sigma.ID",k,sep=""), colnames(fit.mcmc))])
+			for(k in 1:ncol(row.ids)) params.median$row.coefs[[k]] <- median(fit.mcmc[, grep(paste0("row.ranef.sigma.ID",k), colnames(fit.mcmc))])
 			}
 		if(!is.null(X)) 
 			params.median$X.coefs <- matrix(apply(fit.mcmc[, grep("X.params", colnames(fit.mcmc))], 2, median), nrow = p) 
@@ -827,7 +847,7 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != nrow(y)) stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
 		if(row.eff == "random" && (ncol(row.ids) > 1 || length(unique(row.ids[,1])) != nrow(y))) do.marglik.ics <- FALSE
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste("ID", 1:ncol(row.ids), sep = "")
+		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 
 	if(length(grep("traits.params", colnames(fit.mcmc))) > 1) { do.marglik.ics <- FALSE }	
@@ -850,11 +870,11 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
 		cw.params <- list(lv.coefs = matrix(fit.mcmc[t, grep("all.params", colnames(fit.mcmc))], nrow = p))		
 		if(row.eff == "fixed") {
 			cw.params$row.coefs <- vector("list", ncol(row.ids))
-			for(k in 1:ncol(row.ids)) cw.params$row.coefs[[k]] <- fit.mcmc[t, grep(paste("row.params.ID",k,sep=""), colnames(fit.mcmc))]
+			for(k in 1:ncol(row.ids)) cw.params$row.coefs[[k]] <- fit.mcmc[t, grep(paste0("row.params.ID",k), colnames(fit.mcmc))]
 			}
 		if(row.eff == "random") {
 			cw.params$row.coefs <- vector("list", ncol(row.ids))
-			for(k in 1:ncol(row.ids)) cw.params$row.coefs[[k]] <- fit.mcmc[t, grep(paste("row.ranef.sigma.ID",k,sep=""), colnames(fit.mcmc))]
+			for(k in 1:ncol(row.ids)) cw.params$row.coefs[[k]] <- fit.mcmc[t, grep(paste0("row.ranef.sigma.ID",k), colnames(fit.mcmc))]
 			}
 		if(!is.null(X)) cw.params$X.coefs <- matrix(fit.mcmc[t, grep("X.params", colnames(fit.mcmc))], nrow = p) 
 		if(any(complete.family == "ordinal")) cw.params$cutoffs <- fit.mcmc[t, grep("alpha", colnames(fit.mcmc))] 
@@ -881,11 +901,11 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
 	params.mean <- list(lv.coefs = matrix(apply(fit.mcmc[, grep("all.params", colnames(fit.mcmc))], 2, mean), nrow = p))
 	if(row.eff == "fixed") {
 		params.mean$row.coefs <- vector("list", ncol(row.ids))
-		for(k in 1:ncol(row.ids)) params.mean$row.coefs[[k]] <- fit.mcmc[t, grep(paste("row.params.ID",k,sep=""), colnames(fit.mcmc))]
+		for(k in 1:ncol(row.ids)) params.mean$row.coefs[[k]] <- fit.mcmc[t, grep(paste0("row.params.ID",k), colnames(fit.mcmc))]
 		}
 	if(row.eff == "random") {
 		params.mean$row.coefs <- vector("list", ncol(row.ids))
-		for(k in 1:ncol(row.ids)) params.mean$row.coefs[[k]] <- fit.mcmc[t, grep(paste("row.ranef.sigma.ID",k,sep=""), colnames(fit.mcmc))]
+		for(k in 1:ncol(row.ids)) params.mean$row.coefs[[k]] <- fit.mcmc[t, grep(paste0("row.ranef.sigma.ID",k), colnames(fit.mcmc))]
 		}
 	if(!is.null(X)) params.mean$X.coefs <- matrix(apply(fit.mcmc[, grep("X.params", colnames(fit.mcmc))], 2, mean), nrow = p) 
 	if(any(complete.family == "ordinal")) params.mean$cutoffs <- apply(fit.mcmc[, grep("alpha", colnames(fit.mcmc))], 2, mean)
@@ -964,8 +984,8 @@ get.residual.cor <- function(object, est = "median", prob = 0.95) {
 	for(t in 1:nrow(fit.mcmc)) {
 		#lvs <- matrix(fit.mcmc[t,grep("lvs", colnames(fit.mcmc))],nrow=n)
 		lvs.coefs <- matrix(fit.mcmc[t,grep("all.params", colnames(fit.mcmc))],nrow=p)
-		if(all(object$family == "binomial") & all(object$trial.size == 1)) 
-			lvs.coefs[,2:(num.lv+1)] <- lvs.coefs[,2:(num.lv+1)]/matrix(sqrt(1-rowSums(lvs.coefs[,2:(num.lv+1)]^2)),nrow=p,ncol=num.lv,byrow=FALSE) ## If data is Bernoulli, then scale the coefficients to acocunt for constraints (see Knott and Bartholomew, Chapter 4)
+# 		if(all(object$family == "binomial") & all(object$trial.size == 1)) 
+# 			lvs.coefs[,2:(num.lv+1)] <- lvs.coefs[,2:(num.lv+1)]/matrix(sqrt(1-rowSums(lvs.coefs[,2:(num.lv+1)]^2)),nrow=p,ncol=num.lv,byrow=FALSE) ## If data is Bernoulli, then scale the coefficients to acocunt for constraints (see Knott and Bartholomew, Chapter 4)
 		
 		lambdalambdaT <- as.matrix(lvs.coefs[,2:(num.lv+1)])%*%t(as.matrix(lvs.coefs[,2:(num.lv+1)]))
 		all.rescov.mat[t,,] <- (lambdalambdaT) 
@@ -974,7 +994,8 @@ get.residual.cor <- function(object, est = "median", prob = 0.95) {
  		if(all(object$family == "negative.binomial")) {
    			get.var.phis <- numeric(p); 
    			## Multiplicative Poisson gamma model implies a log gamma random effect on the linear predictors
-   			for(j in 1:p) get.var.phis[j] <- var(log(rgamma(2000,shape=1/lvs.coefs[j,ncol(lvs.coefs)],rate=1/lvs.coefs[j,ncol(lvs.coefs)])))
+   			for(j in 1:p) 
+				get.var.phis[j] <- var(log(rgamma(2000,shape=1/lvs.coefs[j,ncol(lvs.coefs)],rate=1/lvs.coefs[j,ncol(lvs.coefs)])))
 			all.rescov.mat[t,,] <- lambdalambdaT + diag(x=get.var.phis,nrow=p)
 # #   			for(j in 1:p) { for(j2 in 1:p) { all.rescor.mat[t,j,j2] <- lambdalambdaT[j,j2]/sqrt((lambdalambdaT[j,j]+get.var.phis[j])*(lambdalambdaT[j2,j2]+get.var.phis[j2])) } }
 # #   			all.trace.rescor[t] <- sum(diag(lambdalambdaT)+get.var.phis)

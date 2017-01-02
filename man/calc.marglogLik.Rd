@@ -1,6 +1,9 @@
 \name{calc.marglogLik}
+
 \alias{calc.marglogLik}
+
 \title{Marginal log-likelihood for an boral model}
+
 \description{Calculates the marginal log-likelihood for a set of parameter estimates from an boral model, whereby the latent variables and random effects (if applicable) are integrated out. The integration is performed using Monte Carlo integration.}
 
 \usage{
@@ -16,10 +19,8 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
   \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
-  For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi\mu^2}, where \eqn{\phi} is the column-specific dispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi^2}, where \eqn{\phi} is the column-specific standard deviation. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
-
- All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific intercept to account for differences between the columns (please see \emph{Details} for formulation). 
-}
+  Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
+  }
 
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
@@ -31,7 +32,7 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
   \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is standard deviation for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
- \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see the help file for the main boral function for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
 
  \item{num.lv}{The number of latent variables used in the boral model. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the log-likelihood.}
 
@@ -51,7 +52,7 @@ where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn
 
 The key difference between this and the conditional likelihood (see \code{calc.condlogLik}) is that the marginal likelihood treats the latent variables as "random effects" and integrates over them, whereas the conditional likelihood treats the latent variables as "fixed effects". 
 
-Please note the function is written conditional on all regression coefficients. Therefore, if traits are included in the model, in which case the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} become random effects instead (please see section titled ``Including species traits" in the main \code{boral} function), then the calculation of the log-likelihood does NOT take this into account, i.e. does not marginalize over them!
+Please note the function is written conditional on all regression coefficients. Therefore, if traits are included in the model, in which case the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} become random effects instead (please see \code{\link{about.traits}}), then the calculation of the log-likelihood does NOT take this into account, i.e. does not marginalize over them!
 
 Likewise if more than two columns are ordinal responses, then the regression coefficients \eqn{\beta_{0j}} corresponding to these columns become random effects, and the calculation of the log-likelihood also does NOT take this into account, i.e. does not marginalize over them!
 
@@ -83,6 +84,11 @@ The AIC and BIC at posterior median returned from \code{\link{get.measures}} are
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -91,7 +97,8 @@ n <- nrow(y); p <- ncol(y);
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", save.model = TRUE, calc.ics = FALSE)
+     row.eff = "fixed", save.model = TRUE, calc.ics = FALSE,
+     mcmc.control = example.mcmc.control)
 
 ## Extract all MCMC samples
 fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix) 
@@ -111,7 +118,8 @@ calc.marglogLik(y, family = "negative.binomial",
 ## Example 2 - model with one latent variable, no site effects, 
 ## 	and environmental covariates
 spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
-     num.lv = 2, save.model = TRUE, calc.ics = FALSE)
+     num.lv = 2, save.model = TRUE, calc.ics = FALSE,
+     mcmc.control = example.mcmc.control)
 
 ## Extract all MCMC samples
 fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix) 

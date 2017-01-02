@@ -1,8 +1,11 @@
 \name{boral}
+
 \alias{boral}
 \alias{boral.default}
 \alias{print.boral}
+
 \title{Fitting boral (Bayesian Ordination and Regression AnaLysis) models}
+
 \description{Bayesian ordination and regression models for analyzing multivariate data in ecology. Three "types" of models may be fitted: 1) With covariates and no latent variables, boral fits independent response GLMs; 2) With no covariates, boral fits a pure latent variable model; 3) With covariates and latent variables, boral fits correlated response GLMs.}
 
 \usage{
@@ -30,16 +33,14 @@ boral(y, ...)
 
   \item{which.traits}{A list of length equal to (number of columns in \code{X} + 1), informing which columns of \code{traits} the column-specific intercepts and each of the column-specific regression coefficients should be regressed against. The first element in the list applies to the column-specific intercept, while the remaining elements apply to the regression coefficients. Each element of \code{which.traits} is a vector indicating which traits are to be used.
   
-  For example, if \code{which.traits[[2]] = c(2,3)}, then the regression coefficients corresponding to the first column in \code{X} are regressed against the second and third columns of \code{traits}. If \code{which.traits[[2]] = 0}, then the regression coefficients for each column are treated as independent. Please see help file below for more details.
+  For example, if \code{which.traits[[2]] = c(2,3)}, then the regression coefficients corresponding to the first column in \code{X} are regressed against the second and third columns of \code{traits}. If \code{which.traits[[2]] = 0}, then the regression coefficients for each column are treated as independent. Please see \code{\link{about.traits}} for more details.
   
   Defaults to \code{NULL}, in conjunction with \code{traits = NULL}).}
 
   \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
-  For the negative binomial distribution, the variance is parameterized as \eqn{Var(y) = \mu + \phi\mu^2}, where \eqn{\phi} is the column-specific dispersion parameter. For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi^2}, where \eqn{\phi} is the column-specific standard deviation. For the tweedie distribution, the variance is parameterized as \eqn{Var(y) = \phi \mu^p} where \eqn{\phi} is the column-specific dispersion parameter and \eqn{p} is a power parameter common to all columns assumed to be tweedie, with \eqn{1 < p < 2}. For the gamma distribution, the variance is parameterized as \eqn{Var(y) = \mu/\phi} where \eqn{\phi} is the column-specific rate (henceforth referred to also as dispersion parameter). For the beta distribution, the parameterization is in terms of the mean \eqn{\mu} and sample size \eqn{\phi} (henceforth referred to also as dispersion parameter), so that the two shape parameters are given by \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
-
- All columns assumed to have ordinal responses are constrained to have the same cutoffs points, with a column-specific random intercept to account for differences between the columns (please see \emph{Details} for formulation). 
-}
+  Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
+  }
 
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
@@ -47,7 +48,7 @@ boral(y, ...)
 
  \item{row.eff}{Single element indicating whether (multiple) row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown variance, analogous to a random intercept in mixed models. Defaults to "none".}    
 
- \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}. This matrix is useful if one wants to specify more complicated row effect structures beyond a single, row effect unique to each row; please see details below as well as examples below. Whether these row effects are included as fixed or random effects is governed by \code{row.eff}. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \code{row.eff = "fixed"} or \code{"random"}, then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}. This matrix is useful if one wants to specify more complicated row effect structures beyond a single, row effect unique to each row; please see details below as well as examples below. Whether these row effects are included as fixed or random effects is governed by \code{row.eff}. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \code{row.eff = "fixed"} or \code{"random"}, then \cr \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
  \item{save.model}{If \code{save.model = TRUE}, then the JAGS model file is saved as a text file (with name given by \code{model.name}) in the current working directory, as well as the MCMC samples from the call to JAGS. If saved, various functions available in the \code{coda} package can be applied to the MCMC samples. Note MCMC samples can take up a lot of memory. Defaults to \code{FALSE}.}
 
@@ -67,7 +68,7 @@ boral(y, ...)
 	
 \item{prior.control}{A list of parameters for controlling the prior distributions. Values not set will assume default values. These include:
 	\itemize{
-		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients (ignored if \code{num.lv = 0}); 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see section \emph{Including species traits} in the help file for \code{\link{boral}} for more information); 4) priors for any dispersion parameters. 
+		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients (ignored if \code{num.lv = 0}); 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see \code{\link{about.traits}} for more information); 4) priors for any dispersion parameters. 
 				
 		For elements 1-3, the prior distributions currently available include: I) ``normal", which is normal prior with the variance controlled by the \code{hypparams} argument; II) ``cauchy", which is a Cauchy prior with variance controlled by the \code{hypparams} argument. Gelman, et al. (2008) considers using Cauchy priors with variance \eqn{2.5^2} as weakly informative priors for regression coefficients; III) ``uniform", which is uniform prior with minimum values given by \code{-hypparams} and maximum values given by \code{+hypparams}. 
 		
@@ -79,17 +80,19 @@ boral(y, ...)
 		
 		Defaults to the vector \code{c(100, 20, 100, 50)}. 
 		
-		\item \emph{ssvs.index:} Indices to be used for stochastic search variable selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer exceeding 1 (SSVS is performed on collectively all coefficients on this covariate/s.) 
+		\item \emph{ssvs.index:} Indices to be used for stochastic search variable selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer greater than 0 (SSVS is performed on collectively all coefficients on this covariate/s.) 
 		
-		This argument is only read if \code{X.eff = TRUE}. Please see the \code{\link{boral}} help file for more information regarding the implementation of SSVS. Defaults to -1, in which case no model selection is performed on the fitted model at all. 
+		This argument is only read if \code{X.eff = TRUE}. Please see \code{\link{about.ssvs}} for more information regarding the implementation of SSVS. Defaults to -1, in which case no model selection is performed on the fitted model at all. 
 
-		\item \emph{ssvs.g:} Multiplicative, shrinkage factor for SSVS, which controls the strength of the "spike" in the SSVS mixture prior. In summary, if the coefficient is included in the model, the "slab" prior is a normal distribution with mean zero and variance given by \code{hypparams[3]}, while if the coefficient is not included in the model, the "spike" prior is normal distribution with mean zero and variance given by \code{hypparams[3]*ssvs.g}. Please see the \code{\link{boral}} help file for more information regarding the implementation of SSVS. Defaults to 1e-6.  		
+		\item \emph{ssvs.g:} Multiplicative, shrinkage factor for SSVS, which controls the strength of the "spike" in the SSVS mixture prior. In summary, if the coefficient is included in the model, the "slab" prior is a normal distribution with mean zero and variance given by \code{hypparams[3]}, while if the coefficient is not included in the model, the "spike" prior is normal distribution with mean zero and variance given by \code{hypparams[3]*ssvs.g}. Please see \code{\link{about.ssvs}} for more information regarding the implementation of SSVS. Defaults to 1e-6.  		
 		}
 	}
  
  \item{do.fit}{If \code{do.fit = FALSE}, then only the JAGS model file is written to the current working directly (as text file with name based on \code{model.name}). No MCMC sampling is performed, and \emph{nothing else} is returned. Defaults to \code{TRUE}.}    
 
  \item{model.name}{Name of the text file that the JAGS model is written to. Defaults to \code{NULL}, in which case the default of "jagsboralmodel.txt" is used.}
+
+% \item{new.format}{If \code{new.format = TRUE}, then the new (and hopefully simpler) format is used for the output, as implemented in versions \eqn{>= 1.2}. If \code{FALSE}, then the old outpt format is used. Defaults to \code{TRUE}.}
 
  \item{...}{Not used.}
 }
@@ -108,7 +111,7 @@ where the mean response for element (i,j), denoted as \eqn{mu_{ij}}, is regresse
 
 Note boral can also handle multiple, hierarchical row effects, which may be useful to account for sampling design. This is controlled using the \code{row.ids} argument. For example, if the first five rows of \eqn{y} correspond to replications from site 1, the next five rows correspond to replications from site 2, and so on, then one can set \code{row.ids = matrix(c(1,1,1,1,1,2,2,2,2,2,...), ncol = 1)} to take this in account. While this way of coding row effects via the \code{row.ids} argument takes some getting used to, it has been done this way partly to force the user to think more carefully about exactly the structure of the data i.e., with great power comes great responsibility...
 
-Without row effects, the above independent response model is basically a Bayesian analog of the \code{manyglm} function in the \code{mvabund} package (Wang et al., 2013). Unlike \code{manyglm} though, row effects can be added easily as a type of "row-standardization". Also, a wider range of assumed distributions (families) are possible, as discussed below (please see the section later on distributions.) 
+Without row effects, the above independent response model is basically a Bayesian analog of the \code{manyglm} function in the \code{mvabund} package (Wang et al., 2013). 
 
 \bold{Pure latent variable models:} If no explanatory variables are included and \code{num.lv} > 0, boral fits a pure latent variable model to perform model-based unconstrained ordination (Hui et al., 2014),
 
@@ -126,22 +129,14 @@ Unconstrained ordination is used for visualizing multivariate data in a low-dime
 This model is thus a mash of the first two types of models. The linear predictor \eqn{\bm{z}^T_i\bm{\theta}_j} induces a residual covariance between the columns of \code{y} (which is of rank \code{num.lv}). For multivariate abundance data, this leads to a parsimonious method of accounting for correlation between species not due to the shared environmental responses. After fitting the model, the residual correlation matrix then can be obtained via the \code{\link{get.residual.cor}} function. Note \code{num.lv > 1} is necessarily in order to flexibly model the residual correlations; see Pollock et al. (2014) for residual correlation matrices in the context of Joint Species Distribution Models, and Warton et al. (2015) for an overview of latent variable models in multivariate ecology.
 
 
-\bold{Including species traits:} When covariates \code{X} are included (i.e. both the independent and correlated response models), one has the option of also including traits to help explain differences in species environmental responses to these covariates. Specifically, when \code{traits} and \code{which.traits} are supplied, then the \eqn{\beta_{0j}}'s and \eqn{\bm{\beta}_j}'s are then regarded as random effects drawn from a normal distribution. For the species-specific intercepts, we have
-
-\deqn{\beta_{0j} \sim N(\kappa_{01} + \bm{traits}^T_j\bm{\kappa}_1, \sigma^2_1),}
-
-where \eqn{(\kappa_{01},\bm{\kappa}_1)} are the regression coefficients relating to the traits to the intercepts and \eqn{\sigma_1} is the error standard deviation. These are now the "parameters" in the model, in the sense that priors are assigned to them and MCMC sampling is used to estimate them (see the next section on estimation). 
-
-In an analogous manner, each of the elements in \eqn{\bm{\beta}_j = (\beta_{j1},\ldots,\beta_{jd})} are now drawn as random effects from a normal distribution. That is, for \eqn{k = 1,\ldots,d} where \code{d = ncol(X)}, we have,
-
-\deqn{\beta_{jk} \sim N(\kappa_{0k} + \bm{traits}^T_j\bm{\kappa}_k, \sigma^2_k),}
-
-Which traits are to included (regressed) in the mean of the normal distributions is determined by the list \code{which.traits}. The first element in the list applies to \eqn{beta_{0j}}, while the remaining elements apply to the the \eqn{\bm{\beta}_j}. Each element of \code{which.traits} is a vector indicating which traits are to be used. For example, if \code{which.traits[[2]] = c(2,3)}, then the \eqn{\beta_{j1}}'s are drawn from a normal distribution with mean depending only on the second and third columns of \code{traits}. If \code{which.traits[[2]] = 0}, then the regression coefficients are treated as independent, i.e. the values of \eqn{\beta_{j1}} are given their own priors and estimated separately from each other. 
-
-Including species traits in the model can be regarded as a method of simplifying the model -- rather than each to estimates \eqn{p} sets of species-specific coefficients, we instead say that these coefficients are linearly related to the corresponding values of their traits (Warton et al., 2015). That is, we are using trait data to help explain similarities/differences in species responses to the environment. This idea has close relations to the fourth corner problem in ecology (Brown et al., 2014). Unlike the models of Brown et al. (2014) however, which treat the \eqn{\beta_{0j}}'s and \eqn{\beta_{jk}}'s are fixed effects and fully explained by the traits, boral adopts a random effects approach similar to Jamil et al. (2013) to "soak up" any additional between species differences in environmental responses not explained by traits.
+\bold{Distributions:}
+A variety of families are available in boral, designed to handle multivariate abundance data of varying response types. Please see \code{\link{about.distributions}} for more information on this.
 
 
-\bold{Estimation:} For boral models, estimation is performed using Bayesian Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). Please note that only \emph{one} MCMC chain in run -- this point is discussed later in this help file. Regarding prior distributions, the default settings, based on the \code{prior.control} argument, are as follows: 
+\bold{Including species traits:} When covariates \code{X} are included i.e. both the independent and correlated response models, one has the option of also including traits to help explain differences in species environmental responses to these covariates. Please see \code{\link{about.traits}} for more information on this.
+
+
+\bold{Estimation:} For boral models, estimation is performed using Bayesian Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). Please note that only \emph{one} MCMC chain in run: this point is discussed later in this help file. Regarding prior distributions, the default settings, based on the \code{prior.control} argument, are as follows: 
 
 \itemize{
 \item Normal priors with mean zero and variance given by \code{hypparams[1]} are assigned to all intercepts, cutoffs for ordinal responses, and row effects. If the row effects are assumed to random, then the standard deviation of the normal random effect is assigned a uniform prior with maximum \code{hypparams[1]}. If more than two columns are ordinal responses, then the standard deviation of the normal random species-specific intercepts is assigned a uniform prior with maximum \code{hypparams[1]}.
@@ -159,38 +154,9 @@ With the default values of \code{hypparams}, all parameters are given uninformat
 We also make the important point that if traits are included in the model, then the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are now random effects. However, currently the calculation of all information criteria do not take this into account! 
 
 
-\bold{SSVS:} As an alternative to using information criterion for model selection, stochastic search variable selection (SSVS, George and McCulloch, 1993) is also implemented for the column-specific coefficients \eqn{\bm{\beta}_j}. Basically, SSVS works by placing a spike-and-slab priors on these coefficients, such that the spike is a narrow normal distribution concentrated around zero and the spike is a normal distribution with a large variance.
-
-\deqn{\rho(\beta) = I_{\beta = 1}\times\mathcal{N}(0,\sigma^2) + (1-I_{\beta = 1})\times \mathcal{N}(0,g*\sigma^2),}
-
-where \eqn{\sigma^2} is determined by \code{prior.control$hypparams[3]} (see section on estimation above), \eqn{g} is determined by \code{ssvs.g}, and \eqn{I_{\beta = 1} = P(\beta = 1)} is an indicator function representing whether coefficient is included in the model. It is given a Bernoulli prior with probability of inclusion 0.5. After fitting, the posterior probability of \eqn{\beta} being included in the model is returned based on posterior mean of the indicator function \eqn{I_{\beta = 1}}. Note this is NOT the same as a \emph{p}-value seen in maximum likelihood estimation -- a \emph{p}-value provides an indication of how much evidence there is against the null hypothesis of \eqn{\beta = 0}, while the posterior probability provides a measure of how likely it is for \eqn{\beta \ne 0} given the data.
-
-In boral, SSVS can be applied at a grouped or individual coefficient level, and this is governed by \code{prior.control$ssvs.index}. For elements of \code{ssvs.index} equal to -1, SSVS is not applied on the corresponding covariate of the model matrix \code{X}. For elements equal to 0, SSVS is applied to each individual coefficient of the corresponding covariate in \code{X}. That is, the fitted model will return posterior probabilities for this covariate, one for each column of \code{y}. For elements taking positive integers {1,2,...}, SSVS is applied to each group of coefficients of the corresponding covariate in \code{X}. That is, the fitted model will return a single posterior probability for this covariate, indicating whether this covariate should be included for all columns of \code{y}; see O'Hara and Sillanpaa (2009) and Tenan et al. (2014) among many others for an discussion of Bayesian variable selection methods.
-
-Note the last application of SSVS allows multiple covariates to be tested \emph{simultaneously}. For example, suppose \code{X} consists of five columns -- the first two columns are environmental covariates, while the last three correspond to quadratic terms of the two covariates as well as their interaction. If we want to "test" whether any quadratic terms are required, then we can set \cr \code{prior.control$ssvs.index = c(-1,-1,1,1,1)}, so a single posterior probability of inclusion is returned for the last three columns of \code{X}. 
-
-Finally, note using information criterion (and possibly residual analysis) should probably not be done at the same as when SSVS is used, and it is advised to separate out their applications e.g., choose the explanatory variables first using SSVS, and then use information criterion to select the number of latent variables??? Obtaining summaries such as posterior medians and HPD intervals of the coefficients from a boral model that is implementing SSVS is also (perhaps) problematic, because the posterior distribution is multi-modal. 
+\bold{SSVS:} As an alternative to using information criterion for model selection, stochastic search variable selection (SSVS, George and McCulloch, 1993) is also implemented for the column-specific coefficients \eqn{\bm{\beta}_j}. Please see \code{\link{about.ssvs}} for more information on this approach.
 }
 
-\section{Distributions}{
-For multivariate abundance data in ecology (also known as community composition data, Legendre and Gallagher, 2001), species counts are often overdispersed. Using a negative binomial distribution (\code{family = "negative.binomial"}) to model the counts usually helps to account for this overdispersion. Please note the variance for the negative binomial distribution is parameterized as \eqn{Var(y) = \mu + \phi\mu^2}, where \eqn{\phi} is the dispersion parameter. 
-
-For non-negative continuous data such as biomass, the lognormal and tweedie distributions may be used (Foster and Bravington, 2013). Note however that a common power parameter is used for tweedie columns -- there is almost always insufficient information to model column-specific power parameters. Normal responses are also implemented, just in case you encounter normal stuff in ecology (pun intended)! 
-
-The beta distribution can be used to model data between values between but \emph{not} including 0 and 1. In principle, this would make it useful for percent cover data in ecology, if it not were for the fact that percent cover is commonly characterized by having lots of zeros (which are not permitted for beta regression). An \emph{ad-hoc} fix to this would be to add a very small value to shift the data away from exact zeros and/or ones. This is however heuristic, and pulls the model towards producing conservative results (see Smithson and Verkuilen, 2006, for a detailed discussion on beta regression, and Korhonen et al., 2007, for an example of an application to forest canopy cover data). Note the parameterization of the beta distribution used here is directly in terms of the mean \eqn{\mu} and the dispersion parameter \eqn{\phi} (more commonly know as the "sample size"). In terms of the two shape parameters, this is equivalent to \eqn{shape1 = a = \mu\phi} and \eqn{shape2 = b = (1-\mu)\phi}.
-
-For ordinal response columns, cumulative probit regression is used (Agresti, 2010). boral assumes all ordinal columns are measured using the same scale i.e., all columns have the same number of theoretical levels, even though some levels for some species may not be observed. The number of levels is then assumed to be given by the maximum value from all the ordinal columns of \code{y}. Because of this, all ordinal columns then assumed to have the \emph{same} cutoffs, \eqn{\bm{\tau}}, while the column-specific intercept effect, \eqn{\beta_{0j}}, allow for deviations away from these common cutoffs. That is, 
-
-\deqn{probit(P(y_{ij} \le k)) = \tau_k + \beta_{0j} + \ldots,}
-
-where \eqn{probit(\cdot)} is the probit function, \eqn{P(y_{ij} \le k)} is the cumulative probability of element \eqn{y_{ij}} being less than or equal to level \eqn{k}, \eqn{\tau_k} is the cutoff linking levels \eqn{k} and \eqn{k+1} (and which are increasing in \eqn{k}), \eqn{\beta_{0j}} are the column effects, and \eqn{\ldots} denotes what else is included in the model, e.g. latent variables and related coefficients. To ensure model identifiability, and also because they are interpreted as species-specific deviations from the common cutoffs, the \eqn{\beta_{0j}}'s are treated as random effects and drawn from a normal distribution with mean zero and unknown standard deviation.
-
-The parameterization above is useful for modeling ordinal in ecology. When ordinal responses are recorded, usually the same scale is applied to all species e.g., level 1 = not there, level 2 = a bit there, level 3 = lots there, level 4 = everywhere! The quantity \eqn{\tau_k} can thus be interpreted as this common scale, while \eqn{\beta_{0j}} allows for deviations away from these to account for differences in species prevalence. Admittedly, the current implementation of boral for ordinal data can be quite slow. 
-
-Finally, in the event different responses are collected for different columns, e.g., some columns of \code{y} are counts, while other columns are presence-absence, one can specify different distributions for each column. Aspects such as variable selection, residual analysis, and plotting of the latent variables are, in principle, not affected by having different distributions. Naturally though, one has to be more careful with interpretation of the row effects \eqn{\alpha_i} and latent variables \eqn{\bm{z}_i}, as different link functions will be applied to each column of \code{y}. A situation where different distributions may prove useful is when \code{y} is a species--traits matrix, where each row is a species and each column a trait such as specific leaf area. In this case, traits could be of different response types, and the goal perhaps is to perform unconstrained ordination to look for patterns between species on an underlying trait surface e.g., a defense index for a species (Moles et al., 2013; see also the discussion below on how to perform model-based unconstrained ordination).
-
-
-}
 
 \section{Why is only one MCMC chain run?}{
 Much like the \code{MCMCfactanal} function in the \code{MCMCpack} package (Martin et al., 2011) for conducting factor analysis, which is a special case of the pure latent variable model with Gaussian responses, boral deliberately runs only one MCMC chain. This runs contrary to the recommendation of most Bayesian analyses, where the advice is to run multiple MCMC chains and check convergence using (most commonly) the Gelman-Rubin statistic or ``Rhat'' (Gelman et al., 2013). The main reason for this is that, in the context of MCMC sampling, the latent variable model is invariant to a switch of the sign, i.e. \eqn{\bm{z}^T_i\bm{\theta}_j = (-\bm{z})^T_i(-\bm{\theta}_j)}, and so is actually unidentifiable. This is similar to well-known problem of label switching that occurs during the course of MCMC sampling for mixture models (see for instance, Section 4.9, McLachlan and Peel, 2004), and is due to the fact that the sign of the latent variables (ordination coordinates) is inherently arbitrary.
@@ -216,7 +182,7 @@ An object of class "boral" is returned, being a list containing the following co
      
      \item{X.coefs.mean/median/sd/iqr}{Matrices containing the mean/median/standard deviation/interquartile range of the posterior distributions of the column-specific coefficients relating to the model matrix \code{X}.}
      
-     \item{traits.coefs.mean/median/sd/iqr}{Matrices containing the mean/median/standard deviation/interquartile range of the posterior distributions of the coefficients and standard deviation relating to the species traits (please see the section on including traits above).}
+     \item{traits.coefs.mean/median/sd/iqr}{Matrices containing the mean/median/standard deviation/interquartile range of the posterior distributions of the coefficients and standard deviation relating to the species traits; please see \code{\link{about.traits}}.}
 
      \item{cutoffs.mean/median/sd/iqr}{Vectors containing the mean/median/standard deviation/interquartile range of the posterior distributions of the common cutoffs for ordinal responses (please see the not-so-brief tangent on distributions above).}
      
@@ -228,13 +194,13 @@ An object of class "boral" is returned, being a list containing the following co
      
 	\item{row.sigma.mean/median/sd/iqr}{A list with each element containing the mean/median/standard deviation/interquartile range of the posterior distributions of the standard deviation for the row random effects normal distribution. The length of the list is equal to the number of row effects included i.e., \code{ncol(row.ids)}.}
 	
-     \item{ssvs.indcoefs.mean/ssvs.indcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including individual coefficients in the model (please see the section on SSVS above). }
+     \item{ssvs.indcoefs.mean/ssvs.indcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including individual coefficients in the model.}
      
-     \item{ssvs.gpcoefs.mean/ssvs.gpcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including grouped coefficients in the model (please see the section on SSVS above). }
+     \item{ssvs.gpcoefs.mean/ssvs.gpcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including grouped coefficients in the model.}
      
      \item{hpdintervals}{A list containing components which correspond to the lower and upper bounds of highest posterior density (HPD) intervals for all the parameters indicated above. Please see \code{\link{get.hpdintervals}} for more details.}
      
-     \item{ics}{If \code{calc.ics = TRUE}, then a list of different information criteria values for the model calculated using \code{\link{get.measures}} is run. Please see help file for \code{\link{get.measures}} regarding details on the criteria. Also, please note the ics returned are based on \code{\link{get.measures}} with \code{more.measures = FALSE}.}
+     \item{ics}{If \code{calc.ics = TRUE}, then a list of different information criteria values for the model calculated using \code{\link{get.measures}} is run. Please see \code{\link{get.measures}} for details regarding the criteria. Also, please note the ics returned are based on \code{\link{get.measures}} with \code{more.measures = FALSE}.}
      
      \item{jags.model}{If \code{save.model = TRUE}, the raw jags model fitted is returned. This can be quite large!}
      
@@ -243,17 +209,12 @@ An object of class "boral" is returned, being a list containing the following co
 
 \references{
 \itemize{
-\item Agresti, A. (2010). Analysis of Ordinal Categorical Data. Wiley.
-
-\item Brown, et al. (2014). The fourth-corner solution - using predictive models to understand how species traits interact with the environment. Methods in Ecology and Evolution 5, 344-352.
-
-\item Foster, S. D. and Bravington, M. V. (2013). A Poisson-Gamma model for analysis of ecological non-negative continuous data. Journal of Environmental and Ecological Statistics, 20, 533-552.
-
 \item Gelman A. (2006) Prior distributions for variance parameters in hierarchical models. Bayesian Analysis 1, 515-533.
 
 \item Gelman, et al. (2008). A weakly informative default prior distribution for logistic and other regression models. The Annals of Applied Statistics, 2, 1360-1383.
 
 \item Gelman et al. (2013) Bayesian Data Analysis. CRC Press.
+
 \item George, E. I. and McCulloch, R. E. (1993). Variable selection via Gibbs sampling. Journal of the American Statistical Association, 85, 398-409.
 
 \item Hui et al. (2014). Model-based approaches to unconstrained ordination. Methods in Ecology and Evolution, 6, 399-411.
@@ -262,14 +223,7 @@ An object of class "boral" is returned, being a list containing the following co
 
 \item Jamil, T., and ter Braak, C.J.F. (2013). Generalized linear mixed models can detect unimodal species-environment relationships. PeerJ 1: e95.
 
-\item Jamil, T. et al. (2013). Selecting traits that explain species-environment relationships: a generalized linear mixed model approach. Journal of Vegetation Science 24, 988-1000
-
-\item Korhonen, L., et al. (2007). Local models for forest canopy cover with beta regression. Silva Fennica, 41, 671-685.
-
 \item Kruskal, J. B. (1964). Nonmetric multidimensional scaling: a numerical method. Psychometrika, 29, 115-129.
-
-\item Legendre, P. and Gallagher, E. D. (2001). Ecologically meaningful transformations for ordination of species data. Oecologia, 129, 271-280.
-Numerical ecology, Volume 20. Elsevier.
 
 \item Legendre, P. and Legendre, L. (2012). Numerical ecology, Volume 20. Elsevier.
 
@@ -277,24 +231,16 @@ Numerical ecology, Volume 20. Elsevier.
 
 \item McLachlan, G., and Peel, D. (2004). Finite Mixture Models. Wiley.
 
-\item  Moles et al. (2013). Correlations between physical and chemical defences in plants: Trade-offs,
-syndromes, or just many different ways to skin a herbivorous cat? New Phytologist, 198, 252-263.
-
-\item O'Hara, B., and Sillianpaa, M.J. (2009). A Review of Bayesian Variable Selection Methods: What, How and Which. Bayesian Analysis, 4, 85-118.
-
 \item Plummer, M. (2003). JAGS: A program for analysis of Bayesian graphical models using Gibbs sampling. In Proceedings of the 3rd International Workshop on Distributed Statistical Computing. March (pp. 20-22).
 
 \item Pollock, L. J. et al. (2014). Understanding co-occurrence by modelling species simultaneously with a Joint Species Distribution Model (JSDM). Methods in Ecology and Evolution, 5, 397-406.
 
 \item Skrondal, A., and Rabe-Hesketh, S. (2004). Generalized latent variable modeling: Multilevel, longitudinal, and structural equation models. CRC Press.
 
-\item Smithson, M., and Verkuilen, J. (2006). A better lemon squeezer? Maximum-likelihood regression with beta-distributed dependent variables. Psychological methods, 11, 54-71.
-
-\item Tenan, S., et al. (2014). Bayesian model selection: The steepest mountain to climb. Ecological Modelling, 283, 62-69.
-
 \item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, to appear.
 
 \item Warton et al. (2012). Distance-based multivariate analyses confound location and dispersion effects. Methods in Ecology and Evolution, 3, 89-101.
+
 \item Wang et al. (2013). \code{mvabund}: statistical methods for analysing multivariate abundance data. R package version 3.8.4.}
 }
 
@@ -349,7 +295,6 @@ summary(spider.fit.nb)
 
 par(mfrow = c(2,2))
 plot(spider.fit.nb) ## Plots used in residual analysis, 
-dev.off()
 ## Used to check if assumptions such an mean-variance relationship 
 ## are adequately satisfied.
 
@@ -364,7 +309,7 @@ spider.fit.nb <- boral(y, X = X, family = "negative.binomial",
 
 summary(spider.fit.nb) 
 ## The results can be compared with the default example from 
-## the manyglm() function in mvabund. Hopefully they are similar =D
+## the manyglm() function in mvabund. 
 
 ## Caterpillar plots for the coefficients
 par(mfrow=c(2,3), mar = c(5,6,1,1))
@@ -443,7 +388,7 @@ which.traits[[3]] <- 0
 
 fit.traits <- boral(y, X = X, traits = traits, which.traits = which.traits, 
 	family = "negative.binomial", calc.ics = FALSE, 
-	mcmc.control = example.mcmc.control)
+	mcmc.control = example.mcmc.control, save.model = TRUE)
 
 summary(fit.traits)
 

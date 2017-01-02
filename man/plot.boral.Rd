@@ -1,6 +1,9 @@
 \name{plot.boral}
+
 \alias{plot.boral}
+
 \title{Plots of a fitted boral object}
+
 \description{Produces four plots relating to the fitted boral object, which can be used for residual analysis. If some of the columns are ordinal, then a single confusion matrix is also produced.}
 
 \usage{
@@ -42,12 +45,17 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
 spider.fit.p <- boral(y, family = "poisson", num.lv = 2, 
-	row.eff = "fixed")
+	row.eff = "fixed", mcmc.control = example.mcmc.control)
 
 par(mfrow = c(2,2))
 plot(spider.fit.p) 
@@ -57,7 +65,7 @@ dev.off()
 
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed")
+     row.eff = "fixed", mcmc.control = example.mcmc.control)
 
 par(mfrow = c(2,2))
 plot(spider.fit.nb) 

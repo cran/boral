@@ -1,6 +1,9 @@
 \name{get.enviro.cor}
+
 \alias{get.enviro.cor}
+
 \title{Extract covariances and correlations due to shared environmental responses from boral models}
+
 \description{Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables (i.e., shared environmental response)}
 
 \usage{
@@ -16,7 +19,7 @@ get.enviro.cor(object, est = "median", prob = 0.95)
 }
 
 \details{
-In both independent response and correlated response models, where the each of the columns of the response matrix \code{y} are fitted to a set of explanatory variables given by \code{X}, the covariance and thus between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}^T_i\bm{\beta}_j} and \eqn{\bm{x}^T_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are column-specific coefficients relating to the explanatory variables (see also the help file for \code{\link{boral}}).
+In both independent response and correlated response models, where the each of the columns of the response matrix \code{y} are fitted to a set of explanatory variables given by \code{X}, the covariance and thus between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}^T_i\bm{\beta}_j} and \eqn{\bm{x}^T_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are column-specific coefficients relating to the explanatory variables.
 
 For multivariate abundance data, the correlation calculated by this function can be interpreted as the correlation attributable to similarities in the environmental response between species. Such correlation matrices are discussed and found in Ovaskainen et al., (2010), Pollock et al., 2014.
 }
@@ -46,6 +49,11 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+     
 library(mvabund) ## Load a dataset from the mvabund package
 library(corrplot) ## For plotting correlations
 data(spider)
@@ -54,7 +62,7 @@ X <- scale(spider$x)
 n <- nrow(y); p <- ncol(y); 
     
 spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
-     save.model = TRUE)
+     save.model = TRUE, mcmc.control = example.mcmc.control)
 
 enviro.cors <- get.enviro.cor(spider.fit.nb)
 

@@ -1,6 +1,9 @@
 \name{fitted.boral}
+
 \alias{fitted.boral}
+
 \title{Extract Model Fitted Values for an boral object}
+
 \description{Calculated the predicted mean responses based on the fitted boral model, by using the posterior medians or means of the parameters.}
 
 \usage{ 
@@ -33,12 +36,17 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+     
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed")
+     row.eff = "fixed", mcmc.control = example.mcmc.control)
 
 fitted(spider.fit.nb)
 }

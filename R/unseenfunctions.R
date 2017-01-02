@@ -106,7 +106,7 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 					for(k in 1:ncol(row.ids)) linpred.string <- paste(linpred.string, " + row.params.", colnames(row.ids)[k],"[row.ids[i,",k,"]]", sep ="")
 					}
 				if(num.X > 0) linpred.string <- paste(linpred.string, " + inprod(X.params[", j, ",],X[i,])", sep ="")
-				resp.family.script <- c(resp.family.script, linpred.string)
+				resp.family.script <- c(resp.family.script, paste("\t\t ", linpred.string, sep = ""))
 				}				
 			}			
 
@@ -156,13 +156,13 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 		if(all(complete.family == "bernoulli")) { ## If all data are Bernoulli, then use step parameterization
 			if(length(unique(complete.family)) == 1) {
 				if(j == 1) {
-					resp.family.script <- c(resp.family.script, paste("\t\t for(j in 1:p) { Z[i,j] ~ dnorm(all.params[j,1] + eta[i,j],1) }", sep = ""))
+					resp.family.script <- c(resp.family.script, paste("\t\t for(j in 1:p) { Z[i,j] ~ dnorm(all.params[j,1] + eta[i,j],(1-sum(all.params[",j,",2:(num.lv+1)]^2))) }", sep = ""))
 					resp.family.script <- c(resp.family.script, paste("\t\t for(j in 1:p) { y[i,j] ~ dbern(step(Z[i,j])) }\n", sep = ""))
 					}
 				if(j > 1) { }
 				}
 			if(length(unique(complete.family)) > 1) {		
-				resp.family.script <- c(resp.family.script, paste("\t\t Z[i,",j, "] ~ dnorm(all.params[", j, ",1] + eta[i,",j, "],1)", sep = ""))
+				resp.family.script <- c(resp.family.script, paste("\t\t Z[i,",j, "] ~ dnorm(all.params[", j, ",1] + eta[i,",j, "],(1-sum(all.params[",j,",2:(num.lv+1)]^2)))", sep = ""))
 				resp.family.script <- c(resp.family.script, paste("\t\t y[i,",j, "] ~ dbern(step(Z[i,",j, "]))\n", sep = ""))
 				}
 			}
@@ -242,10 +242,21 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 			}
 			
 		if(complete.family[j] == "ordinal") {
-			resp.family.script <- c(resp.family.script, paste("\t\t prob[i,", which(index.ord.cols == j), ",1] <- phi(alpha[1]-eta[i,", j, "]-all.params[", j, ",1])", sep = ""))
-			resp.family.script <- c(resp.family.script, paste("\t\t for(k in 2:(num.ord.levels-1)) { prob[i,", which(index.ord.cols == j), ",k] <- phi(alpha[k]-eta[i,", j, "]-all.params[", j, ",1]) - phi(alpha[k-1]-eta[i,", j, "]-all.params[", j, ",1]) }", sep = ""))
-			resp.family.script <- c(resp.family.script, paste("\t\t prob[i,", which(index.ord.cols == j), ",num.ord.levels] <- 1-phi(alpha[num.ord.levels-1]-eta[i,", j, "]-all.params[", j, ",1])", sep = ""))
-			resp.family.script <- c(resp.family.script, paste("\t\t y[i,", j, "] ~ dcat(prob[i,", which(index.ord.cols == j), ",])\n", sep = ""))
+			if(length(index.ord.cols) == p) {
+				if(j == 1) { 
+					resp.family.script <- c(resp.family.script, paste("\t\t for(j in 1:p) { \n\t\t\t prob[i,j,1] <- phi(alpha[1]-eta[i,j]-all.params[j,1])", sep = ""))
+					resp.family.script <- c(resp.family.script, paste("\t\t\t for(k in 2:(num.ord.levels-1)) { \n\t\t\t\t prob[i,j,k] <- phi(alpha[k]-eta[i,j]-all.params[j,1]) - phi(alpha[k-1]-eta[i,j]-all.params[j,1]) \n\t\t\t\t }", sep = ""))
+					resp.family.script <- c(resp.family.script, paste("\t\t\t prob[i,j,num.ord.levels] <- 1-phi(alpha[num.ord.levels-1]-eta[i,j]-all.params[j,1])", sep = ""))
+					resp.family.script <- c(resp.family.script, paste("\t\t\t y[i,j] ~ dcat(prob[i,j,]) \n\t\t\t } \n", sep = ""))
+					}
+				if(j > 1) { }
+				}
+			if(length(index.ord.cols) < p) {
+				resp.family.script <- c(resp.family.script, paste("\t\t prob[i,", which(index.ord.cols == j), ",1] <- phi(alpha[1]-eta[i,", j, "]-all.params[", j, ",1])", sep = ""))
+				resp.family.script <- c(resp.family.script, paste("\t\t for(k in 2:(num.ord.levels-1)) { prob[i,", which(index.ord.cols == j), ",k] <- phi(alpha[k]-eta[i,", j, "]-all.params[", j, ",1]) - phi(alpha[k-1]-eta[i,", j, "]-all.params[", j, ",1]) }", sep = ""))
+				resp.family.script <- c(resp.family.script, paste("\t\t prob[i,", which(index.ord.cols == j), ",num.ord.levels] <- 1-phi(alpha[num.ord.levels-1]-eta[i,", j, "]-all.params[", j, ",1])", sep = ""))
+				resp.family.script <- c(resp.family.script, paste("\t\t y[i,", j, "] ~ dcat(prob[i,", which(index.ord.cols == j), ",])\n", sep = ""))
+				}
 			}
 			
 		if(complete.family[j] == "multinom") { 

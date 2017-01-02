@@ -1,6 +1,9 @@
 \name{ds.residuals}
+
 \alias{ds.residuals}
+
 \title{Dunn-Smyth Residuals for a boral model}
+
 \description{Calculates the Dunn-Smyth residuals for a fitted boral model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
 
 \usage{ds.residuals(object, est = "median")}
@@ -40,12 +43,17 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 
 \examples{
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+     
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed")
+     row.eff = "fixed", mcmc.control = example.mcmc.control)
 
 ds.residuals(spider.fit.nb) 
 }

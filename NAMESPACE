@@ -30,7 +30,10 @@ S3method(boral, default)
 
 
 import(coda, mvtnorm, fishMod, MASS)
+
 importFrom(R2jags, jags)
+
+importFrom(abind, abind)
 
 importFrom(stats, dbeta, pbeta, qbeta, rbeta)
 importFrom(stats, dbinom, pbinom, qbinom, rbinom)
@@ -42,8 +45,8 @@ importFrom(stats, dlnorm, plnorm, qlnorm, rlnorm)
 importFrom(stats, dpois, ppois, qpois, rpois)
 importFrom(stats, dunif, runif, punif, qunif)
 importFrom(stats, rWishart)
-importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor, simulate)
-importFrom(graphics,abline,axis,layout,legend,lines,matplot,par,points,plot,text,mtext,segments)
+importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor, simulate, qqline)
+importFrom(graphics, abline,axis,layout,legend,lines,matplot,par,points,plot,text,mtext,segments)
 importFrom(grDevices,palette, rainbow)
 
 
