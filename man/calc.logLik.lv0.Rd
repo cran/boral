@@ -9,7 +9,8 @@
 \usage{
 calc.logLik.lv0(y, X = NULL, family, trial.size = 1, lv.coefs, 
 	X.coefs = NULL, row.eff = "none", row.params = NULL, 
-	row.ids = NULL, cutoffs = NULL,powerparam = NULL)
+	row.ids = NULL, offset = NULL, cutoffs = NULL,
+	powerparam = NULL)
 }
 
 \arguments{
@@ -34,6 +35,8 @@ calc.logLik.lv0(y, X = NULL, family, trial.size = 1, lv.coefs,
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
 
+ \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
+
  \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \code{y} are ordinal responses. Defaults to \code{NULL}.}
 
 \item{powerparam}{Common power parameter from the boral model when any of the columns of \code{y} are tweedie responses. Defaults to \code{NULL}.}
@@ -51,11 +54,11 @@ Please note the function is written conditional on all regression coefficients. 
 
 Likewise if more than two columns are ordinal responses, then the regression coefficients \eqn{\beta_{0j}} corresponding to these columns become random effects, and the calculation of the log-likelihood also does NOT take this into account, i.e. does not marginalize over them!
 
-In the special case where \eqn{\alpha_i} is a random row effect, then the log-likelihood is calculated by integrating over this,
+When a single \eqn{\alpha_i} random row effect is inclued, then the log-likelihood is calculated by integrating over this,
 
 \deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \beta_{0j}, \alpha_i, \ldots))f(\alpha_i) d\alpha_i ), } 
      
-where \eqn{f(\alpha_i)} is the random effects distribution with mean zero and standard deviation given by the \code{row.params}. The integration is performed using standard Monte Carlo integration. Beyond this however, for more complicated random row effects structures the function currently does not permit the calculation of the log-likelihood in such cases, as the integration over these random effects becomes too complicated to perform in such case. Sorry!
+where \eqn{f(\alpha_i)} is the random effects distribution with mean zero and standard deviation given by the \code{row.params}. The integration is performed using standard Monte Carlo integration. This naturally extends to multiple random row effects structures.
 }
 
 \value{
@@ -93,9 +96,9 @@ spider.fit.nb <- boral(y, family = "negative.binomial",
 fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix) 
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
+coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
      2,median),nrow=p)
-site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
+site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.coefs.ID1", colnames(fit.mcmc))],
      2,median))
 
 ## Calculate the log-likelihood at the posterior median
@@ -112,12 +115,12 @@ spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", row.eff = "rando
 fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix) 
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
+coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
      2,median),nrow=p)
-X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.params",colnames(fit.mcmc))],
+X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.coefs",colnames(fit.mcmc))],
 	2,median),nrow=p)
 site.sigma <- list(ID1 = 
-	median(fit.mcmc[,grep("row.ranef.sigma", colnames(fit.mcmc))]))
+	median(fit.mcmc[,grep("row.sigma.ID1", colnames(fit.mcmc))]))
 
 	
 ## Calculate the log-likelihood at the posterior median

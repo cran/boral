@@ -2,29 +2,39 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 1.2}{
-This list below is written in terms of what is deemed to be most important to least important changes =P Thanks to Wade Blanchard from the ANU for suggesting the first two changes.
+\section{CHANGES IN boral VERSION 1.3}{
+This list below is written in terms of what is deemed to be most important to least important changes =P 
 
   \itemize{
-	\item{The output for \code{hpdintervals} has been reformatted to simplify the structure of what is returned. For example, consider the lower and upper limits of the credible intervals for the latent variables: previously the function returned was \code{lv.lower} and \code{lv.upper} as two separate elements. In the new version, the function returns a single element called \code{lv}, which is a three dimensional array with \code{lv[,,"lower"]} and \code{lv[,,"upper"]} for the limits. Overall, the new structure should be fairly straightforward to understand.}
+     \item A \code{predict.boral} function is now available, which can be used for constructing point predictions and associated intervals, on a linear predictor scale, from a fitted boral model. The predictions can be made either conditionally or marginally on the latent variables and any random row effects in the model. 
 
-	\item{The help file for the main \code{boral} function has been formatted by moving some of the sections into their own separate help files. In particular, 1) stochastic search variable selection (SSVS) now has its own help file as \code{about.ssvs}; 2) Information on the distributions (families) available now has its own help file as \code{about.distributions}; 3) Information on including species traits to help mediate environmental responses now has its own help file as \code{about.traits}.
-	
-	Please note that these new help files are NOT directly linked to any, newly created functions. 
-	}
+     \item Prior distributions for all variance (standard deviation to be precise!) parameters in a boral model are now (also) controlled by the fourth element of prior.control\$type and prior.control\$hypparams. Previously, the priors for variance parameters were all set to uniform distributions with the maximum controlled by different values of prior.control\$hypparams. Now, they are controlled by the same parameters that govern the priors for all dispersion parameters (e.g., the variance in the normal responses, overdispersion parameters in negative binomial responses). 
+     
+     This change allows for more flexibility in constructing the prior distribuion for the variance parameters, in particular, it brings in weakly informative priors such as half-normal and half-cauchy distributions.
 
-	\item{In \code{plot.boral}, the 0--1 line in the normal quantile plot of Dunn-Smyth residuals has now been removed, and replaced with an estimated straight line based on the \code{qqline}. For the purposes of residual analysis, if the fitted model is appropriate then the Dunn-Smyth residuals should lie approximately on a straight line. Any deviations away from indicate skew, heavy tails etc... in the residuals, which in turn suggest outliers and/or the model assumptions are not satisfied. 
-	
-	Of course, the normal quantile plot is just one plot to check. Arguably the more important plot to check is the residuals versus fitted values!}
+     \item The Geweke convergence diagnostic is now calculated and outputed automatically as part of every boral model fitted. In particular, a new output \code{fit\$geweke.diag} produces a list with the two elements. The first element is itself a list containing the Geweke convergence diagnostic (Z-scores) for all appropriate parameters in the model. The second element contains the proportion of Z-scores that whose corresponding p-value is less than 0.05. No adjustment is made for multiple comparison on the p-values. 
+     
+     As written in the help file for boral, if you do indeed want to use this diagnostic to formally check for convergence, then we recommend you conduct some adjustment e.g., using Holm's method, by doing something such as \code{gew.pvals <- 2*pnorm(abs(unlist(fit\$geweke.diag[[1]])), lower.tail = FALSE); p.adjust(gew.pvals, method = "holm")}.
 
-	\item{Traits are now allowed for ordinal regression, used to mediate environmental responses in the analogous manner to what is done with other response types; see \code{about.traits} help file. The only thing to keep in mind is that, for parameter identifiability reasons, if there is only one ordinal column, then the intercept for this is forced to be zero and therefore not regressed against traits.}
+     \item Both \code{calc.logLik.lv0} and \code{calc.marglogL}, and hence information criteria calculated using these functions downstream in \code{get.measures} and \code{get.more.measures}, now permit multiple random row effects. 
 
-	\item{All examples in help files, even those enclosed with in a \code{dontrun}, now use a \code{example.mcmc.control} to speed things up just in case users want to run them and get an idea of how they work!}
+     \item An \code{offset} argument is now available in the main boral fitting function as well as all relevant functions upstream and and downstream. This permits users to enter a matrix of a-priori effects to be included in the linear predictor. The offset must of the same dimensions as the response matrix \code{y}. 
 
-	\item{Fixed a bug associated with the use of uniform distribution as priors.}
-	
-	\item{Fixed a bug associated with calculating residual correlations for binary response matrices (Thanks to Mirko Di Febbraro for finding this typo!)}
-	}
+     \item The names of some of the parameters, when constructing the JAGS scripts using \code{makejagsboralmodel} and \code{makejagsboralnullmodel}, have been changed. The purpose of this is to offer more consistency and transparency with the output from boral. In particular, the following name changes have been implemented: 
+     \itemize{
+          \item \code{all.params} => \code{lv.coefs}, but keep in mind that in the boral output, \code{lv.coefs} also contains the column-specific intercepts and dispersion parameters if appropriate. 
+          \item \code{lvs} becomes \code{lv}
+          \item \code{X.params} becomes \code{X.coefs}
+          \item \code{row.params} becomes \code{row.coefs}. Note though the functions for calculating conditional and marginal log-likelihoods, \code{create.life}, and \code{simulate}, all still have \code{row.params} as an input argument (to allow the flexibility of fixed and random row effects)
+          \item \code{row.ranef.sigma} becomes \code{row.sigma} 
+          \item \code{probindX} becomes \code{ssvs.indcoefs}
+          \item \code{probGpX} becomes \code{ssvs.gpcoefs}
+          \item \code{alpha} becomes \code{cutoffs}
+          }
+     
+     \item When possible, the marginal log-likelihood evaluated at the posterior median is now also outputed as part of the \code{get.measures} function and hence for the main \code{boral} fitting function (when \code{calc.ics = TRUE}). 
+
+     }
 
 	
 }

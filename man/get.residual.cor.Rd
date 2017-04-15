@@ -76,5 +76,6 @@ res.cors <- get.residual.cor(spider.fit.nb)
 
 corrplot(res.cors$sig.cor, title = "Residual correlations", 
 	type = "lower", diag = FALSE, mar = c(3,0.5,2,1), tl.srt = 45)
+dev.off()
 }
 }

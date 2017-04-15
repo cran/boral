@@ -10,8 +10,9 @@
 \usage{ 
 create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL, 
      traits = NULL, traits.coefs = NULL, family, row.eff = "none", 
-     row.params = NULL, row.ids = NULL, trial.size = 1, cutoffs = NULL, 
-     powerparam = NULL, manual.dim = NULL, save.params = FALSE)
+     row.params = NULL, row.ids = NULL, offset = NULL, 
+     trial.size = 1, cutoffs = NULL, powerparam = NULL, 
+     manual.dim = NULL, save.params = FALSE)
 
 \method{simulate}{boral}(object, nsim = 1, seed = NULL, est = "median", ...)   
  }
@@ -53,6 +54,8 @@ create.life(true.lv = NULL, lv.coefs, X = NULL, X.coefs = NULL,
   \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is the standard deviation for the random effects normal distribution. \cr If \code{row.eff = "none"}, then this argument is ignored.}
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
+
+ \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
 
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
@@ -196,10 +199,16 @@ simy = create.life(true.lv = simfit$true.lv, lv.coefs = simfit$lv.coefs, X = X,
 
 
 \dontrun{
+## NOTE: The values below MUST NOT be used in a real application;
+## they are only used here to make the examples run quick!!!
+example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+     n.thin = 1)
+
 which.traits <- vector("list",ncol(X)+1); 
 for(i in 1:length(which.traits)) which.traits[[i]] <- 1:ncol(traits)
 fit.traits <- boral(y = simy, X = X, traits = traits, which.traits = which.traits, 
-	family = "binomial", num.lv = 2, save.model = TRUE, calc.ics = FALSE)
+	family = "binomial", num.lv = 2, save.model = TRUE, calc.ics = FALSE,
+	mcmc.control = example.mcmc.control)
 }
 
 }

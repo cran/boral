@@ -1,4 +1,4 @@
-make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.traits = NULL, row.eff = "none", row.ids = NULL, trial.size = 1, n, p, model.name = NULL, prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6)) {
+make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.traits = NULL, row.eff = "none", row.ids = NULL, offset = NULL, trial.size = 1, n, p, model.name = NULL, prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6)) {
 	if(num.X == 0 & num.traits > 0) 
 		stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please set num.X > 0.") 
  	if(num.traits > 0 & is.null(which.traits)) 
@@ -26,8 +26,6 @@ make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.tr
 	if(all(complete.family == "binomial") & all(complete.trial.size == 1)) { family <- rep("bernoulli",p) }
 
 	
-	if(row.eff == FALSE) row.eff = "none"; 
-	if(row.eff == TRUE) row.eff = "fixed"
 	if(row.eff != "none" && is.null(row.ids)) {
 		row.ids <- matrix(1:n, ncol = 1)
 		message("row.ids assumed to be matrix with one column and elements 1,2,...n i.e., a row-specific intercept.")
@@ -39,10 +37,13 @@ make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.tr
 		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 	
-	if(!("type" %in% names(prior.control))) prior.control$type <- c("normal","normal","normal","uniform")
-	if(!("hypparams" %in% names(prior.control))) prior.control$hypparams <- c(100, 20, 100, 50)
-	if(!("ssvs.index" %in% names(prior.control))) prior.control$ssvs.index <- -1		
-	if(!("ssvs.g" %in% names(prior.control))) prior.control$ssvs.g <- 1e-6
+	
+	if(!is.null(offset)) { 
+		if(!is.matrix(offset)) 
+			stop("offset could be a matrix with the same dimensions as y.")
+		}
+
+	prior.control <- fillin.prior.control(x = prior.control)
 
 	if(length(prior.control$hypparams) != 4 || length(prior.control$type) != 4) 
 		stop("prior.control$type and prior.control$hypparams must be a vector of four elements. Please see boral help file as to what the elements correspond to.\n")
@@ -62,136 +63,128 @@ make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.tr
 	mod.general.lv <- paste0("model {")
 	mod.general.lv <- c(mod.general.lv, "\t ## Data Level ## \n\t for(i in 1:n) {")
 
-	write.resp.script <- setup.resp.families.lv(p = p, complete.family = complete.family, num.lv = 0, row.eff = row.eff, row.ids = row.ids, num.X = num.X, complete.trial.size = complete.trial.size, index.tweed.cols = index.tweed.cols, index.ord.cols = index.ord.cols)
+	write.resp.script <- setup.resp.families.lv(p = p, complete.family = complete.family, num.lv = 0, row.eff = row.eff, row.ids = row.ids, offset = offset, num.X = num.X, complete.trial.size = complete.trial.size, index.tweed.cols = index.tweed.cols, index.ord.cols = index.ord.cols)
 	mod.general.lv <- c(mod.general.lv, write.resp.script)
 	mod.general.lv <- c(mod.general.lv, paste0("\t\t } \n\n\t ## Process level and priors ##"))
 	
 	
-	## prior for spp-coefficients, controlled by prior.control$hypparams[1]
-	if(prior.control$type[1] == "normal") prior.string <- paste0("dnorm(0,",1/prior.control$hypparams[1],")")
-	if(prior.control$type[1] == "cauchy") prior.string <- paste0("dt(0,",1/prior.control$hypparams[1],",1)")
-	if(prior.control$type[1] == "uniform") prior.string <- paste0("dunif(-",prior.control$hypparams[1],",",prior.control$hypparams[1],")")
+	## Build prior strings for all priors distributions
+     prior.strings <- construct.prior.strings(x = prior.control)
 
+     
 	## No traits or traits included but enviro coefs not regressed against them 
 	if(num.traits == 0 || (num.traits > 0 & all(which.traits[[1]] == 0))) { 
 		if(length(index.ord.cols) == 0) 
-			mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { all.params[j,1] ~ ", prior.string, " } ## Separate species intercepts")) 
+			mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ ", prior.strings$p1, " } ## Separate species intercepts")) 
 		if(length(index.ord.cols) == 1) {
-			mod.general.lv <- c(mod.general.lv, paste0("\t all.params[",index.ord.cols, ",1] <- 0 ## Ordinal species intercept"))
+			mod.general.lv <- c(mod.general.lv, paste0("\t lv.coefs[",index.ord.cols, ",1] <- 0 ## Ordinal species intercept"))
 			for(j in (1:p)[-index.ord.cols]) 
-				mod.general.lv <- c(mod.general.lv, paste0("\t all.params[", j, ",1] ~ ", prior.string))
+				mod.general.lv <- c(mod.general.lv, paste0("\t lv.coefs[", j, ",1] ~ ", prior.strings$p1))
 			}
 		if(length(index.ord.cols) > 1) {
 			if(length(index.ord.cols) == p)
-				mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { all.params[j,1] ~ dnorm(0,pow(ordinal.ranef.sigma,-2)) } ## Ordinal species random intercept"))
+				mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ dnorm(0,pow(ordinal.sigma,-2)) } ## Ordinal species random intercept"))
 			else {
 				for(j in index.ord.cols)
-					mod.general.lv <- c(mod.general.lv, paste0("\t all.params[",j, ",1] ~ dnorm(0,pow(ordinal.ranef.sigma,-2)) ## Ordinal species random intercept"))	
+					mod.general.lv <- c(mod.general.lv, paste0("\t lv.coefs[",j, ",1] ~ dnorm(0,pow(ordinal.sigma,-2)) ## Ordinal species random intercept"))	
 				for(j in (1:p)[-index.ord.cols]) 
-					mod.general.lv <- c(mod.general.lv, paste0("\t all.params[", j, ",1] ~ ", prior.string))
+					mod.general.lv <- c(mod.general.lv, paste0("\t lv.coefs[", j, ",1] ~ ", prior.strings$p1))
 				}				
-			mod.general.lv <- c(mod.general.lv, paste0("\t ordinal.ranef.sigma ~ dunif(0,",prior.control$hypparams[1],")"))
+			mod.general.lv <- c(mod.general.lv, paste0("\t ordinal.sigma ~ ", prior.strings$p4))
 			}
 		if((num.traits > 0 & all(which.traits[[1]] == 0))) { 
-			mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[1] <- 0; for(l in 1:num.traits) { traits.params[1,l] <- 0 } \n\t sigma.trait[1] <- 0")) 
+			mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[1] <- 0; for(l in 1:num.traits) { traits.params[1,l] <- 0 } \n\t trait.sigma[1] <- 0")) 
 			}
 		}
 	## Traits included and enviro coefs regressed against (some of) them
 	if(num.traits > 0 & all(which.traits[[1]] > 0)) { 
 		if(length(index.ord.cols) != 1) { ## If there are 0 or > 1 ordinal columns, then regress all intercepts against traits
-			mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { all.params[j,1] ~ dnorm(traits.int[1] + inprod(traits[j,],traits.params[1,1:num.traits]),pow(sigma.trait[1],-2)) } ## Species intercepts regressed against traits"))
+			mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ dnorm(traits.int[1] + inprod(traits[j,],traits.params[1,1:num.traits]),pow(trait.sigma[1],-2)) } ## Species intercepts regressed against traits"))
 			}
 		if(length(index.ord.cols) == 1) { ## If there is 1 ordinal column, do not regress this intercept against trait
-			mod.general.lv <- c(mod.general.lv, paste0("\t all.params[",index.ord.cols, ",1] <- 0 ## Ordinal species intercept"))
+			mod.general.lv <- c(mod.general.lv, paste0("\t lv.coefs[",index.ord.cols, ",1] <- 0 ## Ordinal species intercept"))
 			for(j in (1:p)[-index.ord.cols]) 
-				mod.general.lv <- c(mod.general.lv, paste0("\t all.params[", j, ",1] ~ dnorm(traits.int[1] + inprod(traits[",j,",],traits.params[1,1:num.traits]),pow(sigma.trait[1],-2))"))
+				mod.general.lv <- c(mod.general.lv, paste0("\t lv.coefs[", j, ",1] ~ dnorm(traits.int[1] + inprod(traits[",j,",],traits.params[1,1:num.traits]),pow(trait.sigma[1],-2))"))
 			}
 		for(l in which.traits[[1]]) {
-			mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",1,",",l,"] ~ ", prior.string, " ## traits used for this spp intercept")) 
+			mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",1,",",l,"] ~ ", prior.strings$p1, " ## traits used for this spp intercept")) 
 			}
 		if(length((1:num.traits)[-which.traits[[1]]]) > 0) {
 			for(l in (1:num.traits)[-which.traits[[1]]]) {
-				mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",1,",",l,"] <- 0 ## traits not used for this X.params")) 
+				mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",1,",",l,"] <- 0 ## traits not used for this X.coefs")) 
 				}
 			}
 		
-		mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[1] ~ ", prior.string)) 
-		mod.general.lv <- c(mod.general.lv, paste0("\t sigma.trait[1] ~ dunif(0,",prior.control$hypparams[1],")")) 
+		mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[1] ~ ", prior.strings$p1)) 
+		mod.general.lv <- c(mod.general.lv, paste0("\t trait.sigma[1] ~ ", prior.strings$p4)) 
 		}			 
 
 	if(any(complete.family == "tweedie")) mod.general.lv <- c(mod.general.lv, paste0("\t powerparam ~ dunif(1,2) ## Tweedie power parameter"))
 	if(any(complete.family == "ordinal")) { 
-		mod.general.lv <- c(mod.general.lv, paste0("\t for(k in 1:(num.ord.levels-1)) { alpha0[k] ~ ", prior.string, " }"))
-		mod.general.lv <- c(mod.general.lv, paste0("\t alpha[1:(num.ord.levels-1)] <- sort(alpha0) ## Ordinal cutoffs"))
+		mod.general.lv <- c(mod.general.lv, paste0("\t for(k in 1:(num.ord.levels-1)) { cutoffs0[k] ~ ", prior.strings$p1, " }"))
+		mod.general.lv <- c(mod.general.lv, paste0("\t cutoffs[1:(num.ord.levels-1)] <- sort(cutoffs0) ## Ordinal cutoffs"))
 		}
 
 		
-	## Priors on row effects, controlled by prior.control$hypparams[1]
+	## Priors on row effects
 	if(row.eff == "fixed") {
-		if(prior.control$type[1] == "normal") prior.string <- paste0("dnorm(0,",1/prior.control$hypparams[1],")")
-		if(prior.control$type[1] == "cauchy") prior.string <- paste0("dt(0,",1/prior.control$hypparams[1],",1)")
-		if(prior.control$type[1] == "uniform") prior.string <- paste0("dunif(-",prior.control$hypparams[1],",",prior.control$hypparams[1],")")
 		for(k in 1:ncol(row.ids)) 
-			mod.general.lv <- c(mod.general.lv, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.params.", colnames(row.ids)[k], "[i] ~ ", prior.string, " } "))
+			mod.general.lv <- c(mod.general.lv, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.", colnames(row.ids)[k], "[i] ~ ", prior.strings$p1, " } "))
 		}
 	if(row.eff == "random") {
 		for(k in 1:ncol(row.ids)) {
-			mod.general.lv <- c(mod.general.lv, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.params.", colnames(row.ids)[k], "[i] ~ dnorm(0, pow(row.ranef.sigma.", colnames(row.ids)[k], ",-2)) } "))
-			mod.general.lv <- c(mod.general.lv, paste0("\t row.ranef.sigma.", colnames(row.ids)[k], " ~ dunif(0,",prior.control$hypparams[1],")"))
+			mod.general.lv <- c(mod.general.lv, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.", colnames(row.ids)[k], "[i] ~ dnorm(0, pow(row.sigma.", colnames(row.ids)[k], ",-2)) } "))
+			mod.general.lv <- c(mod.general.lv, paste0("\t row.sigma.", colnames(row.ids)[k], " ~ ",prior.strings$p4))
 			}
-		#mod.general.lv <- c(mod.general.lv, paste0("\t row.ranef.mean ~ ", prior.string))
+		#mod.general.lv <- c(mod.general.lv, paste0("\t row.ranef.mean ~ ", prior.strings$p1))
 		}
 
 		
 	## Prior for X-coefficients, controlled by prior.control$hypparams[3]	
 	if(num.X > 0) {
-		if(prior.control$type[3] == "normal") prior.string <- paste0("dnorm(0,", 1/prior.control$hypparams[3], ")")
-		if(prior.control$type[3] == "cauchy") prior.string <- paste0("dt(0,",1/prior.control$hypparams[3],",1)")
-		if(prior.control$type[3] == "uniform") prior.string <- paste0("dunif(-",prior.control$hypparams[3],",",prior.control$hypparams[3],")")
-
 		mod.general.lv <- c(mod.general.lv, paste0("\n"))
 	
 		if(num.traits == 0) { ## Traits not included in model, so SSVS is permitted
 			for(i in 1:length(prior.control$ssvs.index)) {		
 				if(prior.control$ssvs.index[i] == -1) {
-					mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.params[j,", i, "] ~ ", prior.string, " } ")) 
+					mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.coefs[j,", i, "] ~ ", prior.strings$p3, " } ")) 
 					}
 				if(prior.control$ssvs.index[i] == 0) {
-					ssvs.prior.string <- paste0("dnorm(0,pow(", prior.control$hypparams[3], "*((1-probindX", i, "[j])*", prior.control$ssvs.g, " + probindX", i, "[j]),-1))")
-					mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.params[j,", i, "] ~ ", ssvs.prior.string, "; probindX", i, "[j] ~ dbern(0.5) }"))
+					ssvs.prior.string <- paste0("dnorm(0,pow(", prior.control$hypparams[3], "*((1-ssvs.indcoefs", i, "[j])*", prior.control$ssvs.g, " + ssvs.indcoefs", i, "[j]),-1))")
+					mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.coefs[j,", i, "] ~ ", ssvs.prior.string, "; ssvs.indcoefs", i, "[j] ~ dbern(0.5) }"))
 					}
 				if(prior.control$ssvs.index[i] > 0) {
-					ssvs.prior.string <- paste0("dnorm(0,pow(", prior.control$hypparams[3], "*((1-probGpX", prior.control$ssvs.index[i], ")*", prior.control$ssvs.g, " + probGpX", prior.control$ssvs.index[i], "),-1))")
-					mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.params[j,", i, "] ~ ", ssvs.prior.string, " } "))
+					ssvs.prior.string <- paste0("dnorm(0,pow(", prior.control$hypparams[3], "*((1-ssvs.gpcoefs", prior.control$ssvs.index[i], ")*", prior.control$ssvs.g, " + ssvs.gpcoefs", prior.control$ssvs.index[i], "),-1))")
+					mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.coefs[j,", i, "] ~ ", ssvs.prior.string, " } "))
 					}
 				} 				
 			}
 			
 		if(num.traits > 0) { for(i in 1:num.X) {
 			if(all(which.traits[[i+1]] == 0)) { ## Traits included but enviro coefs not regressed against them
-				mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.params[j,", i, "] ~ ", prior.string, " } ## Coefficient not regressed against any traits")) 
-				mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[",i+1,"] <- 0; sigma.trait[",i+1,"] <- 0; for(l in 1:num.traits) { traits.params[",i+1,",l] <- 0 } \n")) 
+				mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.coefs[j,", i, "] ~ ", prior.strings$p3, " } ## Coefficient not regressed against any traits")) 
+				mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[",i+1,"] <- 0; trait.sigma[",i+1,"] <- 0; for(l in 1:num.traits) { traits.params[",i+1,",l] <- 0 } \n")) 
 				}
 				
 			if(all(which.traits[[i+1]] > 0)) { ## Traits included and environ coefs regressed against some of them
- 				mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.params[j,", i, "] ~ dnorm(traits.int[",i+1,"] + inprod(traits[j,],traits.params[",i+1,",1:num.traits]),pow(sigma.trait[",i+1,"],-2)) } "))
+ 				mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { X.coefs[j,", i, "] ~ dnorm(traits.int[",i+1,"] + inprod(traits[j,],traits.params[",i+1,",1:num.traits]),pow(trait.sigma[",i+1,"],-2)) } "))
 				for(l in which.traits[[i+1]]) {
-					mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",i+1,",",l,"] ~ ", prior.string, " ## traits used for this X.params")) 
+					mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",i+1,",",l,"] ~ ", prior.strings$p3, " ## traits used for this X.coefs")) 
 					}
 				if(length((1:num.traits)[-which.traits[[i+1]]]) > 0) {
 					for(l in (1:num.traits)[-which.traits[[i+1]]]) {
-						mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",i+1,",",l,"] <- 0 ## traits not used for this X.params")) 
+						mod.general.lv <- c(mod.general.lv, paste0("\t traits.params[",i+1,",",l,"] <- 0 ## traits not used for this X.coefs")) 
 						}
 					}
-				mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[",i+1,"] ~ ", prior.string)) 
-				mod.general.lv <- c(mod.general.lv, paste0("\t sigma.trait[",i+1,"] ~ dunif(0,",prior.control$hypparams[3],") \n"))
+				mod.general.lv <- c(mod.general.lv, paste0("\t traits.int[",i+1,"] ~ ", prior.strings$p3)) 
+				mod.general.lv <- c(mod.general.lv, paste0("\t trait.sigma[",i+1,"] ~ ", prior.strings$p4, "\n"))
 				}	
  			} }	
             				
 		mod.general.lv <- c(mod.general.lv, paste0(""))
 		if(any(prior.control$ssvs.index > 0)) {
 			for(i in unique(prior.control$ssvs.index[prior.control$ssvs.index > 0])) 
-				mod.general.lv <- c(mod.general.lv, paste0("\t probGpX", i, " ~ dbern(0.5)")) 
+				mod.general.lv <- c(mod.general.lv, paste0("\t ssvs.gpcoefs", i, " ~ dbern(0.5)")) 
 			}
 		}
 # 	if(num.X > 0 & any(family == "multinom")) {
@@ -202,12 +195,7 @@ make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.tr
 
 	## Prior on dispersion parameters, controlled by prior.control$hypparams[4]
 	if(!all(complete.family %in% c("poisson", "binomial", "ordinal", "multinom", "exponential","bernoulli"))) {
-		if(prior.control$type[4] == "uniform") prior.string <- paste0("dunif(0,",prior.control$hypparams[4],")")
-	 	if(prior.control$type[4] == "halfcauchy") prior.string <- paste0("dt(0,",1/prior.control$hypparams[4],",1)I(0,)")
-	 	if(prior.control$type[4] == "halfnormal") prior.string <- paste0("dnorm(0,",1/prior.control$hypparams[4],")I(0,)")
-		#if(prior.control$type[4] == "gamma") prior.string <- paste0("dgamma(",1/prior.control$hypparams[4],",",1/prior.control$hypparams[4],")")
-
-	 	mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { all.params[j,num.lv+2] ~ ", prior.string, " } ## Dispersion parameters")) 
+	 	mod.general.lv <- c(mod.general.lv, paste0("\t for(j in 1:p) { lv.coefs[j,num.lv+2] ~ ", prior.strings$p4, " } ## Dispersion parameters")) 
 	 	}
 			    
 	mod.general.lv <- c(mod.general.lv, "\n\t }")

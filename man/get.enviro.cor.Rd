@@ -68,5 +68,6 @@ enviro.cors <- get.enviro.cor(spider.fit.nb)
 
 corrplot(enviro.cors$sig.cor, title = "Shared response correlations", 
 	type = "lower", diag = FALSE, mar = c(3,0.5,2,1), tl.srt = 45)
+dev.off()
 }
 }

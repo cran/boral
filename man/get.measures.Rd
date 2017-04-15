@@ -8,7 +8,7 @@
 
 \usage{
 get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none", 
-	row.ids = NULL, num.lv, fit.mcmc)
+	row.ids = NULL, offset = NULL, num.lv, fit.mcmc)
 }
 
 \arguments{
@@ -27,6 +27,8 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
   
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
+ \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
+
  \item{num.lv}{The number of latent variables used in the fitted boral model.}
   
   \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
@@ -43,7 +45,7 @@ The following information criteria are currently calculated, when permitted: 1) 
 
 Intuitively, comparing boral models with and without latent variables (using information criteria such as those returned) amounts to testing whether the columns of the response matrix \code{y} are correlated. With multivariate abundance data for example, where \code{y} is a matrix of \eqn{n} sites and \eqn{p} species, comparing models with and without latent variables tests whether there is any evidence of correlation between species.
 
-Please note that criteria 4 and 5 are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), or more than one random row effect is included (such that \code{row.ids} contains more than one column), then criteria 4 and 5 are will not calculated. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; please see the details in \code{calc.logLik.lv0} and \code{calc.marglogLik}.
+Please note that criteria 4 and 5 are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), or more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), then criteria 4 and 5 are will not calculated. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; please see the details in \code{calc.logLik.lv0} and \code{calc.marglogLik}.
 }
 
 \value{
@@ -56,9 +58,10 @@ A list with the following components:
 \item{do.marglik.ics}{A boolean indicating whether marginal log-likelihood based information criteria are calculated.}
 
 If \code{do.marglik.ics = TRUE}, then we also have:
+\item{median.logLik}{The marginal log-likelihood evaluated at the posterior median.}
+\item{marg.num.params}{Number of estimated parameters used in the fitted model, when all parameters are treated as "fixed" effects.}
 \item{aic.median}{AIC (using the marginal log-likelihood) evaluated at the posterior median.}
 \item{bic.median}{BIC (using the marginal log-likelihood) evaluated at the posterior median.}
-\item{marg.num.params}{Number of estimated parameters used in the fitted model, when all parameters are treated as "fixed" effects.}
 }
 
 \section{Warning}{

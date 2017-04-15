@@ -15,6 +15,7 @@ export(boral,
 	lvsplot,
 	make.jagsboralmodel, 
 	make.jagsboralnullmodel,
+     predict.boral,
 	plot.boral,
 	summary.boral)
 
@@ -22,11 +23,12 @@ export(boral,
 exportClasses(boral)
 
 
-S3method(summary, boral)
-S3method(plot, boral)
-S3method(fitted, boral)
-S3method(simulate, boral)
 S3method(boral, default)
+S3method(fitted, boral)
+S3method(plot, boral)
+S3method(predict, boral)
+S3method(simulate, boral)
+S3method(summary, boral)
 
 
 import(coda, mvtnorm, fishMod, MASS)
@@ -46,6 +48,7 @@ importFrom(stats, dpois, ppois, qpois, rpois)
 importFrom(stats, dunif, runif, punif, qunif)
 importFrom(stats, rWishart)
 importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor, simulate, qqline)
+importFrom(stats, offset, quantile)
 importFrom(graphics, abline,axis,layout,legend,lines,matplot,par,points,plot,text,mtext,segments)
 importFrom(grDevices,palette, rainbow)
 

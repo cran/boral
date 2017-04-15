@@ -8,7 +8,7 @@
 
 \usage{make.jagsboralnullmodel(family, num.X = 0, num.traits = 0, 
    which.traits = NULL, row.eff = "none", row.ids = NULL,
-   trial.size = 1, n, p, model.name = NULL, 
+   offset = NULL, trial.size = 1, n, p, model.name = NULL, 
    prior.control = list(type = c("normal","normal","normal","uniform"), 
 	hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6))
 	}
@@ -34,6 +34,8 @@
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for more details. for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
+ \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
+
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
  \item{n}{The number of rows in the response matrix \code{y}.}
@@ -44,7 +46,7 @@
 
  \item{prior.control}{A list of parameters for controlling the prior distributions. These include:
 	\itemize{
-		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients (ignored if \code{num.lv = 0}); 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see \code{\link{about.traits}} for more information); 4) priors for any dispersion parameters. 
+		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see \code{\link{about.traits}} for more information); 4) priors for any dispersion parameters and variance (standard deviation, to be precise) parameters in the model.
 				
 		For elements 1-3, the prior distributions currently available include: I) ``normal", which is normal prior with the variance controlled by the \code{hypparams} argument; II) ``cauchy", which is a Cauchy prior with variance controlled by the \code{hypparams} argument. Gelman, et al. (2008) considers using Cauchy priors with variance \eqn{2.5^2} as weakly informative priors for regression coefficients; III) ``uniform", which is uniform prior with minimum values given by \code{-hypparams} and maximum values given by \code{+hypparams}. 
 		
@@ -52,8 +54,8 @@
 		
 		Defaults to the vector \code{c("normal","normal","normal","uniform")}. 
 
-		\item \emph{hypparams:} Vector of four hyperparameters used in the set up of prior distributions. In order, these are: 1) affects the prior distribution for all column-specific intercepts, row effects, and cutoff points for ordinal data. If \code{row.eff = "random"}, this also controls the maximum of the uniform prior for the standard deviation of the random effects normal distribution. Also, if more than two of the columns are ordinal, then this also controls the maximum of the uniform prior for the standard deviation of the column-specific random intercepts for these columns; 2) affects the prior distribution for all latent variable coefficients (ignored if \code{num.lv = 0}); 3) affects the prior distribution for column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also affects the prior distribution for the trait regression coefficients, and controls the maximum of the uniform prior for the standard deviation of the normally distributed random effects; 4) affects the prior distribution used for any dispersion parameters. 
-		
+		\item \emph{hypparams:} Vector of four hyperparameters used in the set up of prior distributions. In order, these are: 1) affects the prior distribution for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) affects the prior distribution for all latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) affects the prior distribution for column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also affects the prior distribution for the trait regression coefficients; 4) affects the prior distribution for any dispersion parameters, as well as the prior distributions for the standard deviation of the random effects normal distribution if \code{row.eff = "random"}, the standard deviation of the column-specific random intercepts for these columns if more than two of the columns are ordinal, and the standard deviation of the random effects normal distribution for trait regression coefficients when traits are included in the model.
+
 		Defaults to the vector \code{c(100, 20, 100, 50)}. 
 		
 		\item \emph{ssvs.index:} Indices to be used for stochastic search variable selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer exceeding 1 (SSVS is performed on collectively all coefficients on this covariate/s.) 

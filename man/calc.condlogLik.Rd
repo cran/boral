@@ -9,7 +9,7 @@
 \usage{
 calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 
 	X.coefs = NULL, row.coefs = NULL, row.ids = NULL,
-	lv = NULL, cutoffs = NULL, powerparam = NULL)
+	offset = NULL, lv = NULL, cutoffs = NULL, powerparam = NULL)
 }
 
 \arguments{
@@ -31,6 +31,8 @@ calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
   \item{row.coefs}{Row effect estimates for the boral model. The conditional likelihood is defined conditional on these estimates i.e., they are also treated as ``fixed effects". Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see the \code{\link{boral}} function for details. Defaults to \code{NULL}, so that if \code{row.coefs = NULL} then the argument is ignored, otherwise if \code{row.coefs} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.coefs} and \code{row.ids} are consistent in terms of arguments supplied.}    
+
+ \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
 
  \item{lv}{Latent variables "estimates" from the boral model, which the conditional likelihood is based on. Defaults to \code{NULL}, in which case it is assumed no latent variables were included in the model.}
 
@@ -89,9 +91,9 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
 fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix) 
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
+coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
      2,median),nrow=p)
-site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.params", colnames(fit.mcmc))],
+site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.coefs.ID1", colnames(fit.mcmc))],
      2,median))
 lvs.mat <- matrix(apply(fit.mcmc[,grep("lvs",colnames(fit.mcmc))],2,median),nrow=n)
 
@@ -109,9 +111,9 @@ spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", num.lv = 0,
 fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix) 
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("all.params",colnames(fit.mcmc))],
+coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
      2,median),nrow=p)
-X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.params",colnames(fit.mcmc))],
+X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.coefs",colnames(fit.mcmc))],
 	2,median),nrow=p)
 
 ## Calculate the log-likelihood at the posterior median

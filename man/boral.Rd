@@ -13,8 +13,9 @@ boral(y, ...)
 
 \method{boral}{default}(y, X = NULL, traits = NULL, which.traits = NULL, 
 	family, trial.size = 1, num.lv = 0, row.eff = "none", row.ids = NULL,
-	save.model = FALSE, calc.ics = TRUE, mcmc.control = list(n.burnin = 10000, 
-	n.iteration = 40000, n.thin = 30, seed = 123), 
+	offset = NULL, save.model = FALSE, calc.ics = TRUE, 
+     mcmc.control = list(n.burnin = 10000, n.iteration = 40000, 
+     n.thin = 30, seed = 123), 
 	prior.control = list(type = c("normal","normal","normal","uniform"), 
 	hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6), 
 	do.fit = TRUE, model.name = NULL, ...)
@@ -50,6 +51,8 @@ boral(y, ...)
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}. This matrix is useful if one wants to specify more complicated row effect structures beyond a single, row effect unique to each row; please see details below as well as examples below. Whether these row effects are included as fixed or random effects is governed by \code{row.eff}. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \code{row.eff = "fixed"} or \code{"random"}, then \cr \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
+ \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
+
  \item{save.model}{If \code{save.model = TRUE}, then the JAGS model file is saved as a text file (with name given by \code{model.name}) in the current working directory, as well as the MCMC samples from the call to JAGS. If saved, various functions available in the \code{coda} package can be applied to the MCMC samples. Note MCMC samples can take up a lot of memory. Defaults to \code{FALSE}.}
 
 \item{calc.ics}{If \code{calc.ics = TRUE}, then various information criteria values are also returned, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to \code{TRUE}.}
@@ -68,7 +71,7 @@ boral(y, ...)
 	
 \item{prior.control}{A list of parameters for controlling the prior distributions. Values not set will assume default values. These include:
 	\itemize{
-		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients (ignored if \code{num.lv = 0}); 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see \code{\link{about.traits}} for more information); 4) priors for any dispersion parameters. 
+		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see \code{\link{about.traits}} for more information); 4) priors for any dispersion parameters and variance (standard deviation, to be precise) parameters in the model.
 				
 		For elements 1-3, the prior distributions currently available include: I) ``normal", which is normal prior with the variance controlled by the \code{hypparams} argument; II) ``cauchy", which is a Cauchy prior with variance controlled by the \code{hypparams} argument. Gelman, et al. (2008) considers using Cauchy priors with variance \eqn{2.5^2} as weakly informative priors for regression coefficients; III) ``uniform", which is uniform prior with minimum values given by \code{-hypparams} and maximum values given by \code{+hypparams}. 
 		
@@ -76,7 +79,7 @@ boral(y, ...)
 		
 		Defaults to the vector \code{c("normal","normal","normal","uniform")}. 
 
-		\item \emph{hypparams:} Vector of four hyperparameters used in the set up of prior distributions. In order, these are: 1) affects the prior distribution for all column-specific intercepts, row effects, and cutoff points for ordinal data. If \code{row.eff = "random"}, this also controls the maximum of the uniform prior for the standard deviation of the random effects normal distribution. Also, if more than two of the columns are ordinal, then this also controls the maximum of the uniform prior for the standard deviation of the column-specific random intercepts for these columns; 2) affects the prior distribution for all latent variable coefficients (ignored if \code{num.lv = 0}); 3) affects the prior distribution for column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also affects the prior distribution for the trait regression coefficients, and controls the maximum of the uniform prior for the standard deviation of the normally distributed random effects; 4) affects the prior distribution used for any dispersion parameters. 
+		\item \emph{hypparams:} Vector of four hyperparameters used in the set up of prior distributions. In order, these are: 1) affects the prior distribution for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) affects the prior distribution for all latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) affects the prior distribution for column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also affects the prior distribution for the trait regression coefficients; 4) affects the prior distribution for any dispersion parameters, as well as the prior distributions for the standard deviation of the random effects normal distribution if \code{row.eff = "random"}, the standard deviation of the column-specific random intercepts for these columns if more than two of the columns are ordinal, and the standard deviation of the random effects normal distribution for trait regression coefficients when traits are included in the model.
 		
 		Defaults to the vector \code{c(100, 20, 100, 50)}. 
 		
@@ -111,6 +114,8 @@ where the mean response for element (i,j), denoted as \eqn{mu_{ij}}, is regresse
 
 Note boral can also handle multiple, hierarchical row effects, which may be useful to account for sampling design. This is controlled using the \code{row.ids} argument. For example, if the first five rows of \eqn{y} correspond to replications from site 1, the next five rows correspond to replications from site 2, and so on, then one can set \code{row.ids = matrix(c(1,1,1,1,1,2,2,2,2,2,...), ncol = 1)} to take this in account. While this way of coding row effects via the \code{row.ids} argument takes some getting used to, it has been done this way partly to force the user to think more carefully about exactly the structure of the data i.e., with great power comes great responsibility...
 
+If \code{offset} is supplied, then it will be included in the linear predictor below (and all linear predictors below where appropriate).
+
 Without row effects, the above independent response model is basically a Bayesian analog of the \code{manyglm} function in the \code{mvabund} package (Wang et al., 2013). 
 
 \bold{Pure latent variable models:} If no explanatory variables are included and \code{num.lv} > 0, boral fits a pure latent variable model to perform model-based unconstrained ordination (Hui et al., 2014),
@@ -139,14 +144,14 @@ A variety of families are available in boral, designed to handle multivariate ab
 \bold{Estimation:} For boral models, estimation is performed using Bayesian Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). Please note that only \emph{one} MCMC chain in run: this point is discussed later in this help file. Regarding prior distributions, the default settings, based on the \code{prior.control} argument, are as follows: 
 
 \itemize{
-\item Normal priors with mean zero and variance given by \code{hypparams[1]} are assigned to all intercepts, cutoffs for ordinal responses, and row effects. If the row effects are assumed to random, then the standard deviation of the normal random effect is assigned a uniform prior with maximum \code{hypparams[1]}. If more than two columns are ordinal responses, then the standard deviation of the normal random species-specific intercepts is assigned a uniform prior with maximum \code{hypparams[1]}.
+\item Normal priors with mean zero and variance given by \code{hypparams[1]} are assigned to all intercepts, cutoffs for ordinal responses, and row effects. 
 \item Normal priors with mean zero and variance given by \code{hypparams[2]} are assigned coefficients relating to latent variables, \eqn{\bm{\theta}_j}.
 \item Normal priors with mean zero and variance given by \code{hypparams[3]} are assigned to all coefficients relating to covariates in \eqn{\bm{\beta}_j}. If traits are included, the same normal priors are assigned to the \eqn{\kappa}'s, and the standard deviation \eqn{\sigma_k} are assigned uniform priors with maximum equal to \code{hypparams[4]}.
-\item For the negative binomial, normal, lognormal, and tweedie distributions, uniform priors with maximum equal to \code{hypparams[4]} are used on the dispersion parameters. Please note that for the normal and lognormal distributions, these uniform priors are assigned to the standard deviations \eqn{\phi} (see Gelman, 2006).
+\item For the negative binomial, normal, lognormal, and tweedie distributions, uniform priors with maximum equal to \code{hypparams[4]} are used on the dispersion parameters. Please note that for the normal and lognormal distributions, these uniform priors are assigned to the standard deviations \eqn{\phi} (see Gelman, 2006). If there are any variance (standard deviation, to be precise) parameters in the model, then these are also assigned uniform priors with maximum equal to \code{hypparams[4]} e.g., standard deviation of the normal random effect if the row effects are assumed to random, the standard deviation of the normal random species-specific intercepts if more than two columns are ordinal responses etc...
 
 }
 
-With the default values of \code{hypparams}, all parameters are given uninformative prior distributions except for the priors of the latent variable coefficients \eqn{\bm{\theta}_j}. We recommend such a ``weakly-informative" prior for the latent variable coefficients, as this tends to be produce more stable MCMC sampling particularly if the response matrix is large and sparse. 
+With the default values of \code{hypparams}, all parameters are given uninformative prior distributions except for the priors of the latent variable coefficients \eqn{\bm{\theta}_j}. 
 
 
 \bold{Using information criteria at your own risk:} Using information criterion from \code{calc.ics = TRUE} for model selection should be done with extreme caution, for two reasons: 1) The implementation of some of these criteria is heuristic and experimental, 2) Deciding what model to fit should also be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables is more appropriate. However, if we are interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are more appropriate. As another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = "none"}) or species composition (\code{row.eff = "fixed"}).  
@@ -159,15 +164,21 @@ We also make the important point that if traits are included in the model, then 
 
 
 \section{Why is only one MCMC chain run?}{
-Much like the \code{MCMCfactanal} function in the \code{MCMCpack} package (Martin et al., 2011) for conducting factor analysis, which is a special case of the pure latent variable model with Gaussian responses, boral deliberately runs only one MCMC chain. This runs contrary to the recommendation of most Bayesian analyses, where the advice is to run multiple MCMC chains and check convergence using (most commonly) the Gelman-Rubin statistic or ``Rhat'' (Gelman et al., 2013). The main reason for this is that, in the context of MCMC sampling, the latent variable model is invariant to a switch of the sign, i.e. \eqn{\bm{z}^T_i\bm{\theta}_j = (-\bm{z})^T_i(-\bm{\theta}_j)}, and so is actually unidentifiable. This is similar to well-known problem of label switching that occurs during the course of MCMC sampling for mixture models (see for instance, Section 4.9, McLachlan and Peel, 2004), and is due to the fact that the sign of the latent variables (ordination coordinates) is inherently arbitrary.
+Much like the \code{MCMCfactanal} function in the \code{MCMCpack} package (Martin et al., 2011) for conducting factor analysis, which is a special case of the pure latent variable model with Gaussian responses, boral deliberately runs only one MCMC chain. This runs contrary to the recommendation of most Bayesian analyses, where the advice is to run multiple MCMC chains and check convergence using (most commonly) the Gelman-Rubin statistic (Gelman et al., 2013). The main reason for this is that, in the context of MCMC sampling, the latent variable model is invariant to a switch of the sign, i.e. \eqn{\bm{z}^T_i\bm{\theta}_j = (-\bm{z})^T_i(-\bm{\theta}_j)}, and so is actually unidentifiable. 
 
-As a result of this sign-switching problem, it means that different MCMC chains can produce latent variables and corresponding coefficients values that, while having similar magnitudes, will be different in sign. Consequently, combining MCMC chains and checking Rhats, computing posterior means and medians etc...becomes inappropriate (in principle, one way to resolve this problem would be to post-process the MCMC chains and deal with sign switching, but this is really hard!). Therefore, to alleviate this issue together, boral chooses to only run one MCMC chain.
+As a result of sign-switching, different MCMC chains can produce latent variables and corresponding coefficients values that, while having similar magnitudes, will be different in sign. Consequently, combining MCMC chains and checking Rhats, computing posterior means and medians etc...becomes complicated (in principle, one way to resolve this problem would be to post-process the MCMC chains and deal with sign switching, but this is really hard!). Therefore, to alleviate this issue together, boral chooses to only run one MCMC chain.
 
 What does this mean for the user? 
 \itemize{
-\item For checking convergence, we recommend you look at trace plots of the MCMC chains. Using the \code{coda} package, which is automatically loaded when the \code{boral} package is loaded, try something like \code{traceplot(fit$jags.model, ask = TRUE)}. You could also try \code{geweke.diag} for Geweke's convergence diagnostic, although no promises this necessarily does what is meant it!
+\item boral automatically calculates the Geweke convergence diagnostic (Geweke, 1992), which is a diagnostic applicable with only one MCMC chain; please see the help file \code{geweke.diag} in the \code{CODA} package for more information. The output is a list containing Z-scores for the appropriate parameters in the model, and each score can be interpreted in the same manner as the test statistic from conducting a Z-test i.e., if the score exeeds roughly 1.96 then the p-value is less than 0.05, and there is evidence the MCMC chain (for this particular parameter) has not converged. 
+
+The output from boral also provides the proportion of Z-scores whose corresponding p-values are less than 0.05. Of course, because there are a large number of parameters in the model, then there are large number of Z-scores, and boral does not make any multiple comparison adjustment for this when calculating the number of ``significant" Z-scores. If you do indeed want to use this diagnostic to formally check for convergence, then we recommend you conduct some adjustment e.g., using Holm's method, by doing something such as \cr \code{gew.pvals <- 2*pnorm(abs(unlist(fit$geweke.diag[[1]])), lower.tail = FALSE)} and then \code{p.adjust(gew.pvals, method = "holm")}.
+ 
+\item For checking convergence, we recommend you look at trace plots of the MCMC chains. Using the \code{coda} package, which is automatically loaded when the \code{boral} package is loaded, try something like \code{traceplot(fit$jags.model, ask = TRUE)}. 
+
 \item If you have a lot of data, e.g. lots of sites compared to species, sign-switching tends to be less of problem and pops up less often.
-\item IMPORTANTLY, if the goal of your analysis is to inference while account for residual correlations between the columns of \code{y}, and not for model-based ordination, then the sign-switching problem is not a problem at all! This is because while the signs of the latent variables and associated coefficients may switch, the correlation and their signs are unaffected. In other words, looking the point estimates and credible intervals of regression coefficients \eqn{\bm{\beta}_j}, and functions like \code{get.residual.cor} are unaffected by sign-switching. 
+
+%\item IMPORTANTLY, if the goal of your analysis is to inference while account for residual correlations between the columns of \code{y}, and not for model-based ordination, then the sign-switching problem is not a problem at all! This is because while the signs of the latent variables and associated coefficients may switch, the correlation and their signs are unaffected. In other words, looking the point estimates and credible intervals of regression coefficients \eqn{\bm{\beta}_j}, and functions like \code{get.residual.cor} are unaffected by sign-switching. 
 }
 
 }
@@ -204,6 +215,8 @@ An object of class "boral" is returned, being a list containing the following co
      
      \item{jags.model}{If \code{save.model = TRUE}, the raw jags model fitted is returned. This can be quite large!}
      
+     \item{geweke.diag}{A list with two elements. The first element is itself a list containing the Geweke convergence diagnostic (Z-scores) for all appropriate parameters in the model. The second element contains the proportion of Z-scores that whose corresponding p-value is less than 0.05. No adjustment is made for multiple comparison on the p-values. Please see the section \emph{Why is only one MCMC chain run?} for more information on this diagnostic.}
+
      \item{n, p, family, trial.size, num.lv, ...}{Various attributes of the model fitted, including the dimension of \code{y}, the response and model matrix used, distributional assumptions and trial sizes, number of latent variables, the number of covariates and traits, whether information criteria values were calculated, hyperparameters used in the Bayesian estimation, indices for SSVS, the number of levels for ordinal responses, and n.burnin, n.iteration and n.thin.}
 }
 
@@ -216,6 +229,8 @@ An object of class "boral" is returned, being a list containing the following co
 \item Gelman et al. (2013) Bayesian Data Analysis. CRC Press.
 
 \item George, E. I. and McCulloch, R. E. (1993). Variable selection via Gibbs sampling. Journal of the American Statistical Association, 85, 398-409.
+
+\item Geweke, J. (1992) Evaluating the accuracy of sampling-based approaches to calculating posterior moments. In Bayesian Statistics 4 (editors JM Bernado, JO Berger, AP Dawid and AFM Smith). Clarendon Press.
 
 \item Hui et al. (2014). Model-based approaches to unconstrained ordination. Methods in Ecology and Evolution, 6, 399-411.
 
@@ -288,8 +303,7 @@ example.mcmc.control <- list(n.burnin = 10, n.iteration = 100,
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
 spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", calc.ics = FALSE, 
-     mcmc.control = example.mcmc.control)
+     row.eff = "fixed", mcmc.control = example.mcmc.control)
 
 summary(spider.fit.nb)
 
@@ -297,9 +311,11 @@ par(mfrow = c(2,2))
 plot(spider.fit.nb) ## Plots used in residual analysis, 
 ## Used to check if assumptions such an mean-variance relationship 
 ## are adequately satisfied.
+dev.off()
 
 lvsplot(spider.fit.nb) ## Biplot of the latent variables, 
 ## which can be interpreted in the same manner as an ordination plot.
+dev.off()
 
 \dontrun{
 ## Example 2a - model with no latent variables, no site effects, 
@@ -314,6 +330,7 @@ summary(spider.fit.nb)
 ## Caterpillar plots for the coefficients
 par(mfrow=c(2,3), mar = c(5,6,1,1))
 sapply(colnames(spider.fit.nb$X), coefsplot, x = spider.fit.nb)
+dev.off()
 
 
 ## Example 2b - suppose now, for some reason, the 28 rows were
@@ -370,6 +387,7 @@ tikus.fit <- boral(y, family = "binomial", num.lv = 2,
      
 lvsplot(tikus.fit, biplot = FALSE) 
 ## A strong location between the two sampling years 
+dev.off()
 
 
 ## Example 5 - model fitted to count data, no site effects, and

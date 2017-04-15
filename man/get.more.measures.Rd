@@ -8,8 +8,8 @@
 
 \usage{
 get.more.measures(y, X = NULL, family, trial.size = 1, 
-	row.eff = "none", row.ids = NULL, num.lv, fit.mcmc, 
-	verbose = TRUE)
+	row.eff = "none", row.ids = NULL, offset = NULL,
+	num.lv, fit.mcmc, verbose = TRUE)
 }
 
 \arguments{
@@ -28,6 +28,8 @@ get.more.measures(y, X = NULL, family, trial.size = 1,
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
+ \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
+
  \item{num.lv}{The number of latent variables used in the fitted boral model.}
 
   \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
@@ -40,7 +42,7 @@ Currently, four information criteria are calculated using this function, when pe
 
 All four criteria require computing the marginal log-likelihood across all MCMC samples. This takes a very long time to run, since Monte Carlo integration needs to be performed for all MCMC samples. Consequently, this function is currently not implemented as an argument in main \code{\link{boral}} fitting function, unlike \code{\link{get.measures}} which is available via the \code{calc.ics = TRUE} argument.  
 
-Moreover, note these criteria are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), or more than one random row effect is included (such that \code{row.ids} contains more than one column), then these extra information criteria are will not calculated, and the function returns nothing except a simple message. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; please see the details in \code{calc.logLik.lv0} and \code{calc.marglogLik}. 
+Moreover, note these criteria are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), or more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), then these extra information criteria are will not calculated, and the function returns nothing except a simple message. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; please see the details in \code{calc.logLik.lv0} and \code{calc.marglogLik}. 
 
 The two main differences between the criteria and those returned from \code{\link{get.measures}} are:
 \itemize{
