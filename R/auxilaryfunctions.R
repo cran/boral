@@ -212,7 +212,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs, X.co
 			if(!is.null(X.coefs)) 
 				eta <- eta + matrix(t(as.matrix(X[i, ])) %*% t(X.coefs), nrow = mc.row.eff, ncol = p, byrow = TRUE)
 			if(!is.null(offset)) 
-				eta <- eta + offset
+				eta <- eta + matrix(offset[i,], nrow = mc.row.eff, ncol = p, byrow = TRUE)
 
 				for(j in 1:p) {
 					if(complete.family[j] == "binomial") 

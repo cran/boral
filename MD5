@@ -1,7 +1,7 @@
-bdb443575e5ab2fc01c8cfb0eaf0d4dd *DESCRIPTION
+ba74666207217a746ec80036bdc3c26a *DESCRIPTION
 79d515f3661730cd2ac255952c6e2b4d *NAMESPACE
-d0777d003b5f400624c6d79812945522 *R/auxilaryfunctions.R
-e6ffe34a4eb1b8a17ee39594c68f83dc *R/boral.jags.R
+f1abe2cd32c94dd11b996bb978b66009 *R/auxilaryfunctions.R
+55c44b3605482fe764d8e5f38691c63d *R/boral.jags.R
 3cef68f650432ac8517a1d26e8492112 *R/makejagsboralmodel.R
 ef4b1105a9b6bcda9f1e5c2eba8cc6c8 *R/makejagsboralnullmodel.R
 af2cf3597f4cf8398f5997be6909fff2 *R/unseenfunctions.R

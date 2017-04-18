@@ -23,7 +23,9 @@
 ## 5) Draw species coefficients as random effects. In principle, the current function could allow this if you require users to manually include an intercept into traits. Then if only an intercept column is included for traits, the species coefs for each covariate are draw from a common mean. 
 ## 7) allow for multiple chains, but don't check convergence on the LVs and their loadings. Also cannot combined chains for LV and loadings unless you post process them, which is annoying. Think about how to parallelize JAGS if you can get this going though
 ## 8) Allow SSVS for selecting traits?
+## 9) The documentation suggests using the traceplot() function from coda on model$jags.model. This throws an error. I've found that I need to run coda's as.mcmc(model$jags.model) to use coda's traceplot() and autocorr.plot(). Since these plots are so important for model diagnostics, I recommend making this more clear in the documentation and/or adding traceplot and autocorrelation plot methods to the boral object. A vignette would also be helpful for people who aren't familiar with bayesian diagnostics.
 
+ 
 ## Make sure you test all dontrun examples before building package!!!
 # example(topic = "about.ssvs", package = "boral", run.dontrun=TRUE)
 # example(topic = "about.traits", package = "boral", run.dontrun=TRUE)
@@ -226,7 +228,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	if(row.eff != "none") { 
 		n.ID <- apply(row.ids, 2, function(x) length(unique(x)))
 		jags.data <- c(jags.data, "row.ids", "n.ID") }
-	if(is.null(offset)) jags.data <- c(jags.data, "offset")
+	if(!is.null(offset)) jags.data <- c(jags.data, "offset")
 		
 	
 	jags.params <- c("lv.coefs")
