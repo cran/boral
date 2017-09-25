@@ -2,7 +2,7 @@
 
 \alias{calc.condlogLik}
 
-\title{Conditional log-likelihood for an boral model}
+\title{Conditional log-likelihood for a boral model}
 
 \description{Calculates the conditional log-likelihood for a set of parameter estimates from an boral model, where everything is treated as "fixed effects" including latent variables, row effects, and so on.}
 
@@ -88,7 +88,7 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
      mcmc.control = example.mcmc.control)
 
 ## Extract all MCMC samples
-fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix) 
+fit.mcmc <- get.mcmcsamples(spider.fit.nb) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
@@ -108,7 +108,7 @@ spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", num.lv = 0,
      save.model = TRUE, calc.ics = FALSE, mcmc.control = example.mcmc.control)
 
 ## Extract all MCMC samples
-fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix) 
+fit.mcmc <- get.mcmcsamples(spider.fit.nb2) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],

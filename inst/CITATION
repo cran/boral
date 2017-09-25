@@ -1,0 +1,30 @@
+citHeader("To cite the 'boot' package in publications use:")
+
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
+vers <- paste("R package version", meta$Version)
+
+citEntry(entry="Manual",
+         title = "boral: Bayesian Ordination and Regression AnaLysis",
+         author = personList(as.person("Francis K. C. Hui")),
+         year = year,
+         note = vers,
+
+         textVersion =
+         paste("Francis K. C. Hui (",
+               year,
+               "). boral: Bayesian Ordination and Regression AnaLysis.",
+               vers, ".", sep=""))
+
+citEntry(entry="Article",
+         title = "boral: Bayesian Ordination and Regression Analysis of Multivariate Abundance Data in R.",
+         author = personList(as.person("F. K. C. Hui")),
+    	 journal = "Methods in Ecology and Evolution",
+         year     = "2016",
+         volume      = "7",
+          pages   = "744--750",
+
+         textVersion =
+         paste("Hui, F. K. C. (2016)",
+  	       "boral: Bayesian Ordination and Regression Analysis of Multivariate Abundance Data in R",
+               "Methods in Ecology and Evolution, 7, 744-750.")
+)

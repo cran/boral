@@ -9,13 +9,13 @@
 \details{
 In the main boral function, when covariates \code{X} are included i.e. both the independent and correlated response models, one has the option of also including traits to help explain differences in species environmental responses to these covariates. Specifically, when \code{traits} and \code{which.traits} are supplied, then the \eqn{\beta_{0j}}'s and \eqn{\bm{\beta}_j}'s are then regarded as random effects drawn from a normal distribution. For the species-specific intercepts, we have
 
-\deqn{\beta_{0j} \sim N(\kappa_{01} + \bm{traits}^T_j\bm{\kappa}_1, \sigma^2_1),}
+\deqn{\beta_{0j} \sim N(\kappa_{01} + \bm{traits}^\top_j\bm{\kappa}_1, \sigma^2_1),}
 
 where \eqn{(\kappa_{01},\bm{\kappa}_1)} are the regression coefficients relating to the traits to the intercepts and \eqn{\sigma_1} is the error standard deviation. These are now the "parameters" in the model, in the sense that priors are assigned to them and MCMC sampling is used to estimate them (see the next section on estimation). 
 
 In an analogous manner, each of the elements in \eqn{\bm{\beta}_j = (\beta_{j1},\ldots,\beta_{jd})} are now drawn as random effects from a normal distribution. That is, for \eqn{k = 1,\ldots,d} where \code{d = ncol(X)}, we have,
 
-\deqn{\beta_{jk} \sim N(\kappa_{0k} + \bm{traits}^T_j\bm{\kappa}_k, \sigma^2_k),}
+\deqn{\beta_{jk} \sim N(\kappa_{0k} + \bm{traits}^\top_j\bm{\kappa}_k, \sigma^2_k),}
 
 Which traits are to included (regressed) in the mean of the normal distributions is determined by the list argument \code{which.traits} in the main boral function. The first element in the list applies to \eqn{beta_{0j}}, while the remaining elements apply to the the \eqn{\bm{\beta}_j}. Each element of \code{which.traits} is a vector indicating which traits are to be used. For example, if \code{which.traits[[2]] = c(2,3)}, then the \eqn{\beta_{j1}}'s are drawn from a normal distribution with mean depending only on the second and third columns of \code{traits}. If \code{which.traits[[2]] = 0}, then the regression coefficients are treated as independent, i.e. the values of \eqn{\beta_{j1}} are given their own priors and estimated separately from each other. 
 

@@ -31,7 +31,7 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
 
  \item{num.lv}{The number of latent variables used in the fitted boral model.}
   
-  \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
+  \item{fit.mcmc}{All MCMC samples for the fitted boral model. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then applying \code{get.mcmcsamples(fit)}.} 
 }
 
 \details{

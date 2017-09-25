@@ -71,7 +71,7 @@ example.mcmc.control <- list(n.burnin = 10, n.iteration = 100,
 ## Example 3a - Extend example 2 to demonstrate grouped covariate selection
 ## on the last three covariates. 
 set.prior <- list(type = c("normal","normal","normal","uniform"), 
-	hypparams = c(100, 20, 100, 50), ssvs.index = c(-1,-1,-1,1,2,3))
+	hypparams = c(10, 10, 10, 30), ssvs.index = c(-1,-1,-1,1,2,3))
 spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", 
 	num.lv = 0, calc.ics = FALSE, mcmc.control = example.mcmc.control,
 	prior.control = set.prior)
@@ -82,7 +82,7 @@ summary(spider.fit.nb2)
 ## Example 3b - Extend example 2 to demonstrate individual covariate selection
 ## on the last three covariates. 
 set.prior <- list(type = c("normal","normal","normal","uniform"), 
-	hypparams = c(100, 20, 100, 50), ssvs.index = c(-1,-1,-1,0,0,0))
+	hypparams = c(20, 20, 2, 50), ssvs.index = c(-1,-1,-1,0,0,0))
 spider.fit.nb3 <- boral(y, X = X, family = "negative.binomial", 
 	num.lv = 0, calc.ics = FALSE, mcmc.control = example.mcmc.control,
 	prior.control = set.prior)

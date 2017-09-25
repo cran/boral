@@ -7,14 +7,17 @@
 \description{Obtain predictions and associated intervals (lower and upper limits) on the linear scale from a fitted boral object. Predictions can be made either conditionally on the predicted latent variables and any random row effects included in the model, or marginally (averaged) on the latent variables and any random effects included in the model.}
 
 \usage{
-\method{predict}{boral}(object, newX = NULL, predict.type = "conditional", 
-     est = "median", prob = 0.95, lv.mc = 1000, ...)
+\method{predict}{boral}(object, newX = NULL, newrow.ids = NULL, 
+     predict.type = "conditional", est = "median", prob = 0.95, 
+     lv.mc = 1000, ...)
      }
 
 \arguments{
   \item{object}{An object of class "boral".}
   
   \item{newX}{An optional model matrix of covariates for extrapolation to the same sites (under different environmental conditions) or extrapolation to new sites. No intercept column should be included in \code{newX}. Defaults to \code{NULL}, in which case the model matrix of covariates is taken from the fitted boral object if found.}  
+
+  \item{newrow.ids}{An optional matrix with the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}. Defaults to \code{NULL}, in which case row IDs are taken from the fitted boral object itself (if required) i.e., from \code{object$row.ids}.}  
 
   \item{predict.type}{The type of prediction to be made. Either takes value \code{"conditional"} in which case the prediction is made conditionally on the predicted latent variables and any random row effects in the model, or \code{"marginal"} in which case the prediction marginalizes (averages) over the latent variables and random row effects in the model. Defaults to \code{"conditional"}.}  
 
@@ -31,15 +34,17 @@
 \details{
 Due to the Bayesian MCMC framework, then predictive inference for boral models is based around the posterior predictive distribution, which is the integral of the quantity one wants to predict on, integrated or averaged over the posterior distribution of the parameters and latent variables. Currently, all predictions are made on the \emph{linear predictor scale} (although this might change in future updates) i.e., 
 
-\deqn{\eta_{ij} = \alpha_i + \beta_{0j} + \bm{x}^T_i\bm{\beta}_j + \bm{z}^T_i\bm{\theta}_j; \quad i = 1,\ldots,n; j = 1,\ldots,p,}
+\deqn{\eta_{ij} = \alpha_i + \beta_{0j} + \bm{x}^\top_i\bm{\beta}_j + \bm{z}^\top_i\bm{\theta}_j; \quad i = 1,\ldots,n; j = 1,\ldots,p,}
 
 where \eqn{\bm{z}_i} are a vector of latent variables included in the model, \eqn{\bm{\theta}_j} are the column-specific coefficients relating to these latent variables, \eqn{\bm{x}_i} are covariates included in the model, and \eqn{\bm{beta}_j} being the column-specific coefficients related to these covariates. The quantity \eqn{beta_{0j}} denotes the column-specific intercepts while \code{alpha_i} represents one or more optional row effects that may be treated as a fixed or random effect. 
 
+Note that for the above to work, one must have saved the MCMC samples in the fitted boral object, that is, set \code{save.model = TRUE} when fitting. 
+
 Two types of predictions are possible using this function:
 \itemize{
-     \item The first type is \code{predict.type = "conditional"}, meaning predictions are made conditionally on the predicted latent variables and any random row effects in the model. This is mainly used when predictions are made onto the \emph{same} set of sites that the boral model was fitted to, although a \code{newX} can be supplied in this case if we want to extrapolate on to the same set of sites but under different environmental conditions. 
+     \item The first type is \code{predict.type = "conditional"}, meaning predictions are made conditionally on the predicted latent variables and any (random) row effects in the model. This is mainly used when predictions are made onto the \emph{same} set of sites that the boral model was fitted to, although a \code{newX} can be supplied in this case if we want to extrapolate on to the same set of sites but under different environmental conditions. 
 
-     \item The second type of prediction is \code{predict.type = "marginal"}, meaning predictions are made marginally or averaging over the latent variables and any random row effects in the model. This is mainly used when predictions are made onto a \emph{new} set of sites where the latent variables and/or row effects are unknown. A \code{newX} is often supplied since we are extrapolating to new sites. The integration over the latent variables and any random row effects is done via Monte-Carlo integration. Please note however that, as mentioned before, the integration will be done on the linear predictor scale. 
+     \item The second type of prediction is \code{predict.type = "marginal"}, meaning predictions are made marginally or averaging over the latent variables and any (random) row effects in the model. This is mainly used when predictions are made onto a \emph{new} set of sites where the latent variables and/or row effects are unknown. A \code{newX} and/or \code{newrow.ids} is often supplied since we are extrapolating to new sites. The integration over the latent variables and random row effects is done via Monte-Carlo integration. Please note however that, as mentioned before, the integration will be done on the linear predictor scale. 
      }
 
 More information on conditional versus marginal predictions in latent variable models can be found in Warton et al., (2015). In both cases, the function returns a point prediction (either the posterior mean or median depending on \code{est}) and the lower and upper bounds of a 100\eqn{\alpha\%} interval of the posterior prediction. All of these quantities are calculated empirically based the MCMC samples e.g., the posterior mean is the average of the predictions across the MCMC samples, and the lower and upper bounds are based on quantiles. 
@@ -75,6 +80,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \examples{
 \dontrun{
 library(mvabund) ## Load a dataset from the mvabund package
+library(mvtnorm) 
 data(spider)
 y <- spider$abun
 X <- scale(spider$x)
@@ -85,10 +91,11 @@ n <- nrow(y); p <- ncol(y);
 example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
-## Example 1 - model with two latent variables, no site effects, 
+## Example 1 - model with two latent variables, random site effects, 
 ## 	and environmental covariates
 spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
-     num.lv = 2, mcmc.control = example.mcmc.control)
+     row.eff = "random", num.lv = 2, 
+     mcmc.control = example.mcmc.control, save.model = TRUE)
 
 
 ## Predictions conditional on predicted latent variables
@@ -103,15 +110,14 @@ getmargpreds <- predict(spider.fit.nb, predict.type = "marginal")
 ## Now suppose you extrpolate to new sites
 newX <- rmvnorm(100, mean = rep(0,ncol(X)))
 
-## The should not work since you did not have 100 row effects in the
-##   boral model!
-getpreds <- predict(spider.fit.nb, newX = newX)
+## Below won't work since conditional predictions are made to the same sites
+## getpreds <- predict(spider.fit.nb, newX = newX)
 
-## The below however will work as boral now assumes you are 
-##   predicting onto the same sites, albeit under different
-##   environmental conditions.
-newX <- rmvnorm(nrow(y), mean = rep(0,ncol(X)))
-getpreds <- predict(spider.fit.nb, newX = newX)
+## Marginal predictions will work though provided newrow.ids is set up 
+## properly
+newrow.ids <- matrix(sample(1:28,100,replace=TRUE), 100, 1)
+getpreds <- predict(spider.fit.nb, newX = newX, predict.type = "marginal", 
+     newrow.ids = newrow.ids)
 
 
 }

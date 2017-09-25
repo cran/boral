@@ -19,7 +19,7 @@ get.enviro.cor(object, est = "median", prob = 0.95)
 }
 
 \details{
-In both independent response and correlated response models, where the each of the columns of the response matrix \code{y} are fitted to a set of explanatory variables given by \code{X}, the covariance and thus between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}^T_i\bm{\beta}_j} and \eqn{\bm{x}^T_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are column-specific coefficients relating to the explanatory variables.
+In both independent response and correlated response models, where the each of the columns of the response matrix \code{y} are fitted to a set of explanatory variables given by \code{X}, the covariance and thus between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}^\top_i\bm{\beta}_j} and \eqn{\bm{x}^\top_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are column-specific coefficients relating to the explanatory variables.
 
 For multivariate abundance data, the correlation calculated by this function can be interpreted as the correlation attributable to similarities in the environmental response between species. Such correlation matrices are discussed and found in Ovaskainen et al., (2010), Pollock et al., 2014.
 }
@@ -68,6 +68,5 @@ enviro.cors <- get.enviro.cor(spider.fit.nb)
 
 corrplot(enviro.cors$sig.cor, title = "Shared response correlations", 
 	type = "lower", diag = FALSE, mar = c(3,0.5,2,1), tl.srt = 45)
-dev.off()
 }
 }

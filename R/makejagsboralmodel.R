@@ -1,4 +1,4 @@
-make.jagsboralmodel <- function(family, num.X = 0, num.traits = 0, which.traits = NULL, num.lv = 2, row.eff = "none", row.ids = NULL, offset = NULL, trial.size = 1, n, p, model.name = NULL, prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(100, 20, 100, 50), ssvs.index = -1, ssvs.g = 1e-6)) {
+make.jagsboralmodel <- function(family, num.X = 0, num.traits = 0, which.traits = NULL, num.lv = 2, row.eff = "none", row.ids = NULL, offset = NULL, trial.size = 1, n, p, model.name = NULL, prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(10, 10, 10, 30), ssvs.index = -1, ssvs.g = 1e-6)) {
 	if(num.X == 0 & num.traits > 0) 
 		stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please set num.X > 0.") 
  	if(num.traits > 0 & is.null(which.traits)) 
@@ -9,21 +9,32 @@ make.jagsboralmodel <- function(family, num.X = 0, num.traits = 0, which.traits 
 		stop("Each element in the list which.traits should have at most num.traits elements.") 
  	if(!is.null(which.traits) & any(prior.control$ssvs.index > -1)) 
 		stop("Current version of boral only supports ssvs.index = -1 when traits are supplied...sorry!")
- 	if(is.null(which.traits)) { which.traits <- vector("list",num.X+1); for(k in 1:length(num.X+1)) which.traits[[k]] <- 0 } 
+ 	if(is.null(which.traits)) { 
+		which.traits <- vector("list",num.X+1)
+		for(k in 1:length(num.X+1)) 
+			which.traits[[k]] <- 0 
+		} 
 
 	
 	if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
         stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to p.")
 	if(any(family == "binomial") & length(trial.size) == 1) {
 		complete.trial.size <- rep(0, p)
-		complete.trial.size[which(family == "binomial")] <- trial.size }
-	if(any(family == "binomial") & length(trial.size) == p) { complete.trial.size <- trial.size }
-	if(all(family != "binomial")) { complete.trial.size <- rep(0, p) }
+		complete.trial.size[which(family == "binomial")] <- trial.size 
+		}
+	if(any(family == "binomial") & length(trial.size) == p) 
+		complete.trial.size <- trial.size
+	if(all(family != "binomial")) 
+		complete.trial.size <- rep(0, p)
 
-	if(length(family) == 1) complete.family <- rep(family, p)
-	if(length(family) == p) complete.family <- family
-	if(length(family) != p & length(family) != 1) { stop("Number of elements in family must either one or p") }
-	if(all(complete.family == "binomial") & all(complete.trial.size == 1)) { family <- rep("bernoulli",p) }
+	if(length(family) == 1) 
+		complete.family <- rep(family, p)
+	if(length(family) == p) 
+		complete.family <- family
+	if(length(family) != p & length(family) != 1) 
+		stop("Number of elements in family must either one or p")
+	if(all(complete.family == "binomial") & all(complete.trial.size == 1)) 
+		family <- rep("bernoulli",p)
 
 	
 	if(row.eff != "none" && is.null(row.ids)) {
@@ -34,7 +45,8 @@ make.jagsboralmodel <- function(family, num.X = 0, num.traits = 0, which.traits 
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != n) 
 			stop("Number of rows in the matrix row.ids should be equal to n.")
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
+		if(is.null(colnames(row.ids))) 
+			colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 
 		
@@ -143,7 +155,7 @@ make.jagsboralmodel <- function(family, num.X = 0, num.traits = 0, which.traits 
 		
 	## Priors on Latent variable coefficients, controlled by prior.control$hypparams[2]
 	mod.general.lv <- c(mod.general.lv, paste0("\n\t for(i in 1:(num.lv-1)) { for(j in (i+2):(num.lv+1)) { lv.coefs[i,j] <- 0 } } ## Constraints to 0 on upper diagonal"))
-     mod.general.lv <- c(mod.general.lv, paste0("\t for(i in 1:num.lv) { lv.coefs[i,i+1] ~ dunif(0,",prior.control$hypparams[2],") } ## Sign constraints on diagonal elements"))
+     mod.general.lv <- c(mod.general.lv, paste0("\t for(i in 1:num.lv) { lv.coefs[i,i+1] ~ ", prior.strings$p22, " } ## Sign constraints on diagonal elements"))
      mod.general.lv <- c(mod.general.lv, paste0("\t for(i in 2:num.lv) { for(j in 2:i) { lv.coefs[i,j] ~ ", prior.strings$p2, " } } ## Free lower diagonals"))
      mod.general.lv <- c(mod.general.lv, paste0("\t for(i in (num.lv+1):p) { for(j in 2:(num.lv+1)) { lv.coefs[i,j] ~ ", prior.strings$p2, " } } ## All other elements"))
 

@@ -32,7 +32,7 @@ get.more.measures(y, X = NULL, family, trial.size = 1,
 
  \item{num.lv}{The number of latent variables used in the fitted boral model.}
 
-  \item{fit.mcmc}{All MCMC samples for the fitted boral model, as obtained from JAGS. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then accessing the \code{jags.model} component of the output.} 
+  \item{fit.mcmc}{All MCMC samples for the fitted boral model. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then applying \code{get.mcmcsamples(fit)}.} 
 
   \item{verbose}{If TRUE, a notice is printed every 100 samples indicating progress in calculation of the marginal log-likelihood. Defaults to \code{TRUE}.}    
 }
@@ -100,7 +100,7 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
      mcmc.control = example.mcmc.control)
 
 ## Extract MCMC samples
-fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix)
+fit.mcmc <- get.mcmcsamples(spider.fit.nb)
 
 ## WATCH OUT! The following takes a very long time to run!
 get.more.measures(y, family = "negative.binomial", 
@@ -124,7 +124,7 @@ fit.traits <- boral(y, X = X, traits = traits, num.lv = 2,
 	mcmc.control = example.mcmc.control)
      
 ## Extract MCMC samples
-fit.mcmc <- mcmc(fit.traits$jags.model$BUGSoutput$sims.matrix)
+fit.mcmc <- get.mcmcsamples(fit.traits)
 
 get.more.measures(y, X = X, family = "negative.binomial", 
      num.lv = fit.traits$num.lv, fit.mcmc = fit.mcmc)	

@@ -102,7 +102,7 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
      mcmc.control = example.mcmc.control)
 
 ## Extract all MCMC samples
-fit.mcmc <- mcmc(spider.fit.nb$jags.model$BUGSoutput$sims.matrix) 
+fit.mcmc <- get.mcmcsamples(spider.fit.nb) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
@@ -123,7 +123,7 @@ spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial",
      mcmc.control = example.mcmc.control)
 
 ## Extract all MCMC samples
-fit.mcmc <- mcmc(spider.fit.nb2$jags.model$BUGSoutput$sims.matrix) 
+fit.mcmc <- get.mcmcsamples(spider.fit.nb2) 
 
 ## Find the posterior medians
 coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],

@@ -1,45 +1,118 @@
 ###############################
-## Unseen functions
+## Unseen functions, including check functions
 ##########################
+check.offset <- function(offset = NULL, y) {
+	if(!is.null(offset)) { 
+		if(!is.matrix(offset)) 
+			stop("offset could be a matrix with the same dimensions as y")
+		if(nrow(offset) != nrow(y)) 
+			stop("offset could be a matrix with the same dimensions as y")
+		if(ncol(offset) != ncol(y)) 
+			stop("offset could be a matrix with the same dimensions as y")
+		} 
+	}
 
+check.row.ids <- function(row.ids = NULL, y) {
+	if(!is.null(row.ids)) {
+		row.ids <- as.matrix(row.ids)
+		if(nrow(row.ids) != nrow(y)) 
+			stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
+		if(is.null(colnames(row.ids))) 
+			colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
+		}
+		
+	return(row.ids)
+	}
+	
+check.row.params <- function(row.params = NULL, y, row.ids = NULL) {
+	if(!is.null(row.params)) {
+		if(is.null(row.ids)) {
+			row.ids <- matrix(1:nrow(y), ncol = 1)
+			colnames(row.ids) <- "ID1"
+			}
+		if(!is.list(row.params))
+			stop("row.params should be a list with length equal to the number of columns in row.ids.")
+		if(length(row.params) != ncol(row.ids))
+			stop("row.params should be a list with length equal to the number of columns in row.ids.")
+		}
+	}
+
+check.domarglik.ics <- function(fit.mcmc.names, index.ordinal.cols) {	
+     out <- TRUE
+     
+     if(length(grep("traits.params", fit.mcmc.names)) > 1) 
+		out <- FALSE 
+	if(length(index.ordinal.cols) > 1) 
+		out <- FALSE
+	
+	return(out)
+	}
+	
+	
 ## Construct strings for the prior distributions used in makejagsboralmodel and makejagsboralnullmodel
 construct.prior.strings <- function(x) {
-	if(x$type[1] == "normal") prior.string1 <- paste0("dnorm(0,",1/x$hypparams[1],")")
-	if(x$type[1] == "cauchy") prior.string1 <- paste0("dt(0,",1/x$hypparams[1],",1)")
-	if(x$type[1] == "uniform") prior.string1 <- paste0("dunif(-",x$hypparams[1],",",x$hypparams[1],")")
+	if(x$type[1] == "normal") 
+		prior.string1 <- paste0("dnorm(0,",1/x$hypparams[1],")")
+	if(x$type[1] == "cauchy") 
+		prior.string1 <- paste0("dt(0,",1/x$hypparams[1],",1)")
+	if(x$type[1] == "uniform") 
+		prior.string1 <- paste0("dunif(-",x$hypparams[1],",",x$hypparams[1],")")
 
-     if(x$type[2] == "normal") prior.string2 <- paste0("dnorm(0,", 1/x$hypparams[2], ")")
-     if(x$type[2] == "cauchy") prior.string2 <- paste0("dt(0,",1/x$hypparams[2],",1)")
-     if(x$type[2] == "uniform") prior.string2 <- paste0("dunif(-",x$hypparams[2],",",x$hypparams[2],")")
+     if(x$type[2] == "normal") {
+          prior.string2 <- paste0("dnorm(0,", 1/x$hypparams[2], ")")
+          prior.string22 <- paste0("dnorm(0,",1/x$hypparams[2],")I(0,)")
+          }
+     if(x$type[2] == "cauchy") {
+          prior.string2 <- paste0("dt(0,",1/x$hypparams[2],",1)")
+          prior.string22 <- paste0("dt(0,",1/x$hypparams[4],",1)I(0,)")
+          }
+     if(x$type[2] == "uniform") {
+          prior.string2 <- paste0("dunif(-",x$hypparams[2],",",x$hypparams[2],")")
+          prior.string22 <- paste0("dunif(0,",x$hypparams[4],")")
+          }
      
-     if(x$type[3] == "normal") prior.string3 <- paste0("dnorm(0,", 1/x$hypparams[3], ")")
-     if(x$type[3] == "cauchy") prior.string3 <- paste0("dt(0,",1/x$hypparams[3],",1)")
-     if(x$type[3] == "uniform") prior.string3 <- paste0("dunif(-",x$hypparams[3],",",x$hypparams[3],")")
+     if(x$type[3] == "normal") 
+		prior.string3 <- paste0("dnorm(0,", 1/x$hypparams[3], ")")
+     if(x$type[3] == "cauchy") 
+		prior.string3 <- paste0("dt(0,",1/x$hypparams[3],",1)")
+     if(x$type[3] == "uniform") 
+		prior.string3 <- paste0("dunif(-",x$hypparams[3],",",x$hypparams[3],")")
 
-     if(x$type[4] == "uniform") prior.string4 <- paste0("dunif(0,",x$hypparams[4],")")
-     if(x$type[4] == "halfcauchy") prior.string4 <- paste0("dt(0,",1/x$hypparams[4],",1)I(0,)")
-     if(x$type[4] == "halfnormal") prior.string4 <- paste0("dnorm(0,",1/x$hypparams[4],")I(0,)")
+     if(x$type[4] == "uniform") 
+		prior.string4 <- paste0("dunif(0,",x$hypparams[4],")")
+     if(x$type[4] == "halfcauchy") 
+		prior.string4 <- paste0("dt(0,",1/x$hypparams[4],",1)I(0,)")
+     if(x$type[4] == "halfnormal") 
+		prior.string4 <- paste0("dnorm(0,",1/x$hypparams[4],")I(0,)")
      #if(x$type[4] == "gamma") prior.string4 <- paste0("dgamma(",1/x$hypparams[4],",",1/x$hypparams[4],")")
 
-     return(list(p1 = prior.string1, p2 = prior.string2, p3 = prior.string3, p4 = prior.string4))
+     return(list(p1 = prior.string1, p2 = prior.string2, p22 = prior.string22, p3 = prior.string3, p4 = prior.string4))
 	}
 
 
 ## Fill in empty components of prior.control and mcmc.control
 fillin.prior.control <- function(x) {
-	if(!("type" %in% names(x))) x$type <- c("normal","normal","normal","uniform")
-	if(!("hypparams" %in% names(x))) x$hypparams <- c(100, 20, 100, 50)
-	if(!("ssvs.index" %in% names(x))) x$ssvs.index <- -1		
-	if(!("ssvs.g" %in% names(x))) x$ssvs.g <- 1e-6
+	if(!("type" %in% names(x))) 
+		x$type <- c("normal","normal","normal","uniform")
+	if(!("hypparams" %in% names(x))) 
+		x$hypparams <- c(20, 20, 20, 50)
+	if(!("ssvs.index" %in% names(x))) 
+		x$ssvs.index <- -1		
+	if(!("ssvs.g" %in% names(x))) 
+		x$ssvs.g <- 1e-6
      
      return(x)
      }
 
 fillin.mcmc.control <- function(x) {
-	if(!("n.burnin" %in% names(x))) x$n.burnin <- 10000
-	if(!("n.iteration" %in% names(x))) x$n.iteration <- 40000
-	if(!("n.thin" %in% names(x))) x$n.thin <- 30
-	if(!("seed" %in% names(x))) x$seed <- 123		
+	if(!("n.burnin" %in% names(x))) 
+		x$n.burnin <- 10000
+	if(!("n.iteration" %in% names(x))) 
+		x$n.iteration <- 40000
+	if(!("n.thin" %in% names(x))) 
+		x$n.thin <- 30
+	if(!("seed" %in% names(x))) 
+		x$seed <- 123		
      
      return(x)
      }
@@ -52,18 +125,22 @@ ordinal.conversion.spp <- function(n, lv = NULL, lv.coefs.j = NULL, num.lv = NUL
 	etas <- matrix(0, nrow = n, ncol = length(cutoffs)) ## num.ord.levels - 1
 	for(k in 1:length(cutoffs)) {
 		etas[,k] <- rep(cutoffs[k],n) - lv.coefs.j[1]
-		if(!is.null(lv)) etas[,k] <- etas[,k] - as.matrix(lv)%*%lv.coefs.j[2:(num.lv+1)]
+		if(!is.null(lv)) 
+			etas[,k] <- etas[,k] - as.matrix(lv)%*%lv.coefs.j[2:(num.lv+1)]
 		if(!is.null(row.coefs)) { 
 			if(est == "median") { for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]]$median[row.ids[,k2]] } 
 			if(est == "mean") { for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]]$mean[row.ids[,k2]] }
 			if(est == "ignore") { for(k2 in 1:ncol(row.ids)) etas[,k] <- etas[,k] - row.coefs[[k2]][row.ids[,k2]] }
 			}
-		if(!is.null(offset.j)) etas[,k] <- etas[,k] - matrix(offset.j, ncol = 1)
-		if(!is.null(X)) etas[,k] <- etas[,k] - as.matrix(X)%*%X.coefs.j ## Don't forget the negative sign!
+		if(!is.null(offset.j)) 
+			etas[,k] <- etas[,k] - matrix(offset.j, ncol = 1)
+		if(!is.null(X)) 
+			etas[,k] <- etas[,k] - as.matrix(X)%*%X.coefs.j ## Don't forget the negative sign!
 		}
 	probs <- matrix(0,n,length(cutoffs)+1) ## num.ord.levels
 	probs[,1] <- pnorm(etas[,1])
-	for(k in 2:ncol(etas)) { probs[,k] <- pnorm(etas[,k]) - pnorm(etas[,k-1]) }		
+	for(k in 2:ncol(etas)) 
+		probs[,k] <- pnorm(etas[,k]) - pnorm(etas[,k-1])
 	probs[,length(cutoffs)+1] <- 1 - pnorm(etas[,length(cutoffs)])
 
 	rm(etas); return(probs)
@@ -73,30 +150,38 @@ ordinal.conversion.spp <- function(n, lv = NULL, lv.coefs.j = NULL, num.lv = NUL
 ## Process Geweke's convergence diagnotics from a single chain MCMC fit	
 process.geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv, row.eff, row.ids, num.ord.levels = NULL, prior.control) {
           p <- ncol(y)
-          num.X <- 0; if(!is.null(X)) num.X <- ncol(X)
-          num.traits <- 0; if(!is.null(traits)) num.traits <- ncol(traits)
+          num.X <- 0
+          if(!is.null(X)) 
+			num.X <- ncol(X)
+          num.traits <- 0
+		if(!is.null(traits)) 
+			num.traits <- ncol(traits)
           
  		fit.geweke <- geweke.diag(fit.mcmc)[[1]] ## Takes first chain only
      	make.gewekelist <- list(lv.coefs = matrix(fit.geweke[grep("lv.coefs", names(fit.geweke))], nrow = p))
-          if(num.lv > 0) { make.gewekelist$lv.coefs <- matrix(make.gewekelist$lv.coefs[,-c(2:(num.lv+1))], nrow = p) } ## Drop check on LV coefs
-          if(num.lv > 0) { fit.geweke <- fit.geweke[-grep("lvs",names(fit.geweke))] } ## Drop check on lv
+          if(num.lv > 0) 
+			make.gewekelist$lv.coefs <- matrix(make.gewekelist$lv.coefs[,-c(2:(num.lv+1))], nrow = p) ## Drop check on LV coefs
+          if(num.lv > 0) 
+			fit.geweke <- fit.geweke[-grep("lvs",names(fit.geweke))] ## Drop check on lv
           rownames(make.gewekelist$lv.coefs) <- colnames(y); 
-          if(ncol(make.gewekelist$lv.coefs) > 1) { colnames(make.gewekelist$lv.coefs) <- c("beta0","Disperson") } 
- 		else { colnames(make.gewekelist$lv.coefs) <- c("beta0") }
+          if(ncol(make.gewekelist$lv.coefs) > 1) {
+			colnames(make.gewekelist$lv.coefs) <- c("beta0","Disperson") 
+			} 
+ 		else { 
+			colnames(make.gewekelist$lv.coefs) <- c("beta0") 
+			}
  
           if(row.eff != "none") {
                make.gewekelist$row.coefs <- vector("list", ncol(row.ids))
                names(make.gewekelist$row.coefs) <- colnames(row.ids)
-               for(k in 1:ncol(row.ids)) {
+               for(k in 1:ncol(row.ids))
                     make.gewekelist$row.coefs[[k]] <- fit.geweke[grep(paste0("row.coefs.ID",k), names(fit.geweke))]
-                    }
                }
           if(row.eff == "random") {
                make.gewekelist$row.sigma <- vector("list", ncol(row.ids))
                names(make.gewekelist$row.sigma) <- colnames(row.ids)
-               for(k in 1:ncol(row.ids)) {
+               for(k in 1:ncol(row.ids))
                     make.gewekelist$row.sigma[[k]] <- fit.geweke[grep(paste0("row.sigma.ID",k), names(fit.geweke))]
-                    }
                }
 
                     
@@ -119,14 +204,12 @@ process.geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv,
     			make.gewekelist$cutoffs <- fit.geweke[grep("cutoffs", names(fit.geweke))]
     			names(make.gewekelist$cutoffs) <- paste(1:(num.ord.levels - 1), "|", 2:num.ord.levels, sep = "") 
 
-    			if(sum(family == "ordinal") > 2) {
+    			if(sum(family == "ordinal") > 2)
   				make.gewekelist$ordinal.sigma <- fit.geweke[grep("ordinal.sigma", names(fit.geweke))]
-  				}
     			}
  
-    		if(any(family == "tweedie")) {
+    		if(any(family == "tweedie"))
     			make.gewekelist$powerparam <- fit.geweke[grep("powerparam", names(fit.geweke))]
-    			}
  	
  	
  	prop.outside <- table(2*pnorm(abs(unlist(make.gewekelist)), lower.tail = FALSE) < 0.05)/length(unlist(make.gewekelist))
@@ -143,25 +226,35 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 		if(complete.family[j] != "multinom") {
 			if(length(unique(complete.family)) == 1) {
 				if(j == 1) {
-					if(num.lv == 0) linpred.string <- paste("eta[i,j] <- 0", sep = "")
-					if(num.lv > 0) linpred.string <- paste("eta[i,j] <- inprod(lv.coefs[j,2:(num.lv+1)],lvs[i,])", sep = "")
+					if(num.lv == 0) 
+						linpred.string <- paste("eta[i,j] <- 0", sep = "")
+					if(num.lv > 0) 
+						linpred.string <- paste("eta[i,j] <- inprod(lv.coefs[j,2:(num.lv+1)],lvs[i,])", sep = "")
 					if(row.eff != "none") {
-						for(k in 1:ncol(row.ids)) linpred.string <- paste(linpred.string, " + row.coefs.", colnames(row.ids)[k],"[row.ids[i,",k,"]]", sep ="")
+						for(k in 1:ncol(row.ids)) 
+							linpred.string <- paste(linpred.string, " + row.coefs.", colnames(row.ids)[k],"[row.ids[i,",k,"]]", sep ="")
 						}
-					if(num.X > 0) linpred.string <- paste(linpred.string, " + inprod(X.coefs[j,],X[i,])", sep ="")
-					if(!is.null(offset)) linpred.string <- paste(linpred.string, " + offset[i,j]", sep ="")
+					if(num.X > 0) 
+						linpred.string <- paste(linpred.string, " + inprod(X.coefs[j,],X[i,])", sep ="")
+					if(!is.null(offset)) 
+						linpred.string <- paste(linpred.string, " + offset[i,j]", sep ="")
 					resp.family.script <- c(resp.family.script, paste("\t\t for(j in 1:p) { ", linpred.string, " }", sep = ""))
 					}
 				if(j > 1) { }
 				}	
 			if(length(unique(complete.family)) > 1) {		
-				if(num.lv == 0) linpred.string <- paste("eta[i,",j, "] <- 0", sep = "")
-				if(num.lv > 0) linpred.string <- paste("eta[i,",j, "] <- inprod(lv.coefs[",j, ",2:(num.lv+1)],lvs[i,])", sep = "")
+				if(num.lv == 0) 
+					linpred.string <- paste("eta[i,",j, "] <- 0", sep = "")
+				if(num.lv > 0) 
+					linpred.string <- paste("eta[i,",j, "] <- inprod(lv.coefs[",j, ",2:(num.lv+1)],lvs[i,])", sep = "")
 				if(row.eff != "none") {
-					for(k in 1:ncol(row.ids)) linpred.string <- paste(linpred.string, " + row.coefs.", colnames(row.ids)[k],"[row.ids[i,",k,"]]", sep ="")
+					for(k in 1:ncol(row.ids)) 
+						linpred.string <- paste(linpred.string, " + row.coefs.", colnames(row.ids)[k],"[row.ids[i,",k,"]]", sep ="")
 					}
-				if(num.X > 0) linpred.string <- paste(linpred.string, " + inprod(X.coefs[", j, ",],X[i,])", sep ="")
-				if(!is.null(offset)) linpred.string <- paste(linpred.string, " + offset[i,",j,"]", sep ="")
+				if(num.X > 0) 
+					linpred.string <- paste(linpred.string, " + inprod(X.coefs[", j, ",],X[i,])", sep ="")
+				if(!is.null(offset)) 
+					linpred.string <- paste(linpred.string, " + offset[i,",j,"]", sep ="")
 				resp.family.script <- c(resp.family.script, paste("\t\t ", linpred.string, sep = ""))
 				}				
 			}			
@@ -321,7 +414,7 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 # 			if(num.X == 0 & row.eff) mod.general.lv <- c(mod.general.lv, paste("\t\t\t mu[i,",which(index.multinom.cols == j),",k] <- exp(row.coefs[i] + inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]))",sep="")) 
 # 			if(num.X > 0 & row.eff) mod.general.lv <- c(mod.general.lv, paste("\t\t\t mu[i,",which(index.multinom.cols == j),",k] <- exp(row.coefs[i] + inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]) + inprod(X.multinom.params[",which(index.multinom.cols == j),",,k],X[i,]))",sep="")) 
 # 			if(num.X == 0 & !row.eff) mod.general.lv <- c(mod.general.lv, paste("\t\t\t mu[i,",which(index.multinom.cols == j),",k] <- exp(inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]))",sep="")) 
-# 			if(num.X == 0 & !row.eff) mod.general.lv <- c(mod.general.lv, paste("\t\t\t mu[i,",which(index.multinom.cols == j),",k] <- exp(inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]) + inprod(X.multinom.params[",which(index.multinom.cols == j),",,k],X[i,]))",sep="")) 			
+# 			if(num.X > 0 & !row.eff) mod.general.lv <- c(mod.general.lv, paste("\t\t\t mu[i,",which(index.multinom.cols == j),",k] <- exp(inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]) + inprod(X.multinom.params[",which(index.multinom.cols == j),",,k],X[i,]))",sep="")) 			
 # 			mod.general.lv <- c(mod.general.lv, paste("\t\t\t prob[i,",which(index.multinom.cols == j),",k] <- mu[i,",which(index.multinom.cols == j),",k]/sum(mu[i,",which(index.multinom.cols == j),",]) }",sep="")) 
 # 			mod.general.lv <- c(mod.general.lv, paste("\t\t y[i,",j,"] ~ dcat(prob[i,",which(index.multinom.cols == j),",]+0.001)\n",sep="")) 
 			}		

@@ -66,7 +66,6 @@ spider.fit.nb <- boral(y, X = X, family = "negative.binomial",
 par(mfrow=c(2,3), mar = c(5,6,1,1))
 sapply(colnames(spider.fit.nb$X), coefsplot, 
 	spider.fit.nb)
-dev.off()
 }
 
 }

@@ -59,7 +59,6 @@ spider.fit.p <- boral(y, family = "poisson", num.lv = 2,
 
 par(mfrow = c(2,2))
 plot(spider.fit.p) 
-dev.off()
 ## A distinct fan pattern is observed in the plot of residuals 
 ## versus linear predictors plot. 
 
@@ -69,7 +68,6 @@ spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2,
 
 par(mfrow = c(2,2))
 plot(spider.fit.nb) 
-dev.off()
 ## The fan shape is not as clear now, 
 ## and the normal quantile plot also suggests a better fit to the data 
 }
