@@ -26,7 +26,7 @@ calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
   \item{lv.coefs}{The column-specific intercept, coefficient estimates relating to the latent variables, and dispersion parameters from the boral model.}
 
-  \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
+  \item{X.coefs}{The coefficients estimates relating to \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
   \item{row.coefs}{Row effect estimates for the boral model. The conditional likelihood is defined conditional on these estimates i.e., they are also treated as ``fixed effects". Defaults to \code{NULL}, in which case it is assumed there are no row effects in the model.} 
 
@@ -45,7 +45,7 @@ calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 \details{
 For an \eqn{n x p} response matrix \code{y}, suppose we fit an boral model with one or more latent variables. If we denote the latent variables by \eqn{\bm{z}_i; i = 1,\ldots,n}, then the conditional log-likelihood is given by,
 
-\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log (f(y_{ij} | \bm{z}_i, \bm{\theta}_j, \beta_{0j}, \ldots)), }
+\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log \{f(y_{ij} | \bm{z}_i, \bm{\theta}_j, \beta_{0j}, \ldots)\}, }
 
 where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\bm{z}_i} are the latent variables and \eqn{\bm{\theta}_j} are the coefficients relating to them, \eqn{\beta_{0j}} are column-specific intercepts, and \eqn{\ldots} denotes anything else included in the model, such as row effects, regression coefficients related \code{X} and \code{traits}, etc...
 
@@ -73,51 +73,53 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
 
 ## Example 1 - model with 2 latent variables, site effects, 
 ## 	and no environmental covariates
-spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-	row.eff = "fixed", save.model = TRUE, calc.ics = FALSE,
-     mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
+	row.eff = "fixed", save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Extract all MCMC samples
-fit.mcmc <- get.mcmcsamples(spider.fit.nb) 
+fit_mcmc <- get.mcmcsamples(spiderfit_nb) 
+mcmc_names <- colnames(fit_mcmc)
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
+coef_mat <- matrix(apply(fit_mcmc[,grep("lv.coefs",mcmc_names)],
      2,median),nrow=p)
-site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.coefs.ID1", colnames(fit.mcmc))],
+site_coef <- list(ID1 = apply(fit_mcmc[,grep("row.coefs.ID1", mcmc_names)],
      2,median))
-lvs.mat <- matrix(apply(fit.mcmc[,grep("lvs",colnames(fit.mcmc))],2,median),nrow=n)
+lvs_mat <- matrix(apply(fit_mcmc[,grep("lvs",mcmc_names)],2,median),nrow=n)
 
 ## Calculate the conditional log-likelihood at the posterior median
 calc.condlogLik(y, family = "negative.binomial", 
-     lv.coefs = coef.mat, row.coefs = site.coef, lv = lvs.mat)
+     lv.coefs = coef_mat, row.coefs = site_coef, lv = lvs_mat)
 
 
 ## Example 2 - model with no latent variables and environmental covariates
 X <- scale(spider$x)
-spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", num.lv = 0, 
-     save.model = TRUE, calc.ics = FALSE, mcmc.control = example.mcmc.control)
+spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", num.lv = 0, 
+     save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Extract all MCMC samples
-fit.mcmc <- get.mcmcsamples(spider.fit.nb2) 
+fit_mcmc <- get.mcmcsamples(spiderfit_nb2) 
+mcmc_names <- colnames(fit_mcmc)
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
+coef_mat <- matrix(apply(fit_mcmc[,grep("lv.coefs",mcmc_names)],
      2,median),nrow=p)
-X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.coefs",colnames(fit.mcmc))],
+X_coef_mat <- matrix(apply(fit_mcmc[,grep("X.coefs",mcmc_names)],
 	2,median),nrow=p)
 
 ## Calculate the log-likelihood at the posterior median
 calc.condlogLik(y, X = X, family = "negative.binomial", 
-	lv.coefs =  coef.mat, X.coefs = X.coef.mat)
+	lv.coefs =  coef_mat, X.coefs = X_coef_mat)
 }
 }

@@ -72,19 +72,20 @@ Residual correlation and precision matrices are reliably modeled only with two o
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
 library(mvabund) ## Load a dataset from the mvabund package
 library(corrplot) ## For plotting correlations
 data(spider)
 y <- spider$abun
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
     
-spider.fit.nb <- boral(y, X = spider$x, family = "negative.binomial", 
-	num.lv = 2, save.model = TRUE, mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, X = spider$x, family = "negative.binomial", 
+	num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)
 
-res.cors <- get.residual.cor(spider.fit.nb)
+res.cors <- get.residual.cor(spiderfit_nb)
 
 corrplot(res.cors$sig.cor, title = "Residual correlations", 
 	type = "lower", diag = FALSE, mar = c(3,0.5,2,1), tl.srt = 45)

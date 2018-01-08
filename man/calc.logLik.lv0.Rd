@@ -27,7 +27,7 @@ calc.logLik.lv0(y, X = NULL, family, trial.size = 1, lv.coefs,
 
   \item{lv.coefs}{The column-specific intercept, coefficient estimates relating to the latent variables, and dispersion parameters from the boral model.}
 
-  \item{X.coefs}{The coefficients estimates relating to the model matrix \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
+  \item{X.coefs}{The coefficients estimates relating to \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
   \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and standard deviation given by \code{row.params}. Defaults to "none". } 
 
@@ -46,7 +46,7 @@ calc.logLik.lv0(y, X = NULL, family, trial.size = 1, lv.coefs,
 \details{
 For an \eqn{n x p} response matrix \code{y}, the log-likelihood for a model with no latent variables included is given by,
 
-\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log (f(y_{ij} | \beta_{0j}, \alpha_i, \ldots)), }
+\deqn{ \log(f) = \sum_{i=1}^n \sum_{j=1}^p \log \{f(y_{ij} | \beta_{0j}, \alpha_i, \ldots)\}, }
 
 where \eqn{f(y_{ij}|\cdot)} is the assumed distribution for column \eqn{j}, \eqn{\beta_{0j}} is the column-specific intercepts, \eqn{\alpha_i} is the row effect, and \eqn{\ldots} generically denotes anything else included in the model, e.g. row effects, dispersion parameters etc...
 
@@ -56,7 +56,7 @@ Likewise if more than two columns are ordinal responses, then the regression coe
 
 When a single \eqn{\alpha_i} random row effect is inclued, then the log-likelihood is calculated by integrating over this,
 
-\deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p (f(y_{ij} | \beta_{0j}, \alpha_i, \ldots))f(\alpha_i) d\alpha_i ), } 
+\deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p \{f(y_{ij} | \beta_{0j}, \alpha_i, \ldots)\}f(\alpha_i) d\alpha_i ), } 
      
 where \eqn{f(\alpha_i)} is the random effects distribution with mean zero and standard deviation given by the \code{row.params}. The integration is performed using standard Monte Carlo integration. This naturally extends to multiple random row effects structures.
 }
@@ -79,52 +79,55 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
 
 ## Example 1 - NULL model with site effects only
-spider.fit.nb <- boral(y, family = "negative.binomial", 
-     row.eff = "fixed", save.model = TRUE, calc.ics = FALSE,
-     mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, family = "negative.binomial", 
+     row.eff = "fixed", save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Extract all MCMC samples
-fit.mcmc <- get.mcmcsamples(spider.fit.nb) 
+fit_mcmc <- get.mcmcsamples(spiderfit_nb) 
+mcmc_names <- colnames(fit_mcmc)
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
+coef_mat <- matrix(apply(fit_mcmc[,grep("lv.coefs",mcmc_names)],
      2,median),nrow=p)
-site.coef <- list(ID1 = apply(fit.mcmc[,grep("row.coefs.ID1", colnames(fit.mcmc))],
+site_coef <- list(ID1 = apply(fit_mcmc[,grep("row.coefs.ID1", mcmc_names)],
      2,median))
 
 ## Calculate the log-likelihood at the posterior median
 calc.logLik.lv0(y, family = "negative.binomial",
-     lv.coefs =  coef.mat, row.eff = "fixed", row.params = site.coef)
+     lv.coefs =  coef_mat, row.eff = "fixed", row.params = site_coef)
 
 
 ## Example 2 - Model with environmental covariates and random row effects
 X <- scale(spider$x)
-spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", row.eff = "random",
-     save.model = TRUE, calc.ics = FALSE, mcmc.control = example.mcmc.control)
+spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", 
+     row.eff = "random",save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Extract all MCMC samples
-fit.mcmc <- get.mcmcsamples(spider.fit.nb2) 
+fit_mcmc <- get.mcmcsamples(spiderfit_nb2) 
+mcmc_names <- colnames(fit_mcmc)
 
 ## Find the posterior medians
-coef.mat <- matrix(apply(fit.mcmc[,grep("lv.coefs",colnames(fit.mcmc))],
+coef_mat <- matrix(apply(fit_mcmc[,grep("lv.coefs",mcmc_names)],
      2,median),nrow=p)
-X.coef.mat <- matrix(apply(fit.mcmc[,grep("X.coefs",colnames(fit.mcmc))],
+X_coef_mat <- matrix(apply(fit_mcmc[,grep("X.coefs",mcmc_names)],
 	2,median),nrow=p)
 site.sigma <- list(ID1 = 
-	median(fit.mcmc[,grep("row.sigma.ID1", colnames(fit.mcmc))]))
+	median(fit_mcmc[,grep("row.sigma.ID1", mcmc_names)]))
 
 	
 ## Calculate the log-likelihood at the posterior median
-calc.logLik.lv0(y, X = spider$x, family = "negative.binomial", row.eff = "random",
-	lv.coefs =  coef.mat, X.coefs = X.coef.mat, row.params = site.sigma)
+calc.logLik.lv0(y, X = spider$x, family = "negative.binomial", 
+     row.eff = "random",lv.coefs =  coef_mat, X.coefs = X_coef_mat, 
+     row.params = site.sigma)
 }
 }

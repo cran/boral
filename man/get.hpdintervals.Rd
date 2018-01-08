@@ -35,12 +35,19 @@ The function uses the \code{HPDinterval} function from the \code{coda} package t
 A list containing the following components where applicable:
 
 \item{lv.coefs}{A three dimensional array giving the lower \code{lv.coefs[,,"lower"]} and upper \code{lv.coefs[,,"upper"]} bounds of the HPD intervals for the column-specific intercepts, latent variable coefficients, and dispersion parameters if appropriate.}
+
 \item{lv}{A three dimensional array giving the \code{lv.coefs[,,"lower"]} and upper \code{lv.coefs[,,"upper"]} bounds of the HPD intervals for the latent variables.}
+
 \item{row.coefs}{A list with each element being a matrix giving the lower and upper bounds of the HPD intervals for row effects. The number of elements in the list should equal the number of row effects included in the model i.e., \code{ncol(row.ids)}.}
+
 \item{row.sigma}{A list with each element being a vector giving the lower and upper bounds of the HPD interval for the standard deviation of the normal distribution for the row effects. The number of elements in the list should equal the number of row effects included in the model i.e., \code{ncol(row.ids)}.}
-\item{X.coefs}{A three dimensional array giving the lower \code{lv.coefs[,,"lower"]} and upper \code{lv.coefs[,,"upper"]} bounds of the HPD intervals for coefficients relating to the model matrix \code{X}.}
+
+\item{X.coefs}{A three dimensional array giving the lower \code{lv.coefs[,,"lower"]} and upper \code{lv.coefs[,,"upper"]} bounds of the HPD intervals for coefficients relating to \code{X}.}
+
 \item{traits.coefs}{A three dimensional array giving the lower \code{lv.coefs[,,"lower"]} and upper \code{lv.coefs[,,"upper"]} bounds of the HPD intervals for coefficients and standard deviation relating to the traits matrix \code{traits}.}
+
 \item{cutoffs}{A matrix giving the lower and upper bounds of the HPD intervals for common cutoffs in proportional odds regression.}
+
 \item{powerparam}{A vector giving the lower and upper bounds of the HPD interval for common power parameter in tweedie regression.}
 }
 
@@ -66,31 +73,32 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
     
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
-spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
+spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
      row.eff = "fixed", save.model = TRUE,
-     mcmc.control = example.mcmc.control)
+     mcmc.control = example_mcmc_control)
 
 ## Returns a list with components corresponding to values described above.
-spider.fit.nb$hpdintervals 
+spiderfit_nb$hpdintervals 
 
 ## Example 2 - model with two latent variable, site effects, 
 ## 	and environmental covariates
-spider.fit.nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
+spiderfit_nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
 	num.lv = 2, row.eff = "fixed", save.model = TRUE,
-     mcmc.control = example.mcmc.control)
+     mcmc.control = example_mcmc_control)
 
 ## Returns a list with components corresponding to values described above.
-spider.fit.nb2$hpdintervals 
+spiderfit_nb2$hpdintervals 
 
 }
 }

@@ -33,6 +33,8 @@ S3method(simulate, boral)
 S3method(summary, boral)
 
 
+importFrom("utils", "packageDescription")
+
 import(coda, mvtnorm, fishMod, MASS)
 
 importFrom(R2jags, jags)

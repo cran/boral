@@ -60,7 +60,7 @@ For latent variable models, we are generally interested in "symmetric plots" tha
 
 \item Legendre, P. and Legendre, L. (2012). Numerical ecology, Volume 20. Elsevier.
 
-\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, in review.
+\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, to appear
 }
 }
 
@@ -71,18 +71,17 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \examples{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
-n <- nrow(y); p <- ncol(y); 
-
+n <- nrow(y)
+p <- ncol(y)
      
-spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-	row.eff = "fixed", calc.ics = FALSE,
-     mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
+	row.eff = "fixed", mcmc.control = example_mcmc_control)
 
-lvsplot(spider.fit.nb) 
+lvsplot(spiderfit_nb) 
 }

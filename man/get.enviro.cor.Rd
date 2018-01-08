@@ -51,7 +51,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
 library(mvabund) ## Load a dataset from the mvabund package
@@ -59,12 +59,13 @@ library(corrplot) ## For plotting correlations
 data(spider)
 y <- spider$abun
 X <- scale(spider$x)
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
     
-spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
-     save.model = TRUE, mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
+     save.model = TRUE, mcmc.control = example_mcmc_control)
 
-enviro.cors <- get.enviro.cor(spider.fit.nb)
+enviro.cors <- get.enviro.cor(spiderfit_nb)
 
 corrplot(enviro.cors$sig.cor, title = "Shared response correlations", 
 	type = "lower", diag = FALSE, mar = c(3,0.5,2,1), tl.srt = 45)

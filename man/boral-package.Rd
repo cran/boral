@@ -30,7 +30,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 
 \item Skrondal, A., and Rabe-Hesketh, S. (2004). Generalized latent variable modeling: Multilevel, longitudinal, and structural equation models. CRC Press.
 
-\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, to appear.
+\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, 30, 766-779.
 
 \item Yi W. et al. (2013). \code{mvabund}: statistical methods for analysing multivariate abundance data. R package version 3.8.4. } 
 }

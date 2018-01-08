@@ -47,6 +47,7 @@ Moreover, note these criteria are not calculated all the time. In models where t
 The two main differences between the criteria and those returned from \code{\link{get.measures}} are:
 \itemize{
 \item The AIC and BIC computed here are based on the log-likelihood evaluated at the posterior mode, whereas the AIC and BIC from \code{\link{get.measures}} are evaluated at the posterior median. The posterior mode and median will be quite close to one another if the component-wise posterior distributions are unimodal and symmetric. Furthermore, given uninformative priors are used, then both will be approximate maximum likelihood estimators. 
+
 \item The DIC and WAIC computed here are based on the marginal log-likelihood, whereas the DIC and WAIC from \code{\link{get.measures}} are based on the conditional log-likelihood. Criteria based on the two types of log-likelihood are equally valid, and to a certain extent, which one to use depends on the question being answered i.e., whether to condition on the latent variables or treat them as "random effects" (see discussions in Spiegelhalter et al. 2002, and Vaida and Blanchard, 2005). 
 }
 }
@@ -87,25 +88,26 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
-n <- nrow(y); p <- ncol(y); 
-    
-spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
+n <- nrow(y)
+p <- ncol(y)
+
+spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
      row.eff = "fixed", save.model = TRUE, calc.ics = TRUE,
-     mcmc.control = example.mcmc.control)
+     mcmc.control = example_mcmc_control)
 
 ## Extract MCMC samples
-fit.mcmc <- get.mcmcsamples(spider.fit.nb)
+fit_mcmc <- get.mcmcsamples(spiderfit_nb)
 
 ## WATCH OUT! The following takes a very long time to run!
 get.more.measures(y, family = "negative.binomial", 
-     num.lv = spider.fit.nb$num.lv, fit.mcmc = fit.mcmc, 
-     row.eff = "fixed", row.ids = spider.fit.nb$row.ids)		
+     num.lv = spiderfit_nb$num.lv, fit.mcmc = fit_mcmc, 
+     row.eff = "fixed", row.ids = spiderfit_nb$row.ids)		
 
      
 ## Illustrating what happens in a case where these criteria will 
@@ -115,18 +117,18 @@ y <- antTraits$abun
 X <- as.matrix(scale(antTraits$env))
 ## Include only traits 1, 2, and 5
 traits <- as.matrix(antTraits$traits[,c(1,2,5)])
-which.traits <- vector("list",ncol(X)+1)
-for(i in 1:length(which.traits)) which.traits[[i]] <- 1:ncol(traits)
+example_which_traits <- vector("list",ncol(X)+1)
+for(i in 1:length(example_which_traits))
+     example_which_traits[[i]] <- 1:ncol(traits)
 
-fit.traits <- boral(y, X = X, traits = traits, num.lv = 2, 
-	which.traits = which.traits, family = "negative.binomial", 
-	calc.ics = FALSE, save.model = TRUE,
-	mcmc.control = example.mcmc.control)
+fit_traits <- boral(y, X = X, traits = traits, num.lv = 2, 
+	which.traits = example_which_traits, family = "negative.binomial", 
+	save.model = TRUE, mcmc.control = example_mcmc_control)
      
 ## Extract MCMC samples
-fit.mcmc <- get.mcmcsamples(fit.traits)
+fit_mcmc <- get.mcmcsamples(fit_traits)
 
 get.more.measures(y, X = X, family = "negative.binomial", 
-     num.lv = fit.traits$num.lv, fit.mcmc = fit.mcmc)	
+     num.lv = fit.traits$num.lv, fit.mcmc = fit_mcmc)	
 }
 }

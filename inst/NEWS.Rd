@@ -2,23 +2,21 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 1.4}{
+\section{CHANGES IN boral VERSION 1.5}{
 This list below is written in terms of what is deemed to be most important to least important changes =P 
 
   \itemize{
-     \item A \code{get.mcmcsamples} function has been created to allow users to simply extract MCMC samples from fitted boral objects. Apart for simplifying access of MCMC samples for assessing diagnostics, it also benefits downstream functions such as \code{get.measures} and \code{get.more.measures}. Thanks to Patrick Ewing for this idea!
+     \item Stochastic Search Variable Selection (SSVS) is now available for the trait coefficients, by supplying a \code{prior.control\$ssvs.traitsindex} argument. This argument should have the same set up as \code{which.traits}, except with elements equal to either -1 (no SSVS) or 0 (SSVS). Please see the help files for the main \code{boral} function, \code{about.ssvs}, and \code{about.traits} for more information.
 
-     \item Inverse correlation, otherwise known as precision matrices, and significant precision matrices, are now available as part of the output for \code{get.residual.cor}.
+     \item The \code{create.life} and \code{simulate.boral} functions both now have the option of generating new latent variables for simulation, in addition to the previously available (default) option of supplying or conditioning the latent variables from the true model. This is controlled via the \code{lv.control} and \code{new.lvs argument} in the two functions respectively. Please see the help file for the \code{create.life} function for more information.
 
-     \item A \code{calc.varpart} function has been created, which attempts a variance partitioning on the linear predictor scale, averaged with respect to MCMC samples from the posterior distribution. Please see the associated help file for details.
+     \item \code{calc.ics = FALSE} is now the default argument in the main \code{boral} function.
 
-     \item The priors on the elements of latent variable coefficient matrix (lv.coefs) which have sign contraints is now broadened to behave like with the choice of prior.control\$type[2]. Specifically, it is set to normal then a half normal distribution is used, if it is set to uniform[-c,c] then a uniform[0,c] is used, and if it is set to Cauchy then a half Cauchy prior is used. 
-     
-     \item Default \code{hypparams} have changed: For normal priors, the default variance is now set at 10, while for uniform priors, the default maximum value is now set to 30. The former has been done to echo the ideas from Gelman et al. (2008) in that that we do not expect regression coefficients on the linear predictor scale to go beyond -5 to 5; see also \url{https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations}.
+     \item Both the \code{make.jagsboralmodel} and \code{make.jagsboralnullmodel} functions now print the \code{boral} version and the time of file creation as part of JAGS script.
 
-     \item A citation file has been added. 
+     \item Some of the objects inside the function and in the examples in the help files have been altered to use ``_" instead ".". This has been done to reduce potential confusion with functions. Note however that arguments to and outputs from functions all still use ``." when required.
 
-     \item Fixed a couple of bugs in the \code{predict.boral} example and code itself. Thanks to Chongliang Zhang for picking this up!
+     \item Fixed a bug in the \code{plot.boral} code. Thanks to Matthew Helmus for picking this up!
      }
 
 }

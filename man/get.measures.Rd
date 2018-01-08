@@ -95,24 +95,25 @@ When a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRU
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
-n <- nrow(y); p <- ncol(y); 
-    
-spider.fit.pois <- boral(y, family = "poisson", 
+n <- nrow(y)
+p <- ncol(y)
+
+spiderfit_pois <- boral(y, family = "poisson", 
 	num.lv = 2, row.eff = "random",
-	mcmc.control = example.mcmc.control)
+	mcmc.control = example_mcmc_control)
 
-spider.fit.pois$ics ## Returns information criteria
+spiderfit_pois$ics ## Returns information criteria
 
-spider.fit.nb <- boral(y, family = "negative.binomial", 
+spiderfit_nb <- boral(y, family = "negative.binomial", 
 	num.lv = 2, row.eff = "random",
-	mcmc.control = example.mcmc.control)
+	mcmc.control = example_mcmc_control)
 
-spider.fit.nb$ics ## Returns the information criteria 
+spiderfit_nb$ics ## Returns the information criteria 
 }
 }

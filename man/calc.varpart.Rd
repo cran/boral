@@ -50,7 +50,7 @@ A list containing the following components if applicable:
 
 \item Hui et al. (2014). Model-based approaches to unconstrained ordination. Methods in Ecology and Evolution, 6, 399-411.
 
-\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, to appear.
+\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, 30, 766-779.
 }
 }
 
@@ -70,24 +70,26 @@ library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 X <- scale(spider$x)
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
 
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
 ## Example 1 - model with X variables, two latent variables, and no row effects
-spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
-     num.lv = 2, save.model = TRUE, calc.ics = FALSE, mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
+     num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)
 
-## Partition variance for each species into that explained by covariates and by the latent variables
-dovar <- calc.varpart(spider.fit.nb)
+## Partition variance for each species into that explained by covariates 
+## and by the latent variables
+dovar <- calc.varpart(spiderfit_nb)
 
-## Consider the intercept and first two covariates in X as one group, and remaining 
-## four covariates in X as another group, then partition variance for each species 
-## based on these groups.
-dovar <- calc.varpart(spider.fit.nb, groupX = c(1,1,1,2,2,2,2))
+## Consider the intercept and first two covariates in X as one group, 
+## and remaining four covariates in X as another group, 
+## then partition variance for each species based on these groups.
+dovar <- calc.varpart(spiderfit_nb, groupX = c(1,1,1,2,2,2,2))
 
 
 ## Example 2 - model fitted to count data, no site effects, and
@@ -97,19 +99,22 @@ y <- antTraits$abun
 X <- as.matrix(scale(antTraits$env))
 ## Include only traits 1, 2, and 5
 traits <- as.matrix(antTraits$traits[,c(1,2,5)])
-which.traits <- vector("list",ncol(X)+1)
-for(i in 1:length(which.traits)) which.traits[[i]] <- 1:ncol(traits)
+example_which_traits <- vector("list",ncol(X)+1)
+for(i in 1:length(example_which_traits)) 
+     example_which_traits[[i]] <- 1:ncol(traits)
 ## Just for fun, the regression coefficients for the second column of X,
-## corresponding to the third element in the list which.traits,
+## corresponding to the third element in the list example_which_traits,
 ## will be estimated separately and not regressed against traits.
-which.traits[[3]] <- 0
+example_which_traits[[3]] <- 0
 
-fit.traits <- boral(y, X = X, traits = traits, which.traits = which.traits, 
-	family = "negative.binomial", mcmc.control = example.mcmc.control, save.model = TRUE)
+fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
+	family = "negative.binomial", mcmc.control = example_mcmc_control, 
+	save.model = TRUE)
 
-## Partition variance for each species due to covariates in X and latent variables
-## Also calculate proportion of variance due to the covariates which can be explained by traits 
-dovar <- calc.varpart(fit.traits)
+## Partition variance for each species due to covariates in X 
+## and latent variables. Also calculate proportion of variance 
+## due to the covariates which can be explained by traits 
+dovar <- calc.varpart(fit_traits)
 }
 
 }

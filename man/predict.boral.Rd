@@ -63,7 +63,7 @@ A list containing the following components:
 \itemize{
 \item Gelman et al. (2013) Bayesian Data Analysis. CRC Press.
 
-\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, to appear.
+\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, 30, 766-779.
 }
 }
 
@@ -84,42 +84,80 @@ library(mvtnorm)
 data(spider)
 y <- spider$abun
 X <- scale(spider$x)
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
 
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
 ## Example 1 - model with two latent variables, random site effects, 
 ## 	and environmental covariates
-spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
      row.eff = "random", num.lv = 2, 
-     mcmc.control = example.mcmc.control, save.model = TRUE)
+     mcmc.control = example_mcmc_control, save.model = TRUE)
 
 
 ## Predictions conditional on predicted latent variables
-getcondpreds <- predict(spider.fit.nb)
+getcondpreds <- predict(spiderfit_nb)
 
-## Predictions marginal on predicted latent variables
+## Predictions marginal on latent variables, random row effects
 ## The intervals for these will generally be wider than the
 ##   conditional intervals.
-getmargpreds <- predict(spider.fit.nb, predict.type = "marginal")
+getmargpreds <- predict(spiderfit_nb, predict.type = "marginal")
 
 
 ## Now suppose you extrpolate to new sites
 newX <- rmvnorm(100, mean = rep(0,ncol(X)))
 
 ## Below won't work since conditional predictions are made to the same sites
-## getpreds <- predict(spider.fit.nb, newX = newX)
+getcondpreds <- predict(spiderfit_nb, newX = newX)
 
 ## Marginal predictions will work though provided newrow.ids is set up 
-## properly
-newrow.ids <- matrix(sample(1:28,100,replace=TRUE), 100, 1)
-getpreds <- predict(spider.fit.nb, newX = newX, predict.type = "marginal", 
-     newrow.ids = newrow.ids)
+## properly. For example,
+new_row_ids <- matrix(sample(1:28,100,replace=TRUE), 100, 1)
+getmargpreds <- predict(spiderfit_nb, newX = newX, predict.type = "marginal", 
+     newrow.ids = new_row_ids)
+
+     
+## Example 2 - simulate count data, based on a model with two latent variables, 
+## no site variables, with two traits and one environmental covariates 
+library(mvtnorm)
+
+n <- 100; s <- 50
+X <- as.matrix(scale(1:n))
+colnames(X) <- c("elevation")
+
+traits <- cbind(rbinom(s,1,0.5), rnorm(s)) 
+## one categorical and one continuous variable
+colnames(traits) <- c("thorns-dummy","SLA")
+
+simfit <- list(true.lv = rmvnorm(n, mean = rep(0,2)), 
+	lv.coefs = cbind(rnorm(s), rmvnorm(s, mean = rep(0,2)), 1), 
+	traits.coefs = matrix(c(0.1,1,-0.5,0.1,0.5,0,-1,0.1), 2, byrow = TRUE))
+rownames(simfit$traits.coefs) <- c("beta0","elevation")
+colnames(simfit$traits.coefs) <- c("kappa0","thorns-dummy","SLA","sigma")
+
+simy = create.life(true.lv = simfit$true.lv, lv.coefs = simfit$lv.coefs, X = X, 
+	traits = traits, traits.coefs = simfit$traits.coefs, family = "normal") 
 
 
+example_which_traits <- vector("list",ncol(X)+1)
+for(i in 1:length(example_which_traits)) 
+     example_which_traits[[i]] <- 1:ncol(traits)
+fit_traits <- boral(y = simy, X = X, traits = traits, 
+     which.traits = example_which_traits, family = "normal", 
+     num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)	
+
+     
+## Predictions conditional on predicted latent variables   
+getcondpreds <- predict(fit_traits)     
+     
+## Predictions marginal on latent variables
+## The intervals for these will generally be wider than the
+##   conditional intervals.
+getmargpreds <- predict(fit_traits, predict.type = "marginal")
 }
 
 }

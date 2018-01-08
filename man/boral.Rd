@@ -13,12 +13,12 @@ boral(y, ...)
 
 \method{boral}{default}(y, X = NULL, traits = NULL, which.traits = NULL, 
 	family, trial.size = 1, num.lv = 0, row.eff = "none", row.ids = NULL,
-	offset = NULL, save.model = FALSE, calc.ics = TRUE, 
+	offset = NULL, save.model = FALSE, calc.ics = FALSE, 
      mcmc.control = list(n.burnin = 10000, n.iteration = 40000, 
      n.thin = 30, seed = 123), 
 	prior.control = list(type = c("normal","normal","normal","uniform"), 
-	hypparams = c(10, 10, 10, 30), ssvs.index = -1, ssvs.g = 1e-6), 
-	do.fit = TRUE, model.name = NULL, ...)
+	hypparams = c(10, 10, 10, 30), ssvs.index = -1, ssvs.g = 1e-6, 
+	ssvs.traitsindex = -1), do.fit = TRUE, model.name = NULL, ...)
 
 \method{print}{boral}(x, ...)
 }
@@ -34,9 +34,9 @@ boral(y, ...)
 
   \item{which.traits}{A list of length equal to (number of columns in \code{X} + 1), informing which columns of \code{traits} the column-specific intercepts and each of the column-specific regression coefficients should be regressed against. The first element in the list applies to the column-specific intercept, while the remaining elements apply to the regression coefficients. Each element of \code{which.traits} is a vector indicating which traits are to be used.
   
-  For example, if \code{which.traits[[2]] = c(2,3)}, then the regression coefficients corresponding to the first column in \code{X} are regressed against the second and third columns of \code{traits}. If \code{which.traits[[2]] = 0}, then the regression coefficients for each column are treated as independent. Please see \code{\link{about.traits}} for more details.
+  For example, if \code{which.traits[[2]] = c(2,3)}, then the regression coefficients corresponding to the first column in \code{X} are regressed against the second and third columns of \code{traits}. If \code{which.traits[[2]][1] = 0}, then the regression coefficients for each column are treated as independent. Please see \code{\link{about.traits}} for more details.
   
-  Defaults to \code{NULL}, in conjunction with \code{traits = NULL}).}
+  Defaults to \code{NULL}, and used in conjunction with \code{traits} and \cr \code{prior.control$ssvs.traitsindex}.}
 
   \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
@@ -55,7 +55,7 @@ boral(y, ...)
 
  \item{save.model}{If \code{save.model = TRUE}, then the JAGS model file is saved as a text file (with name given by \code{model.name}) in the current working directory as well as the MCMC samples, which themselves can be extracted using the \code{get.mcmcsamples} function. Various functions available in the \code{coda} package can be applied to the MCMC samples for diagnosing convergence. Note MCMC samples can take up a lot of memory. Defaults to \code{FALSE}.}
 
-\item{calc.ics}{If \code{calc.ics = TRUE}, then various information criteria values are also returned, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to \code{TRUE}.}
+\item{calc.ics}{If \code{calc.ics = TRUE}, then various information criteria values are also returned, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to \code{FALSE}.}
 
 \item{mcmc.control}{A list of parameters for controlling the MCMC sampling. Values not set will assume default values. These include:
 	\itemize{
@@ -71,7 +71,7 @@ boral(y, ...)
 	
 \item{prior.control}{A list of parameters for controlling the prior distributions. Values not set will assume default values. These include:
 	\itemize{
-		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) priors for all column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see \code{\link{about.traits}} for more information); 4) priors for any dispersion parameters and variance (standard deviation, to be precise) parameters in the model.
+		\item \emph{type:} Vector of four strings indicating the type of prior distributions to use. In order, these are: 1) priors for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) priors for the latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) priors for all column-specific coefficients relating to \code{X} (ignored if \code{X = NULL}). When traits are included in the model, this is also the prior for the trait regression coefficients (please see \code{\link{about.traits}} for more information); 4) priors for any dispersion parameters and variance (standard deviation, to be precise) parameters in the model.
 				
 		For elements 1-3, the prior distributions currently available include: I) ``normal", which is a normal prior with the variance controlled by elements 1-3 in \code{hypparams}; II) ``cauchy", which is a Cauchy prior with variance controlled by elements 1-3 in \code{hypparams}. Gelman, et al. (2008) considers using Cauchy priors with variance \eqn{2.5^2} as weakly informative priors for coefficients in logistic and potentially other generalized linear models; III) ``uniform", which is a symmetric uniform prior with minimum and maximum values controlled by element 1-3 in \code{hypparams}. 
 		
@@ -79,15 +79,20 @@ boral(y, ...)
 		
 		Defaults to the vector \code{c("normal","normal","normal","uniform")}. 
 
-		\item \emph{hypparams:} Vector of four hyperparameters used in the set up of prior distributions. In order, these are: 1) affects the prior distribution for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) affects the prior distribution for all latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) affects the prior distribution for column-specific coefficients relating to the model matrix \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also affects the prior distribution for the trait regression coefficients; 4) affects the prior distribution for any dispersion parameters, as well as the prior distributions for the standard deviation of the random effects normal distribution if \code{row.eff = "random"}, the standard deviation of the column-specific random intercepts for these columns if more than two of the columns are ordinal, and the standard deviation of the random effects normal distribution for trait regression coefficients when traits are included in the model.
+		\item \emph{hypparams:} Vector of four hyperparameters used in the set up of prior distributions. In order, these are: 1) affects the prior distribution for all column-specific intercepts, row effects, and cutoff points for ordinal data; 2) affects the prior distribution for all latent variable coefficients. This is ignored if \code{num.lv = 0}; 3) affects the prior distribution for column-specific coefficients relating to \code{X} (ignored if \code{X = NULL}). When traits are included in the model, it also affects the prior distribution for the trait regression coefficients; 4) affects the prior distribution for any dispersion parameters, as well as the prior distributions for the standard deviation of the random effects normal distribution if \code{row.eff = "random"}, the standard deviation of the column-specific random intercepts for these columns if more than two of the columns are ordinal, and the standard deviation of the random effects normal distribution for trait regression coefficients when traits are included in the model.
 		
 		Defaults to the vector \code{c(10, 10, 10, 30)}. The use of normal distributions with mean zero and variance 10 as priors is seen as one type of (very) weakly informative prior, according to \href{https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations}{Prior choice recommendations}.
 		
-		\item \emph{ssvs.index:} Indices to be used for stochastic search variable selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in the implied model matrix \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer greater than 0 (SSVS is performed on collectively all coefficients on this covariate/s.) 
+		\item \emph{ssvs.index:} Indices to be used for stochastic search variable selection (SSVS, George and McCulloch, 1993). Either a single element or a vector with length equal to the number of columns in \code{X}. Each element can take values of -1 (no SSVS is performed on this covariate), 0 (SSVS is performed on individual coefficients for this covariate), or any integer greater than 0 (SSVS is performed on collectively all coefficients on this covariate/s.) 
 		
-		This argument is only read if \code{X.eff = TRUE}. Please see \code{\link{about.ssvs}} for more information regarding the implementation of SSVS. Defaults to -1, in which case no model selection is performed on the fitted model at all. 
+		Please see \code{\link{about.ssvs}} for more information regarding the implementation of SSVS. Defaults to -1, in which case SSVS is not performed on \code{X} variables. 
 
 		\item \emph{ssvs.g:} Multiplicative, shrinkage factor for SSVS, which controls the strength of the "spike" in the SSVS mixture prior. In summary, if the coefficient is included in the model, the "slab" prior is a normal distribution with mean zero and variance given by element 3 in \code{hypparams}, while if the coefficient is not included in the model, the "spike" prior is normal distribution with mean zero and variance given by element 3 in \code{hypparams} multiplied by \code{ssvs.g}. Please see \code{\link{about.ssvs}} for more information regarding the implementation of SSVS. Defaults to 1e-6.  		
+		
+		\item \emph{ssvs.traitsindex:} Used in conjunction with \code{traits} and \code{which.traits}, this is a list of indices to be used 
+		for performing SSVS on the trait coefficients. Should be a list with the same length as \code{which.traits}, and with each element a vector of indices with the same length as the corresponding element in \code{which.traits}. Each index either can take values of -1 (no SSVS on this trait coefficient) or 0 (no SSVS on this trait coefficient). 
+
+		Please see \code{\link{about.ssvs}} for more information regarding the implementation of SSVS. Defaults to -1, in which case SSVS is not performed on any of the trait coefficients, if they are included in the model.
 		}
 	}
  
@@ -104,7 +109,7 @@ boral(y, ...)
 \details{
 The boral package is designed to fit three types models which may be useful in ecology (and probably outside of ecology as well =D). 
 
-\bold{Independent response models:} boral allows explanatory variables to be entered into the model via a model matrix \code{X}. This model matrix can contain anything the user wants, provided factors have been parameterized as dummy variables. It should NOT include an intercept column. 
+\bold{Independent response models:} boral allows explanatory variables to be entered into the model via \code{X}. This model matrix can contain anything the user wants, provided factors have been parameterized as dummy variables. It should NOT include an intercept column. 
 
 Without latent variables, i.e. \code{num.lv = 0}, boral fits separate GLMs to each column of the \eqn{n \times p} matrix \code{y}, where the columns are assumed to be independent. 
 
@@ -134,8 +139,7 @@ Unconstrained ordination is used for visualizing multivariate data in a low-dime
 This model is thus a mash of the first two types of models. The linear predictor \eqn{\bm{z}^\top_i\bm{\theta}_j} induces a residual covariance between the columns of \code{y} (which is of rank \code{num.lv}). For multivariate abundance data, this leads to a parsimonious method of accounting for correlation between species not due to the shared environmental responses. After fitting the model, the residual correlation matrix then can be obtained via the \code{\link{get.residual.cor}} function. Note \code{num.lv > 1} is necessarily in order to flexibly model the residual correlations; see Pollock et al. (2014) for residual correlation matrices in the context of Joint Species Distribution Models, and Warton et al. (2015) for an overview of latent variable models in multivariate ecology.
 
 
-\bold{Distributions:}
-A variety of families are available in boral, designed to handle multivariate abundance data of varying response types. Please see \code{\link{about.distributions}} for more information on this.
+\bold{Distributions:} A variety of families are available in boral, designed to handle multivariate abundance data of varying response types. Please see \code{\link{about.distributions}} for more information on this.
 
 
 \bold{Including species traits:} When covariates \code{X} are included i.e. both the independent and correlated response models, one has the option of also including traits to help explain differences in species environmental responses to these covariates. Please see \code{\link{about.traits}} for more information on this.
@@ -150,7 +154,7 @@ A variety of families are available in boral, designed to handle multivariate ab
 
 \item Normal priors with mean zero and variance given by element 3 \code{hypparams} are assigned to all coefficients relating to covariates in \eqn{\bm{\beta}_j}. If traits are included, the same normal priors are assigned to the \eqn{\kappa}'s, and the standard deviation \eqn{\sigma_k} are assigned uniform priors with maximum equal to element 4 in \code{hypparams}.
 
-\item For the negative binomial, normal, lognormal, and tweedie distributions, uniform priors with maximum equal to element 4 in \code{hypparams} are used on the dispersion parameters. Please note that for the normal and lognormal distributions, these uniform priors are assigned to the standard deviations \eqn{\phi} (see Gelman, 2006). If there are any variance (standard deviation, to be precise) parameters in the model, then these are also assigned uniform priors with maximum equal to element 4 in \code{hypparams} e.g., standard deviation of the normal random effect if the row effects are assumed to random, the standard deviation of the normal random species-specific intercepts if more than two columns are ordinal responses etc...
+\item For the negative binomial, normal, lognormal, and tweedie distributions, uniform priors with maximum equal to element 4 in \code{hypparams} are used on the dispersion parameters. Please note that for the normal and lognormal distributions, these uniform priors are assigned to the standard deviations \eqn{\phi} (see Gelman, 2006). If there are any variance (standard deviation, to be precise) parameters in the model, then these are also assigned uniform priors with maximum equal to element 4 in \code{hypparams} e.g., standard deviation of the normal random effect if the row effects are assumed to random, the standard deviation of the normal random column-specific intercepts if more than two columns are ordinal responses etc...
 }
 
 
@@ -191,7 +195,7 @@ An object of class "boral" is returned, being a list containing the following co
      
      \item{lv.mean/median/sd/iqr}{A matrix containing the mean/median/standard deviation/interquartile range of the posterior distributions of the latent variables.}
      
-     \item{X.coefs.mean/median/sd/iqr}{Matrices containing the mean/median/standard deviation/interquartile range of the posterior distributions of the column-specific coefficients relating to the model matrix \code{X}.}
+     \item{X.coefs.mean/median/sd/iqr}{Matrices containing the mean/median/standard deviation/interquartile range of the posterior distributions of the column-specific coefficients relating to \code{X}.}
      
      \item{traits.coefs.mean/median/sd/iqr}{Matrices containing the mean/median/standard deviation/interquartile range of the posterior distributions of the coefficients and standard deviation relating to the species traits; please see \code{\link{about.traits}}.}
 
@@ -205,10 +209,12 @@ An object of class "boral" is returned, being a list containing the following co
      
 	\item{row.sigma.mean/median/sd/iqr}{A list with each element containing the mean/median/standard deviation/interquartile range of the posterior distributions of the standard deviation for the row random effects normal distribution. The length of the list is equal to the number of row effects included i.e., \code{ncol(row.ids)}.}
 	
-     \item{ssvs.indcoefs.mean/ssvs.indcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including individual coefficients in the model.}
+     \item{ssvs.indcoefs.mean/ssvs.indcoefs.sd}{Matrices containing posterior probabilities and associated standard deviation for individual SSVS of coefficients in \code{X}.}
      
-     \item{ssvs.gpcoefs.mean/ssvs.gpcoefs.sd}{Matrices containing the SSVS posterior probabilities and associated standard deviation of including grouped coefficients in the model.}
+     \item{ssvs.gpcoefs.mean/ssvs.gpcoefs.sd}{Matrices containing posterior probabilities and associated standard deviation for group SSVS of coefficients in \code{X}.}
      
+     \item{ssvs.traitscoefs.mean/ssvs.traitscoefs.sd}{Matrices containing posterior probabilities and associated standard deviation for individual SSVS of coefficients relating to species traits.}
+
      \item{hpdintervals}{A list containing components which correspond to the lower and upper bounds of highest posterior density (HPD) intervals for all the parameters indicated above. Please see \code{\link{get.hpdintervals}} for more details.}
      
      \item{ics}{If \code{calc.ics = TRUE}, then a list of different information criteria values for the model calculated using \code{\link{get.measures}} is run. Please see \code{\link{get.measures}} for details regarding the criteria. Also, please note the ics returned are based on \code{\link{get.measures}} with \code{more.measures = FALSE}.}
@@ -252,7 +258,7 @@ An object of class "boral" is returned, being a list containing the following co
 
 \item Skrondal, A., and Rabe-Hesketh, S. (2004). Generalized latent variable modeling: Multilevel, longitudinal, and structural equation models. CRC Press.
 
-\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, to appear.
+\item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, 30, 766-779.
 
 \item Warton et al. (2012). Distance-based multivariate analyses confound location and dispersion effects. Methods in Ecology and Evolution, 3, 89-101.
 
@@ -292,83 +298,84 @@ library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 X <- scale(spider$x)
-n <- nrow(y); p <- ncol(y); 
+n <- nrow(y)
+p <- ncol(y)
 
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example.mcmc.control <- list(n.burnin = 10, n.iteration = 100, 
+example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
      
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
-spider.fit.nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
+     row.eff = "fixed", mcmc.control = example_mcmc_control)
 
-summary(spider.fit.nb)
+summary(spiderfit_nb)
 
 par(mfrow = c(2,2))
-plot(spider.fit.nb) ## Plots used in residual analysis, 
+plot(spiderfit_nb) ## Plots used in residual analysis, 
 ## Used to check if assumptions such an mean-variance relationship 
 ## are adequately satisfied.
 
-lvsplot(spider.fit.nb) ## Biplot of the latent variables, 
+lvsplot(spiderfit_nb) ## Biplot of the latent variables, 
 ## which can be interpreted in the same manner as an ordination plot.
 
 \dontrun{
 ## Example 2a - model with no latent variables, no site effects, 
 ## 	and environmental covariates
-spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 0, mcmc.control = example.mcmc.control)
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
+	num.lv = 0, mcmc.control = example_mcmc_control)
 
-summary(spider.fit.nb) 
+summary(spiderfit_nb) 
 ## The results can be compared with the default example from 
 ## the manyglm() function in mvabund. 
 
 ## Caterpillar plots for the coefficients
 par(mfrow=c(2,3), mar = c(5,6,1,1))
-sapply(colnames(spider.fit.nb$X), coefsplot, x = spider.fit.nb)
+sapply(colnames(spiderfit_nb$X), coefsplot, x = spiderfit_nb)
 
 
 ## Example 2b - suppose now, for some reason, the 28 rows were
 ## 	sampled such into four replications of seven sites
 ## Let us account for this as a fixed effect
-spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
 	num.lv = 0, row.eff = "fixed", row.ids = matrix(rep(1:7,each=4),ncol=1),
-	mcmc.control = example.mcmc.control)
+	mcmc.control = example_mcmc_control)
 
-spider.fit.nb$row.coefs
+spiderfit_nb$row.coefs
 
 ## Example 2c - suppose now, for some reason, the 28 rows reflected
 ## 	a nested design with seven regions, each with four sub-regions
 ## We can account for this nesting as a random effect
-spider.fit.nb <- boral(y, X = X, family = "negative.binomial", 
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
 	num.lv = 0, row.eff = "random", 
 	row.ids = cbind(1:n, rep(1:7,each=4)), 
-	mcmc.control = example.mcmc.control)
+	mcmc.control = example_mcmc_control)
 
-spider.fit.nb$row.coefs
+spiderfit_nb$row.coefs
 
 
 ## Example 3a - Extend example 2 to demonstrate grouped covariate selection
 ## on the last three covariates. 
-set.prior <- list(type = c("normal","normal","normal","uniform"), 
-	hypparams = c(10, 10, 10, 30), ssvs.index = c(-1,-1,-1,1,2,3))
-spider.fit.nb2 <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 0, calc.ics = FALSE, mcmc.control = example.mcmc.control,
-	prior.control = set.prior)
+example_prior_control <- list(type = c("normal","normal","normal","uniform"), 
+     ssvs.index = c(-1,-1,-1,1,2,3))
+spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", 
+	num.lv = 0, mcmc.control = example_mcmc_control,
+	prior.control = example_prior_control)
      
-summary(spider.fit.nb2) 
+summary(spiderfit_nb2) 
 
 
 ## Example 3b - Extend example 2 to demonstrate individual covariate selection
 ## on the last three covariates. 
-set.prior <- list(type = c("normal","normal","normal","uniform"), 
-	hypparams = c(10, 10, 10, 30), ssvs.index = c(-1,-1,-1,0,0,0))
-spider.fit.nb3 <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 0, calc.ics = FALSE, mcmc.control = example.mcmc.control,
-	prior.control = set.prior)
-summary(spider.fit.nb3) 
+example_prior_control <- list(type = c("normal","normal","normal","uniform"), 
+     ssvs.index = c(-1,-1,-1,0,0,0))
+spiderfit_nb3 <- boral(y, X = X, family = "negative.binomial", 
+	num.lv = 0, mcmc.control = example_mcmc_control,
+	prior.control = example_prior_control)
+summary(spiderfit_nb3) 
 
 	
 ## Example 4 - model fitted to presence-absence data, no site effects, and
@@ -380,31 +387,44 @@ y <- y[1:20,] ## Consider only years 1981 and 1983
 y <- y[,apply(y > 0,2,sum) > 2] ## Consider only spp with more than 2 presences
      
 tikus.fit <- boral(y, family = "binomial", num.lv = 2, 
-	calc.ics = FALSE, mcmc.control = example.mcmc.control)
+	mcmc.control = example_mcmc_control)
      
 lvsplot(tikus.fit, biplot = FALSE) 
 ## A strong location between the two sampling years 
 
 
-## Example 5 - model fitted to count data, no site effects, and
+## Example 5a - model fitted to count data, no site effects, and
 ## two latent variables, plus traits included to explain environmental responses
 data(antTraits)
 y <- antTraits$abun
 X <- as.matrix(scale(antTraits$env))
 ## Include only traits 1, 2, and 5
 traits <- as.matrix(antTraits$traits[,c(1,2,5)])
-which.traits <- vector("list",ncol(X)+1)
-for(i in 1:length(which.traits)) which.traits[[i]] <- 1:ncol(traits)
+example_which_traits <- vector("list",ncol(X)+1)
+for(i in 1:length(example_which_traits)) 
+     example_which_traits[[i]] <- 1:ncol(traits)
 ## Just for fun, the regression coefficients for the second column of X,
-## corresponding to the third element in the list which.traits,
+## corresponding to the third element in the list example_which_traits,
 ## will be estimated separately and not regressed against traits.
-which.traits[[3]] <- 0
+example_which_traits[[3]] <- 0
 
-fit.traits <- boral(y, X = X, traits = traits, which.traits = which.traits, 
-	family = "negative.binomial", calc.ics = FALSE, 
-	mcmc.control = example.mcmc.control, save.model = TRUE)
+fit_traits <- boral(y, X = X, traits = traits, 
+     which.traits = example_which_traits, family = "negative.binomial",
+     mcmc.control = example_mcmc_control, save.model = TRUE)
 
-summary(fit.traits)
+summary(fit_traits)
+
+
+## Example 5b - perform selection on trait coefficients
+ssvs_traitsindex <- vector("list",ncol(X)+1)
+for(i in 1:length(ssvs_traitsindex)) 
+     ssvs_traitsindex[[i]] <- rep(0,ncol(traits))
+ssvs_traitsindex[[3]] <- -1
+fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
+	family = "negative.binomial", mcmc.control = example_mcmc_control, 
+	save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
+
+summary(fit_traits)
 
 
 ## Example 6 - simulate Bernoulli data, based on a model with two latent variables, 
@@ -431,11 +451,12 @@ simy = create.life(true.lv = simfit$true.lv, lv.coefs = simfit$lv.coefs, X = X,
 	traits = traits, traits.coefs = simfit$traits.coefs, family = "binomial") 
 
 
-which.traits <- vector("list",ncol(X)+1)
-for(i in 1:length(which.traits)) which.traits[[i]] <- 1:ncol(traits)
-fit.traits <- boral(y = simy, X = X, traits = traits, which.traits = which.traits, 
-	family = "binomial", num.lv = 2, save.model = TRUE, calc.ics = FALSE, 
-	mcmc.control = example.mcmc.control)
+example_which_traits <- vector("list",ncol(X)+1)
+for(i in 1:length(example_which_traits)) 
+     example_which_traits[[i]] <- 1:ncol(traits)
+fit_traits <- boral(y = simy, X = X, traits = traits, 
+     which.traits = example_which_traits, family = "binomial", 
+     num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)
 
 }
 
