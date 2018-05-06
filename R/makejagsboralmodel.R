@@ -178,11 +178,11 @@ make.jagsboralmodel <- function(family, num.X = 0, num.traits = 0, which.traits 
 	## Priors on row effects
 	if(row.eff == "fixed") {
 		for(k in 1:ncol(row.ids)) 
-			model_script <- c(model_script, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.", colnames(row.ids)[k], "[i] ~ ", prior.strings$p1, " } "))
+				model_script <- c(model_script, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.ID", k, "[i] ~ ", prior.strings$p1, " } "))
 		}
 	if(row.eff == "random") {
 		for(k in 1:ncol(row.ids)) {
-			model_script <- c(model_script, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.", colnames(row.ids)[k], "[i] ~ dnorm(0, pow(row.sigma.", colnames(row.ids)[k], ",-2)) } "))
+			model_script <- c(model_script, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.ID", k, "[i] ~ dnorm(0, pow(row.sigma.", colnames(row.ids)[k], ",-2)) } "))
 			model_script <- c(model_script, paste0("\t row.sigma.", colnames(row.ids)[k], " ~ ", prior.strings$p4))
 			}
 		#model_script <- c(model_script, paste0("\t row.ranef.mean ~ ", prior.string))

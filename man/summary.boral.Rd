@@ -5,7 +5,7 @@
 
 \title{Summary of fitted boral object}
 
-\description{A summary of the fitted boral objects including the type of model fitted e.g., error distribution, number of latent variables parameter estimates, values of the information criteria (if applicable), and so on.}
+\description{A summary of the fitted boral objects including the type of model fitted e.g., error distribution, number of latent variables parameter estimates, and so on.}
 
 \usage{
 \method{summary}{boral}(object, est = "median", ...)
@@ -24,7 +24,7 @@
 }
 
 \value{
-Attributes of the model fitted, parameter estimates, and values of the information criteria if \code{calc.ics = TRUE} in the boral object, and posterior probabilities of including individual and/or grouped coefficients in the model based on SSVS if appropriate.
+Attributes of the model fitted, parameter estimates, in the boral object, and posterior probabilities of including individual and/or grouped coefficients in the model based on SSVS if appropriate.
 }
 
 \author{
@@ -32,7 +32,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \seealso{
-\code{\link{boral}} for the fitting function on which \code{summary} is applied, \code{\link{get.measures}} for details regarding the information criteria returned.
+\code{\link{boral}} for the fitting function on which \code{summary} is applied.
 }
 
 \examples{

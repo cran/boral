@@ -55,7 +55,7 @@ boral(y, ...)
 
  \item{save.model}{If \code{save.model = TRUE}, then the JAGS model file is saved as a text file (with name given by \code{model.name}) in the current working directory as well as the MCMC samples, which themselves can be extracted using the \code{get.mcmcsamples} function. Various functions available in the \code{coda} package can be applied to the MCMC samples for diagnosing convergence. Note MCMC samples can take up a lot of memory. Defaults to \code{FALSE}.}
 
-\item{calc.ics}{If \code{calc.ics = TRUE}, then various information criteria values are also returned, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to \code{FALSE}.}
+\item{calc.ics}{If \code{calc.ics = TRUE}, then various information criteria values are also returned, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to \code{FALSE}. WARNING: As of version 1.5, functions to calculate information criteria will no longer be updated...use at your own peril!!!}
 
 \item{mcmc.control}{A list of parameters for controlling the MCMC sampling. Values not set will assume default values. These include:
 	\itemize{
@@ -158,12 +158,10 @@ This model is thus a mash of the first two types of models. The linear predictor
 }
 
 
-\bold{Using information criteria at your own risk:} Using information criterion from \code{calc.ics = TRUE} for model selection should be done with extreme caution, for two reasons: 1) The implementation of some of these criteria is heuristic and experimental, 2) Deciding what model to fit should also be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables is more appropriate. However, if we are interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are more appropriate. As another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = "none"}) or species composition (\code{row.eff = "fixed"}).  
-
-We also make the important point that if traits are included in the model, then the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are now random effects. However, currently the calculation of all information criteria do not take this into account! 
+\bold{Using information criteria at your own risk:} Using information criterion from \code{calc.ics = TRUE} for model selection should be done with extreme caution, for two reasons: 1) The implementation of some of these criteria is heuristic and experimental, 2) Deciding what model to fit should also be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables is more appropriate. However, if we are interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are more appropriate. As another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = "none"}) or species composition (\code{row.eff = "fixed"}). We also make the important point that if traits are included in the model, then the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are now random effects. However, currently the calculation of all information criteria do not take this into account! 
 
 
-\bold{SSVS:} As an alternative to using information criterion for model selection, stochastic search variable selection (SSVS, George and McCulloch, 1993) is also implemented for the column-specific coefficients \eqn{\bm{\beta}_j}. Please see \code{\link{about.ssvs}} for more information on this approach.
+\bold{SSVS:} Stochastic search variable selection (SSVS, George and McCulloch, 1993) is also implemented for the column-specific coefficients \eqn{\bm{\beta}_j}. Please see \code{\link{about.ssvs}} for more information on this approach.
 }
 
 
@@ -223,7 +221,7 @@ An object of class "boral" is returned, being a list containing the following co
      
      \item{geweke.diag}{A list with two elements. The first element is itself a list containing the Geweke convergence diagnostic (Z-scores) for all appropriate parameters in the model. The second element contains the proportion of Z-scores that whose corresponding p-value is less than 0.05. No adjustment is made for multiple comparison on the p-values. Please see the section \emph{Why is only one MCMC chain run?} for more information on this diagnostic.}
 
-     \item{n, p, family, trial.size, num.lv, ...}{Various attributes of the model fitted, including the dimension of \code{y}, the response and model matrix used, distributional assumptions and trial sizes, number of latent variables, the number of covariates and traits, whether information criteria values were calculated, hyperparameters used in the Bayesian estimation, indices for SSVS, the number of levels for ordinal responses, and n.burnin, n.iteration and n.thin.}
+     \item{n, p, family, trial.size, num.lv, ...}{Various attributes of the model fitted, including the dimension of \code{y}, the response and model matrix used, distributional assumptions and trial sizes, number of latent variables, the number of covariates and traits, hyperparameters used in the Bayesian estimation, indices for SSVS, the number of levels for ordinal responses, and n.burnin, n.iteration and n.thin.}
 }
 
 \references{
@@ -277,11 +275,9 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 
 \item For models including both explanatory covariates and latent variables, one requires \code{num.lv > 1} to allow flexible modeling of the residual correlation matrix. 
 
-\item MCMC can take a long time to run, especially with if the response matrix \code{y} is large! The calculation of information criteria (\code{calc.ics = TRUE}) can also take a while. Apologies for this advance =(
+\item As of version 1.5, functions to calculate information criteria will no longer be updated...use \code{calc.ics = TRUE} at your own peril!!!
 
 \item MCMC with lots of ordinal columns take an especially long time to run! Moreover, estimates for the cutoffs in cumulative probit regression may be poor for levels with little data. Major apologies for this advance =(
-
-\item As discussed in the details, the use of information criterion should be done so with caution. What model to select should be first and foremost driven by the question of interest. Also, the use of information criterion in the presence of model selection using SSVS is problematic.
 
 \item Summaries of the coefficients such as posterior medians and HPD intervals may also be problematic when SSVS is being used, since the posterior distribution will be multi-modal. 
 
@@ -290,7 +286,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \seealso{
-\code{\link{lvsplot}} for a scatter plot of the latent variables (and their coefficients if applicable) when \code{num.lv = 1} or \code{2}, \code{\link{coefsplot}} for horizontal line or "caterpillar plot" of the regression coefficients corresponding to \code{X} (if applicable), \code{\link{summary.boral}} for a summary of the fitted boral model, \code{\link{get.measures}} and \cr \code{\link{get.more.measures}} for information criteria from the fitted boral model, \code{\link{get.residual.cor}} for calculating the residual correlation matrix. 
+\code{\link{lvsplot}} for a scatter plot of the latent variables (and their coefficients if applicable) when \code{num.lv = 1} or \code{2}, \code{\link{coefsplot}} for horizontal line or "caterpillar plot" of the regression coefficients corresponding to \code{X} (if applicable), \code{\link{summary.boral}} for a summary of the fitted boral model, \code{\link{get.enviro.cor}} and \code{\link{get.residual.cor}} for calculating the correlation matrix between the explanatory variables in \code{X} and the residual correlation matrix respectively, and \code{\link{calc.varpart}} to calculate variance partitioning of the explanatory variables in \code{X}. 
 }
 
 \examples{

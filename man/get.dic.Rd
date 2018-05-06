@@ -42,10 +42,6 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 This function and consequently the DIC value is automatically returned when a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRUE}. 
 }
 
-\seealso{
-\code{\link{get.measures}} and \code{\link{get.more.measures}} for other information criteria which could potentially be used for variable selection.
-}
-
 \examples{
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;

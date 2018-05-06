@@ -7,7 +7,7 @@
 \description{This help file provides more information regarding the implementation of the stochastic search variable selection (SSVS, George and McCulloch, 1993) as implemented in the boral package.}
 
 \details{
-An alternative to using information criterion for model selection, which is applicable specifically to the Bayesian MCMC framework, is stochastic search variable selection (SSVS, George and McCulloch, 1993). As of boral version 1.5, SSVS is implemented in two ways.
+Stochastic search variable selection (SSVS, George and McCulloch, 1993) is a approach for model selection, which is applicable specifically to the Bayesian MCMC framework. As of boral version 1.5, SSVS is implemented in two ways.
 
 \bold{SSVS on coefficients in \code{X}:}
 SSVS is implemented on the column-specific coefficients \eqn{\bm{\beta}_j}. Basically, SSVS works by placing a spike-and-slab priors on these coefficients, such that the spike is a narrow normal distribution concentrated around zero and the spike is a normal distribution with a large variance.
@@ -28,7 +28,7 @@ SSVS can be applied at a grouped or individual coefficient level, and this is go
 
 Note the last application of SSVS allows multiple covariates to be selected \emph{simultaneously}. For example, suppose \code{X} consists of five columns: the first two columns are environmental covariates, while the last three correspond to quadratic terms of the two covariates as well as their interaction. If we want to "test" whether any quadratic terms are required, then we can set \cr \code{prior.control$ssvs.index = c(-1,-1,1,1,1)}, so a single posterior probability of inclusion is returned for the last three columns of \code{X}. 
 
-Finally, note using information criterion (and possibly residual analysis) should probably not be done at the same as when SSVS is used, and it is advised to separate out their applications e.g., choose the explanatory variables first using SSVS, and then use information criterion to select the number of latent variables? Obtaining summaries such as posterior medians and HPD intervals of the coefficients from a boral model that is implementing SSVS is also (perhaps) problematic, because the posterior distribution is multi-modal. 
+Finally, note that summaries such as posterior medians and HPD intervals of the coefficients, as well as performing residual analysis, from a boral model that has implemented SSVS may be problematic because the posterior distribution is by definition multi-modal. It may be advisable instead to separate out their application of SSVS and posterior inference.
 
 \bold{SSVS on trait coefficients:}
 If traits are included in boral, thereby leading to a fourth corner model (see \code{\link{about.traits}} for more details on this type of model), SSVS can also be performed on the associated trait coefficients. That is, in such model we have

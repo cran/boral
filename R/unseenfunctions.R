@@ -222,13 +222,13 @@ process.geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv,
                out_gewekelist$row.coefs <- vector("list", ncol(row.ids))
                names(out_gewekelist$row.coefs) <- colnames(row.ids)
                for(k in 1:ncol(row.ids))
-                    out_gewekelist$row.coefs[[k]] <- fit_geweke[grep(paste0("row.coefs.ID",k), names(fit_geweke))]
+                    out_gewekelist$row.coefs[[k]] <- fit_geweke[grep(paste0("row.coefs.ID",k,"\\["), names(fit_geweke))]
                }
           if(row.eff == "random") {
                out_gewekelist$row.sigma <- vector("list", ncol(row.ids))
                names(out_gewekelist$row.sigma) <- colnames(row.ids)
                for(k in 1:ncol(row.ids))
-                    out_gewekelist$row.sigma[[k]] <- fit_geweke[grep(paste0("row.sigma.ID",k), names(fit_geweke))]
+                    out_gewekelist$row.sigma[[k]] <- fit_geweke[grep(paste0("row.sigma.",k,"$"), names(fit_geweke))]
                }
 
                     
@@ -282,7 +282,7 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 						linpred_string <- paste("eta[i,j] <- inprod(lv.coefs[j,2:(num.lv+1)],lvs[i,])", sep = "")
 					if(row.eff != "none") {
 						for(k in 1:ncol(row.ids)) 
-							linpred_string <- paste(linpred_string, " + row.coefs.", colnames(row.ids)[k],"[row.ids[i,",k,"]]", sep ="")
+							linpred_string <- paste(linpred_string, " + row.coefs.ID", k,"[row.ids[i,",k,"]]", sep ="")
 						}
 					if(num.X > 0) 
 						linpred_string <- paste(linpred_string, " + inprod(X.coefs[j,],X[i,])", sep ="")
@@ -299,7 +299,7 @@ setup.resp.families.lv <- function(p, complete.family, num.lv, row.eff, row.ids,
 					linpred_string <- paste("eta[i,",j, "] <- inprod(lv.coefs[",j, ",2:(num.lv+1)],lvs[i,])", sep = "")
 				if(row.eff != "none") {
 					for(k in 1:ncol(row.ids)) 
-						linpred_string <- paste(linpred_string, " + row.coefs.", colnames(row.ids)[k],"[row.ids[i,",k,"]]", sep ="")
+						linpred_string <- paste(linpred_string, " + row.coefs.ID", k,"[row.ids[i,",k,"]]", sep ="")
 					}
 				if(num.X > 0) 
 					linpred_string <- paste(linpred_string, " + inprod(X.coefs[", j, ",],X[i,])", sep ="")

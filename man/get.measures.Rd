@@ -4,7 +4,7 @@
 
 \title{Information Criteria for boral models}
 
-\description{Calculates some information criteria for an boral model, which could be used for model selection.}
+\description{Calculates some information criteria for an boral model, which could be used for model selection. WARNING: As of version 1.5, this function will no longer be updated...use at your own peril!!!}
 
 \usage{
 get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none", 
@@ -65,6 +65,8 @@ If \code{do.marglik.ics = TRUE}, then we also have:
 }
 
 \section{Warning}{
+As of version 1.5, this function will no longer be updated...use at your own peril!!!
+
 Using information criterion for variable selection should be done with extreme caution, for two reasons: 1) The implementation of these criteria are both \emph{heuristic} and experimental. 2) Deciding what model to fit for ordination purposes should be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables. However, if we interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are far more appropriate. As an another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = FALSE}) or in terms of species composition (\code{row.eff = "fixed"}).  
 
 Also, the use of information criterion in the presence of variable selection using SSVS is questionable.

@@ -33,7 +33,7 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
   \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is standard deviation for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
- \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \cr \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
 
  \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
 
@@ -74,12 +74,9 @@ A list with the following components:
 Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
-\note{
-The AIC and BIC at posterior median returned from \code{\link{get.measures}} are all based on the marginal log-likelihood calculated from this function. Additionally, \code{\link{get.more.measures}} returns even more information criteria based on the marginal log-likelihood. As mentioned in the details though, these information criteria do not take into account that traits are included in the model!
-}
-
 \seealso{
-\code{\link{get.measures}} and \code{\link{get.more.measures}} for information criteria based on the marginal log-likelihood; \code{\link{calc.condlogLik}} for calculation of the conditional log-likelihood; \code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables.
+\code{\link{calc.condlogLik}} for calculation of the conditional log-likelihood; 
+\code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables.
 }
 
 \examples{

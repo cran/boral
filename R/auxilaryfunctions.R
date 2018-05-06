@@ -41,12 +41,12 @@ calc.varpart <- function(object, groupX = NULL) {
                }
           if(object$row.eff == "random") {
                for(k2 in 1:ncol(object$row.ids)) 
-				row_var[k,] <- row_var[k,] + rep(fit.mcmc[k, grep(paste0("row.sigma.ID",k2), colnames(fit.mcmc))]^2,object$p) 
+				row_var[k,] <- row_var[k,] + rep(fit.mcmc[k, grep(paste0("row.sigma.",k2,"$"), colnames(fit.mcmc))]^2,object$p) 
 			}
           if(object$row.eff == "fixed") {
                cw.row.linpred <- matrix(0, object$n, object$p)
                for(k2 in 1:ncol(object$row.ids)) 
-				cw.row.linpred <- cw.row.linpred + matrix(fit.mcmc[k, grep(paste0("row.coefs.ID",k2), colnames(fit.mcmc))][object$row.ids[,k2]], nrow = object$n, ncol = object$p, byrow = FALSE)
+				cw.row.linpred <- cw.row.linpred + matrix(fit.mcmc[k, grep(paste0("row.coefs.ID",k2,"\\["), colnames(fit.mcmc))][object$row.ids[,k2]], nrow = object$n, ncol = object$p, byrow = FALSE)
                row_var[k,] <- apply(cw.row.linpred, 2, var)
                }
 
@@ -371,8 +371,8 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
 		names(final_list$row.coefs) <- colnames(row.ids)
 		for(k in 1:ncol(row.ids)) {
 			row_coefs_arr <- cbind(
-				hpd_lower[grep(paste0("row.coefs.ID",k), names(hpd_lower))],
-				hpd_upper[grep(paste0("row.coefs.ID",k), names(hpd_upper))])
+				hpd_lower[grep(paste0("row.coefs.ID",k,"\\["), names(hpd_lower))],
+				hpd_upper[grep(paste0("row.coefs.ID",k,"\\["), names(hpd_upper))])
 			rownames(row_coefs_arr) <- 1:n.ID[k]; colnames(row_coefs_arr) <- c("lower","upper")
 			
 			final_list$row.coefs[[k]] <- row_coefs_arr
@@ -383,8 +383,8 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
 			names(final_list$row.sigma) <- colnames(row.ids)
 			for(k in 1:ncol(row.ids)) {
 				row_sigma_vec <- c(
-					hpd_lower[grep(paste0("row.sigma.ID",k), names(hpd_lower))],
-					hpd_upper[grep(paste0("row.sigma.ID",k), names(hpd_upper))])
+					hpd_lower[grep(paste0("row.sigma.",k,"$"), names(hpd_lower))],
+					hpd_upper[grep(paste0("row.sigma.",k,"$"), names(hpd_upper))])
 				names(row_sigma_vec) <- c("lower","upper")
 				
 				final_list$row.sigma[[k]] <- row_sigma_vec
@@ -444,6 +444,9 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
 ## Also calculate the marginal likelihood at component medians, and bases a AIC and BIC on this. Note this only done in cases where calc.marglogLik and calc.logLik.lv0 actually produce a sensible result
 get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", row.ids = NULL, 
      offset = NULL, num.lv, fit.mcmc) { #lv.control 
+        
+        warning("Please note that as of version 1.6, functions to calculate information criteria will no longer be updated. Use at your peril!")
+	
 	
 	if(length(family) != ncol(y) & length(family) != 1) 
 		stop("Number of elements in family is either 1 or equal to # of columns in y")
@@ -484,7 +487,7 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
 		if(row.eff != "none") {
 			cw.params$row.coefs <- vector("list", ncol(row.ids))
 			for(k in 1:ncol(row.ids)) 
-				cw.params$row.coefs[[k]] <- fit.mcmc[k0, grep(paste0("row.coefs.ID",k), colnames(fit.mcmc))] 
+				cw.params$row.coefs[[k]] <- fit.mcmc[k0, grep(paste0("row.coefs.ID",k,"\\["), colnames(fit.mcmc))] 
 			}
 		if(!is.null(X)) 
 			cw.params$X.coefs <- matrix(fit.mcmc[k0, grep("X.coefs", colnames(fit.mcmc))], nrow = p) 
@@ -529,12 +532,12 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
 		if(row.eff == "fixed") {
 			params.median$row.coefs <- vector("list", ncol(row.ids))
 			for(k in 1:ncol(row.ids)) 
-                    params.median$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste0("row.coefs.ID",k), colnames(fit.mcmc))], 2, median)
+                    params.median$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste0("row.coefs.ID",k,"\\["), colnames(fit.mcmc))], 2, median)
 			}
 		if(row.eff == "random") {
 			params.median$row.coefs <- vector("list", ncol(row.ids))
 			for(k in 1:ncol(row.ids)) 
-                    params.median$row.coefs[[k]] <- median(fit.mcmc[, grep(paste0("row.sigma.ID",k), colnames(fit.mcmc))])
+                    params.median$row.coefs[[k]] <- median(fit.mcmc[, grep(paste0("row.sigma.",k,"$"), colnames(fit.mcmc))])
 			}
 		if(!is.null(X)) 
 			params.median$X.coefs <- matrix(apply(fit.mcmc[, grep("X.coefs", colnames(fit.mcmc))], 2, median), nrow = p) 
@@ -575,6 +578,8 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
 ## Calculates WAIC based on the marginal likelihood; DIC based on the marginal likelihood
 ## All of this is only permitted when the fitted boral model has a simple enough structure to allow these calculations!
 get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", row.ids = NULL, offset = NULL, num.lv, fit.mcmc, verbose = TRUE) { #lv.control
+
+        warning("Please note that as of version 1.6, functions to calculate information criteria will no longer be updated. Use at your peril!")
 	index_ordinal_cols <- which(family == "ordinal")
 
 	if(num.lv == 0) 
@@ -631,12 +636,12 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
 		if(row.eff == "fixed") {
 			cw.params$row.coefs <- vector("list", ncol(row.ids))
 			for(k in 1:ncol(row.ids)) 
-				cw.params$row.coefs[[k]] <- fit.mcmc[k0, grep(paste0("row.coefs.ID",k), colnames(fit.mcmc))]
+				cw.params$row.coefs[[k]] <- fit.mcmc[k0, grep(paste0("row.coefs.ID",k,"\\["), colnames(fit.mcmc))]
 			}
 		if(row.eff == "random") {
 			cw.params$row.coefs <- vector("list", ncol(row.ids))
 			for(k in 1:ncol(row.ids)) 
-				cw.params$row.coefs[[k]] <- fit.mcmc[k0, grep(paste0("row.sigma.ID",k), colnames(fit.mcmc))]
+				cw.params$row.coefs[[k]] <- fit.mcmc[k0, grep(paste0("row.sigma.",k,"$"), colnames(fit.mcmc))]
 			}
 		if(!is.null(X)) 
 			cw.params$X.coefs <- matrix(fit.mcmc[k0, grep("X.coefs", colnames(fit.mcmc))], nrow = p) 
@@ -672,12 +677,12 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
 	if(row.eff == "fixed") {
 		params.mean$row.coefs <- vector("list", ncol(row.ids))
 		for(k in 1:ncol(row.ids)) 
-			params.mean$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste0("row.coefs.ID",k), colnames(fit.mcmc))],2,mean)
+			params.mean$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste0("row.coefs.ID",k,"\\["), colnames(fit.mcmc))],2,mean)
 		}
 	if(row.eff == "random") {
 		params.mean$row.coefs <- vector("list", ncol(row.ids))
 		for(k in 1:ncol(row.ids)) 
-			params.mean$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste0("row.sigma.ID",k), colnames(fit.mcmc))],2,mean)
+			params.mean$row.coefs[[k]] <- apply(fit.mcmc[, grep(paste0("row.sigma.",k,"$"), colnames(fit.mcmc))],2,mean)
 		}
 	if(!is.null(X)) 
 		params.mean$X.coefs <- matrix(apply(fit.mcmc[, grep("X.coefs", colnames(fit.mcmc))], 2, mean), nrow = p) 
@@ -929,7 +934,7 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, predict.type =
 				cw_eta <- cw_eta + object$offset
                if(object$row.eff != "none") { 
 				for(k in 1:ncol(object$row.ids)) {
-					cw_row_coefs[[k]] <- combined_fit_mcmc[k0, grep(paste0("row.coefs.ID",k), mcmc_names)] 
+					cw_row_coefs[[k]] <- combined_fit_mcmc[k0, grep(paste0("row.coefs.ID",k,"\\["), mcmc_names)] 
 					cw_eta <- cw_eta + cw_row_coefs[[k]][object$row.ids[,k]] 
 					}
 				}
@@ -965,13 +970,13 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, predict.type =
                if(object$row.eff == "fixed") { 
                     cw_row_coefs <- vector("list", ncol(newrow.ids))
                     for(k in 1:ncol(newrow.ids)) 
-                         cw_row_coefs[[k]] <- combined_fit_mcmc[k0, grep(paste0("row.coefs.ID",k), mcmc_names)] 
+                         cw_row_coefs[[k]] <- combined_fit_mcmc[k0, grep(paste0("row.coefs.ID",k,"\\["), mcmc_names)] 
                     } 
                if(object$row.eff == "random") {
                     cw_row_coefs <- vector("list", ncol(newrow.ids))
                     ## Need to generate from length(unique(object$row.ids[,k])) to account for fact that we may have less levels in newrow.ids (which is OK)
                     for(k in 1:ncol(newrow.ids)) 
-                         cw_row_coefs[[k]] <- matrix(rnorm(length(unique(object$row.ids[,k]))*lv.mc, mean = 0, sd = combined_fit_mcmc[k0, grep(paste0("row.sigma.ID",k), mcmc_names)]), ncol = lv.mc) 
+                         cw_row_coefs[[k]] <- matrix(rnorm(length(unique(object$row.ids[,k]))*lv.mc, mean = 0, sd = combined_fit_mcmc[k0, grep(paste0("row.sigma.",k,"$"), mcmc_names)]), ncol = lv.mc) 
                     }
                cw_lv_coefs <- matrix(combined_fit_mcmc[k0, grep("lv.coefs", mcmc_names)], nrow = object$p)
                all_linpredmc <- array(NA, dim = c(n, object$p, lv.mc))

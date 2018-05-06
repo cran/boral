@@ -66,7 +66,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}
 }
 
 \seealso{
-\code{\link{get.measures}} for some information criteria based on the conditional log-likelihood; \code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables; \code{\link{calc.marglogLik}} for calculation of the marginal log-likelihood; 
+\code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables; \code{\link{calc.marglogLik}} for calculation of the marginal log-likelihood; 
 }
 
 \examples{

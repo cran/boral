@@ -4,14 +4,10 @@
 ## Multinomial regression is available, but CURRENTLY NOT ALLOWED DUE TO COMPUTATION TIME
 ################
 
-## Changes from v1.4 (news files to be updated!)
-## - SSVS now permitted on trait coefficients by supplying a prior.control$ssvs.traitsindex argument, which should have the same set up as which.traits, except with elements -1 (no SSVS) or 0 (SSVS)
-## - create.life and simulate.boral now have the option of generating new LVs for simulation, using a lv.control and new.lvs argument respectively
-## - calc.ics = FALSE now default in vanilla boral function
-## - make.jagsboralmodel and make.jagsboralnullmodel functions now print the boral version and time of file creation as part of JAGS script
-## - convert some of the objects inside functions and examples in help files to use _ instead . to reduce potential confusion with functions, but arguments in and outputs from functions are still kept using .
-## - Some names of objects changed in JAGS script, and calculate logL functions moved into a separate R script
-
+## Changes from v1.5 (news files to be updated!)
+## - Fixed a bug in naming the row effects. Thanks to Michael Bedward for picking this up!
+## - Fixed a bug in grepping objects. Thanks to Johannes Radinger for picking this up!
+## - Warnings now printed that IC calculations will no longer be updated as of version 1.5
 
 ## TODO: 
 ## -1) How to allow for multiple sets of LVs, Maybe the first step is just to allow structured LVs first -- DONE BUT COMMENTED OUT, AND HELP file NEED TO BE WRITTEN FOR THIS 
@@ -21,23 +17,23 @@
 ## 5) Reduce rank species coefficients to get constrained ordination? HARD!!!
 ## 6) Species specific random effects! In principle, with row.ids in place this should not be too difficult!
 ## 7) allow for multiple chains, but don't check convergence on the LVs and their loadings. Also cannot combined chains for LV and loadings unless you post process them, which is annoying.
-## 8) Scrap all ICs and replace with OFAL priors to select and make sparse loadings? See massaging-sparsepriors.R
+## 8) Include OFAL priors as a way to select and make sparse loadings? See massaging-sparsepriors.R
 ## 9) Consider porting over to use runjags instead of R2jags?
 
 ##############
-#  library(R2jags); 
-#  library(mvtnorm); 
-#  library(mvabund); 
-#  library(coda); 
-#  library(MASS)
-#  library(fishMod)
-#  library(abind)
-#  source("boral15/R/auxilaryfunctions.R")
-#  source("boral15/R/calclogLfunctions.R")
-#  source("boral15/R/makejagsboralmodel.R")
-#  source("boral15/R/makejagsboralnullmodel.R")
-#  source("boral15/R/simdatafunctions.R")
-#  source("boral15/R/unseenfunctions.R")
+# library(R2jags); 
+# library(mvtnorm); 
+# library(mvabund); 
+# library(coda); 
+# library(MASS)
+# library(fishMod)
+# library(abind)
+# source("boral16/R/auxilaryfunctions.R")
+# source("boral16/R/calclogLfunctions.R")
+# source("boral16/R/makejagsboralmodel.R")
+# source("boral16/R/makejagsboralnullmodel.R")
+# source("boral16/R/simdatafunctions.R")
+# source("boral16/R/unseenfunctions.R")
  
 
 # n = 60; p <- 30
@@ -434,10 +430,10 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 		names(out.fit$row.coefs) <- colnames(row.ids)
 		for(k in 1:ncol(row.ids)) {
 			row_coefs_arr <- cbind(
-				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k), mcmc_names)], 2, median), 
-				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k), mcmc_names)], 2, mean), 
-				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k), mcmc_names)], 2, IQR), 
-				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k), mcmc_names)], 2, sd))
+				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k,"\\["), mcmc_names)], 2, median), 
+				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k,"\\["), mcmc_names)], 2, mean), 
+				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k,"\\["), mcmc_names)], 2, IQR), 
+				apply(combined_fit_mcmc[, grep(paste0("row.coefs.ID",k,"\\["), mcmc_names)], 2, sd))
 			rownames(row_coefs_arr) <- 1:n.ID[k]
 			colnames(row_coefs_arr) <- c("median","mean","iqr","sd")
 				
@@ -452,10 +448,10 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 			names(out.fit$row.sigma) <- colnames(row.ids)
 			for(k in 1:ncol(row.ids)) {
 				row_sigma_vec <- c(
-					median(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k), mcmc_names)]),
-					mean(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k), mcmc_names)]),
-					IQR(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k), mcmc_names)]),
-					sd(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k), mcmc_names)]))
+					median(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k,"$"), mcmc_names)]),
+					mean(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k,"$"), mcmc_names)]),
+					IQR(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k,"$"), mcmc_names)]),
+					sd(combined_fit_mcmc[, grep(paste0("row.sigma.ID",k,"$"), mcmc_names)]))
 				names(row_sigma_vec) <- c("median","mean","iqr","sd")
 				
 				if(new.format) 
@@ -495,7 +491,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 		if(any(prior.control$ssvs.index == 0)) { ## You should not be able to enter this loop if num.traits > 0!
 			ssvs_indcoefs_arr <- array(NA, dim = c(p, num.X, 2))
 			for(k1 in 1:num.X) {
-                    find.Xvars <- grep(paste0("ssvs.indX",k1), mcmc_names)
+                    find.Xvars <- grep(paste0("ssvs.indX",k1,"\\["), mcmc_names)
                     if(length(find.Xvars) > 0) {
                          ssvs_indcoefs_arr[,k1,1] <- colMeans(combined_fit_mcmc[,find.Xvars])
                          ssvs_indcoefs_arr[,k1,2] <- apply(combined_fit_mcmc[,find.Xvars], 2, sd)
@@ -530,7 +526,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
                ssvs_traitscoefs_arr <- array(NA, dim = c(num.X+1, num.traits, 2))
                dimnames(ssvs_traitscoefs_arr) <- list(X.coefficients = c("beta0",colnames(X)), traits.coefficients =  colnames(traits), type = c("mean","sd"))
                for(k1 in 1:(num.X+1)) { for(k2 in 1:num.traits) {
-                    find.Xvars <- grep(paste0("ssvs.traitscoefs",k1,k2), mcmc_names)
+                    find.Xvars <- grep(paste0("ssvs.traitscoefs",k1,k2,"$"), mcmc_names)
                     if(length(find.Xvars) == 1) {
                          ssvs_traitscoefs_arr[k1,k2,1] <- mean(combined_fit_mcmc[,find.Xvars])
                          ssvs_traitscoefs_arr[k1,k2,2] <- sd(combined_fit_mcmc[,find.Xvars])
@@ -644,7 +640,7 @@ boral.default <- function (y, X = NULL, traits = NULL, which.traits = NULL, fami
 	get.hpds <- get.hpdintervals(y, X = X, traits = traits, row.ids = row.ids, fit.mcmc = combined_fit_mcmc, num.lv = num.lv) #lv.control = lv.control
 	out.fit$hpdintervals <- get.hpds
 	if(calc.ics) {
-		message("Calculating Information criteria..")
+		warning("Please note that as of version 1.6, functions to calculate information criteria will no longer be updated. Use at your peril!")
 		get_ics <- get.measures(y = y, X = X, family = family, trial.size = complete_trial_size, row.eff = row.eff, row.ids = row.ids, offset = offset, num.lv = num.lv, fit.mcmc = combined_fit_mcmc) #lv.control = lv.control
 		ics <- c(get.dic(jagsfit), get_ics$waic, get_ics$eaic, get_ics$ebic)
 		names_ics <- c("Conditional DIC", "WAIC", "EAIC", "EBIC")
@@ -947,9 +943,6 @@ summary.boral <- function(object, est = "median", ...) {
 		gather_output$ssvs.gpcoefs.prob <- round(object$ssvs.gpcoefs.mean,3) 
 	if(any(unlist(object$prior.control$ssvs.traitsindex) == 0)) 
 		gather_output$ssvs.traitscoefs.prob <- round(object$ssvs.traitscoefs.mean,3) 
-
-	if(object$calc.ics) 
-          gather_output$ics <- round(object$ics,3)
 
      class(gather_output) <- "summary.boral"
  	gather_output 
