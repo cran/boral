@@ -24,7 +24,7 @@ A matrix containing the MCMC samples, with the number of rows equal to the numbe
 
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 %\seealso{

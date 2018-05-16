@@ -55,7 +55,7 @@ A list containing the following components if applicable:
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \section{Warnings}{

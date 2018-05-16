@@ -19,7 +19,7 @@ License: \tab GPL-2\cr
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \references{

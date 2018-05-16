@@ -46,7 +46,8 @@ make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.tr
 		row.ids <- as.matrix(row.ids)
 		if(nrow(row.ids) != n) 
 			stop("Number of rows in the matrix row.ids should be equal to n")
-		if(is.null(colnames(row.ids))) colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
+		if(is.null(colnames(row.ids))) 
+                    colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
 		}
 	
 	
@@ -166,8 +167,8 @@ make.jagsboralnullmodel <- function (family, num.X = 0, num.traits = 0, which.tr
 		}
 	if(row.eff == "random") {
 		for(k in 1:ncol(row.ids)) {
-			model_script <- c(model_script, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.ID", k, "[i] ~ dnorm(0, pow(row.sigma.", colnames(row.ids)[k], ",-2)) } "))
-			model_script <- c(model_script, paste0("\t row.sigma.", colnames(row.ids)[k], " ~ ",prior.strings$p4))
+			model_script <- c(model_script, paste0("\n\t for(i in 1:n.ID[", k, "]) { row.coefs.ID", k, "[i] ~ dnorm(0, pow(row.sigma.ID", k, ",-2)) } "))
+			model_script <- c(model_script, paste0("\t row.sigma.ID", k, " ~ ",prior.strings$p4))
 			}
 		#model_script <- c(model_script, paste0("\t row.ranef.mean ~ ", prior.strings$p1))
 		}

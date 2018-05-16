@@ -42,7 +42,7 @@ Finally, note that from boral version 1.5, stochastic search variable selection 
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 

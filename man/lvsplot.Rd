@@ -65,7 +65,7 @@ For latent variable models, we are generally interested in "symmetric plots" tha
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \examples{

@@ -90,7 +90,7 @@ If \code{simulate} is used, then a three dimensional array of dimension \eqn{n} 
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \seealso{

@@ -83,7 +83,7 @@ Also, the use of information criterion in the presence of variable selection usi
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \note{

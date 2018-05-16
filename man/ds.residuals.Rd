@@ -35,7 +35,7 @@ A list containing \code{agree.ordinal} which is a single confusion matrix for or
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \seealso{

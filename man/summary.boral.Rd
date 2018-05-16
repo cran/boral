@@ -28,7 +28,7 @@ Attributes of the model fitted, parameter estimates, in the boral object, and po
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \seealso{

@@ -38,7 +38,7 @@ As mentioned above, for ordinal responses things are much more challenging as th
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \seealso{\code{\link{fitted.boral}} to obtain the fitted values, \code{\link{ds.residuals}} to obtain Dunn-Smyth residuals and details as to what they are.}

@@ -228,7 +228,7 @@ process.geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv,
                out_gewekelist$row.sigma <- vector("list", ncol(row.ids))
                names(out_gewekelist$row.sigma) <- colnames(row.ids)
                for(k in 1:ncol(row.ids))
-                    out_gewekelist$row.sigma[[k]] <- fit_geweke[grep(paste0("row.sigma.",k,"$"), names(fit_geweke))]
+                    out_gewekelist$row.sigma[[k]] <- fit_geweke[grep(paste0("row.sigma.ID",k,"$"), names(fit_geweke))]
                }
 
                     
@@ -498,7 +498,7 @@ rhats <- function (x, asc = FALSE) {
 #     			names(make.rhatslist$row.coefs) <- rownames(y) 
 #     			}
 #     		if(row.eff == "random") {
-#     			make.rhatslist$row.sigma <- fit.rhats[grep("row.sigma", rownames(fit.rhats))]
+#     			make.rhatslist$row.sigma <- fit.rhats[grep("row.sigma.ID", rownames(fit.rhats))]
 #    				names(make.rhatslist$row.sigma) <- c("Row random effects sigma") 
 #     			}
 # 

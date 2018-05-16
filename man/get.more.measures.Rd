@@ -81,7 +81,7 @@ Also, the use of information criterion in the presence of variable selection usi
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \seealso{\code{\link{get.measures}} for several information criteria which take considerably less time to compute, and are automatically implemented in \code{\link{boral}} with \code{calc.ics = TRUE}.}

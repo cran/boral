@@ -27,7 +27,7 @@ A list containing \code{ordinal.probs} which is an array with dimensions (no. of
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}
+Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
 }
 
 \seealso{
