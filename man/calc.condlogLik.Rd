@@ -2,6 +2,8 @@
 
 \alias{calc.condlogLik}
 
+\docType{package}
+
 \title{Conditional log-likelihood for a boral model}
 
 \description{Calculates the conditional log-likelihood for a set of parameter estimates from an boral model, where everything is treated as "fixed effects" including latent variables, row effects, and so on.}
@@ -62,7 +64,9 @@ A list with the following components:
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
@@ -84,8 +88,9 @@ p <- ncol(y)
 
 ## Example 1 - model with 2 latent variables, site effects, 
 ## 	and no environmental covariates
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-	row.eff = "fixed", save.model = TRUE, mcmc.control = example_mcmc_control)
+spiderfit_nb <- boral(y, family = "negative.binomial", 
+    lv.control = list(num.lv = 2), row.eff = "fixed", 
+    save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Extract all MCMC samples
 fit_mcmc <- get.mcmcsamples(spiderfit_nb) 
@@ -93,20 +98,20 @@ mcmc_names <- colnames(fit_mcmc)
 
 ## Find the posterior medians
 coef_mat <- matrix(apply(fit_mcmc[,grep("lv.coefs",mcmc_names)],
-     2,median),nrow=p)
+    2,median),nrow=p)
 site_coef <- list(ID1 = apply(fit_mcmc[,grep("row.coefs.ID1", mcmc_names)],
-     2,median))
+    2,median))
 lvs_mat <- matrix(apply(fit_mcmc[,grep("lvs",mcmc_names)],2,median),nrow=n)
 
 ## Calculate the conditional log-likelihood at the posterior median
 calc.condlogLik(y, family = "negative.binomial", 
-     lv.coefs = coef_mat, row.coefs = site_coef, lv = lvs_mat)
+    lv.coefs = coef_mat, row.coefs = site_coef, lv = lvs_mat)
 
 
 ## Example 2 - model with no latent variables and environmental covariates
 X <- scale(spider$x)
-spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", num.lv = 0, 
-     save.model = TRUE, mcmc.control = example_mcmc_control)
+spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", 
+    save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Extract all MCMC samples
 fit_mcmc <- get.mcmcsamples(spiderfit_nb2) 
@@ -114,12 +119,12 @@ mcmc_names <- colnames(fit_mcmc)
 
 ## Find the posterior medians
 coef_mat <- matrix(apply(fit_mcmc[,grep("lv.coefs",mcmc_names)],
-     2,median),nrow=p)
+    2,median),nrow=p)
 X_coef_mat <- matrix(apply(fit_mcmc[,grep("X.coefs",mcmc_names)],
-	2,median),nrow=p)
+    2,median),nrow=p)
 
 ## Calculate the log-likelihood at the posterior median
 calc.condlogLik(y, X = X, family = "negative.binomial", 
-	lv.coefs =  coef_mat, X.coefs = X_coef_mat)
+    lv.coefs =  coef_mat, X.coefs = X_coef_mat)
 }
 }

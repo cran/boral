@@ -2,6 +2,8 @@
 
 \alias{get.residual.cor}
 
+\docType{package}
+
 \title{Extract residual correlations and precisions from boral models}
 
 \description{Calculates the residual correlation and precision matrices from models that include latent variables.}
@@ -57,7 +59,9 @@ A list with the following components:
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \note{
@@ -83,11 +87,12 @@ n <- nrow(y)
 p <- ncol(y)
     
 spiderfit_nb <- boral(y, X = spider$x, family = "negative.binomial", 
-	num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)
+    lv.control = list(num.lv = 2), save.model = TRUE, 
+    mcmc.control = example_mcmc_control)
 
 res.cors <- get.residual.cor(spiderfit_nb)
 
 corrplot(res.cors$sig.cor, title = "Residual correlations", 
-	type = "lower", diag = FALSE, mar = c(3,0.5,2,1), tl.srt = 45)
+    type = "lower", diag = FALSE, mar = c(3,0.5,2,1), tl.srt = 45)
 }
 }

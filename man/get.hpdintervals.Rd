@@ -2,13 +2,15 @@
 
 \alias{get.hpdintervals}
 
+\docType{package}
+
 \title{Highest posterior density intervals for an boral model}
 
 \description{Calculates the lower and upper bounds of the highest posterior density intervals for parameters and latent variables in a fitted boral model.}
 
 \usage{
 get.hpdintervals(y, X = NULL, traits = NULL, row.ids = NULL, 
-	fit.mcmc, num.lv, prob = 0.95)
+	fit.mcmc, lv.control, prob = 0.95, num.lv = NULL)
 }
 
 \arguments{
@@ -22,9 +24,20 @@ get.hpdintervals(y, X = NULL, traits = NULL, row.ids = NULL,
 
  \item{fit.mcmc}{All MCMC samples for the fitted boral model. These can be extracted by fitting an boral model using \code{boral} with \code{save.model = TRUE}, and then applying \code{get.mcmcsamples(fit)}.} 
   
-  \item{num.lv}{The number of latent variables used in the boral model. If zero, then HPD intervals will not be produced for latent variables.}   
+ \item{lv.control}{A list (currently) with the following arguments:
+    \itemize{
+        \item \emph{num.lv:} which specifies the number of true latent variables to generate. Defaults to 0.
+        
+        \item \emph{type:} which specifies the type the correlation structure of the latent variables (across sites). Defaults to independence correlation structure.
+        
+        \item \emph{distmat:} which a distance matrix required to calculate correlations across sites when a non-independence correlation structure on the latent variables is imposed. 
+        }
+    Please see \code{\link{about.lvs}} for more information.
+    }
 
-  \item{prob}{A numeric scalar in the interval (0,1) giving the target probability coverage of the intervals. Defaults to 0.95.}   
+    \item{prob}{A numeric scalar in the interval (0,1) giving the target probability coverage of the intervals. Defaults to 0.95.}   
+
+    \item{num.lv}{Old argument superceded by \code{lv.control}. Defaults to \code{NULL} and ignored.} 
 }
 
 \details{
@@ -37,6 +50,8 @@ A list containing the following components where applicable:
 \item{lv.coefs}{A three dimensional array giving the lower \code{lv.coefs[,,"lower"]} and upper \code{lv.coefs[,,"upper"]} bounds of the HPD intervals for the column-specific intercepts, latent variable coefficients, and dispersion parameters if appropriate.}
 
 \item{lv}{A three dimensional array giving the \code{lv.coefs[,,"lower"]} and upper \code{lv.coefs[,,"upper"]} bounds of the HPD intervals for the latent variables.}
+
+\item{lv.covparams}{A matrix giving the lower and upper bounds of the HPD intervals for the parameters characterizing the correlation structure of the latent variables when they are assumed to be non-independent across rows.}
 
 \item{row.coefs}{A list with each element being a matrix giving the lower and upper bounds of the HPD intervals for row effects. The number of elements in the list should equal the number of row effects included in the model i.e., \code{ncol(row.ids)}.}
 
@@ -52,7 +67,9 @@ A list containing the following components where applicable:
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \note{
@@ -74,7 +91,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
-     n.thin = 1)
+    n.thin = 1)
      
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
@@ -84,9 +101,8 @@ p <- ncol(y)
     
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", save.model = TRUE,
-     mcmc.control = example_mcmc_control)
+spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
+    row.eff = "fixed", save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Returns a list with components corresponding to values described above.
 spiderfit_nb$hpdintervals 
@@ -94,8 +110,8 @@ spiderfit_nb$hpdintervals
 ## Example 2 - model with two latent variable, site effects, 
 ## 	and environmental covariates
 spiderfit_nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
-	num.lv = 2, row.eff = "fixed", save.model = TRUE,
-     mcmc.control = example_mcmc_control)
+    lv.control = list(num.lv = 2), row.eff = "fixed", save.model = TRUE,
+    mcmc.control = example_mcmc_control)
 
 ## Returns a list with components corresponding to values described above.
 spiderfit_nb2$hpdintervals 

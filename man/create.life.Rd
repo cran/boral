@@ -3,20 +3,23 @@
 \alias{create.life}
 \alias{simulate.boral}
 
+\docType{package}
+
 \title{Simulate a Multivariate Response Matrix}
 
 \description{Simulate a multivariate response matrix, given parameters such as but not necessarily all of: family, number of latent variables and related coefficients, an matrix of explanatory variables and related coefficients, row effects, cutoffs for cumulative probit regression of ordinal responses.}
 
 \usage{ 
 create.life(true.lv = NULL, lv.coefs, 
-     lv.control = list(num.lv = 0, type = "independent"),
+    lv.control = list(num.lv = 0, type = "independent", 
+    lv.covparams = NULL, distmat = NULL),
      X = NULL, X.coefs = NULL, 
      traits = NULL, traits.coefs = NULL, family, row.eff = "none", 
      row.params = NULL, row.ids = NULL, offset = NULL, 
      trial.size = 1, cutoffs = NULL, powerparam = NULL, 
      manual.dim = NULL, save.params = FALSE)
 
-\method{simulate}{boral}(object, nsim = 1, seed = NULL, new.lvs = FALSE, 
+\method{simulate}{boral}(object, nsim = 1, seed = NULL, new.lvs = FALSE, distmat = NULL, 
      est = "median", ...)   
  }
 
@@ -29,13 +32,26 @@ create.life(true.lv = NULL, lv.coefs,
 
  \item{new.lvs}{If \code{FALSE}, then true latent variables are obtained from the \code{object}. If \code{TRUE}, then new true latent variables are generated.}
 
+ \item{distmat}{A distance matrix required to calculate correlations across sites when a non-independent correlation structure on the latent variables is imposed, when \code{new.lvs = TRUE} and \code{object$lv.type != "independent"}.}
+   
  \item{est}{A choice of either the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
 
   \item{true.lv}{A matrix of true latent variables. With multivariate abundance data in ecology for instance, each row corresponds to the true site ordination coordinates. If supplied, then simulation is based of these true latent variables. If \code{NULL}, then the function looks to the argument \code{lv.control} to see what to do. Defaults to \code{NULL}.}
 
  \item{lv.coefs}{A matrix containing column-specific intercepts, latent variable coefficients relating to \code{true.lv}, and dispersion parameters.}
 
- \item{lv.control}{This argument is utilized if \code{true.lv = NULL}, in which case the function uses this argument to determine how to simulate new, true latent variables. A list (currently) with two argument: 1) \code{num.lv} which defaults to 0 and specifies the number of true latent variables to generate, 2) \code{type} which defaults to \code{"independent"}, and this is currently ignored.}
+ \item{lv.control}{This argument is utilized if \code{true.lv = NULL}, in which case the function uses this argument to determine how to simulate new, true latent variables. A list (currently) with the following arguments:
+    \itemize{
+        \item \emph{num.lv:} which specifies the number of true latent variables to generate. Defaults to 0.
+        
+        \item \emph{type:} which specifies the type the correlation structure of the latent variables (across sites). Defaults to independence correlation structure.
+        
+        \item \emph{lv.covparams:} which is a vector containing one or two elements required if parameterizing a non-independence spatial correlation structure of the latent variables.
+        
+        \item \emph{distmat:} which a distance matrix required to calculate correlations across sites when a non-independence correlation structure on the latent variables is imposed. 
+        }
+    Please see \code{\link{about.lvs}} for more information.
+    }
 
  \item{X}{An model matrix of covariates, which can be included as part of the data generation. Defaults to \code{NULL}, in which case no model matrix is used. No intercept column should be included in \code{X}.}  
 
@@ -90,7 +106,9 @@ If \code{simulate} is used, then a three dimensional array of dimension \eqn{n} 
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
@@ -116,11 +134,11 @@ X <- matrix(rnorm(30*4),30,4)
 X.coefs <- matrix(rnorm(30*4),30,4)
 
 simy <- create.life(true.lv = true.lv, lv.coefs = lv.coefs, 
-     X = X, X.coefs = X.coefs, family = "normal")
+    X = X, X.coefs = X.coefs, family = "normal")
 
 \dontrun{
-fit.boral <- boral(simy, X = X, family = "normal", num.lv = 2,
-      mcmc.control = example_mcmc_control)
+fit.boral <- boral(simy, X = X, family = "normal", lv.control = list(num.lv = 2),
+    mcmc.control = example_mcmc_control)
 
 summary(fit.boral)
 }
@@ -132,19 +150,28 @@ example_row_ids <- cbind(1:30, rep(1:6,each=5))
 true.row.sigma <- list(ID1 = 0.5, ID2 = 2)
 
 simy <- create.life(true.lv = true.lv, lv.coefs = lv.coefs, 
-     X = X, X.coefs = X.coefs, row.eff = "random",
-	row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
-	save.params = TRUE)
+    X = X, X.coefs = X.coefs, row.eff = "random",
+    row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
+    save.params = TRUE)
 
 	
 ## Example 1c - Same as example 1b except new, true latent variables are generated
 simy <- create.life(true.lv = NULL, lv.coefs = lv.coefs, 
-     lv.control = list(num.lv = 2, type = "independent"),
-     X = X, X.coefs = X.coefs, row.eff = "random",
-	row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
-	save.params = TRUE)
-	
-	
+    X = X, X.coefs = X.coefs, row.eff = "random",
+    row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
+    save.params = TRUE)
+
+    
+## Example 1d - Same as example 1a except new, true latent variables are generated
+## with a non-independent correlation structure using a fake distance matrix
+makedistmat <- as.matrix(dist(1:30))
+simy <- create.life(true.lv = NULL, lv.coefs = lv.coefs, 
+    lv.control = list(num.lv = 2, type = "exponential", lv.covparams = 5, distmat = makedistmat),
+    X = X, X.coefs = X.coefs, row.eff = "random",
+    row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
+    save.params = TRUE)
+
+    
 ## Example 2 - Simulate a response matrix of ordinal data
 ## 30 rows (sites) with two latent variables 
 true.lv <- rbind(rmvnorm(15,mean=c(-2,-2)),rmvnorm(15,mean=c(2,2)))
@@ -157,7 +184,7 @@ simy <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs,
      family = "ordinal", cutoffs = true.ordinal.cutoffs, save.params = TRUE) 
 
 \dontrun{
-fit.boral <- boral(y = simy$resp, family = "ordinal", num.lv = 2,
+fit.boral <- boral(y = simy$resp, family = "ordinal", lv.control = list(num.lv = 2),
       mcmc.control = example_mcmc_control)
 }
 
@@ -177,7 +204,7 @@ for(i in 1:length(example_which_traits))
      example_which_traits[[i]] <- 1:ncol(traits)
 
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
-	family = "negative.binomial", num.lv = 2, 
+    family = "negative.binomial", lv.control = list(num.lv = 2),
      mcmc.control = example_mcmc_control)
 
 ## The hard way
@@ -210,27 +237,28 @@ colnames(traits) <- c("thorns-dummy","SLA")
 
 simfit <- list(lv.coefs = cbind(rnorm(s), rmvnorm(s, mean = rep(0,2))), 
      lv.control = list(num.lv = 2, type = "independent"),
-	traits.coefs = matrix(c(0.1,1,-0.5,1,0.5,0,-1,1), 2, byrow = TRUE))
+    traits.coefs = matrix(c(0.1,1,-0.5,1,0.5,0,-1,1), 2, byrow = TRUE))
 rownames(simfit$traits.coefs) <- c("beta0","elevation")
 colnames(simfit$traits.coefs) <- c("kappa0","thorns-dummy","SLA","sigma")
 
-simy = create.life(lv.control = simfit$lv.control, lv.coefs = simfit$lv.coefs, 
-     X = X, traits = traits, traits.coefs = simfit$traits.coefs, 
-     family = "binomial") 
+simy <- create.life(lv.control = simfit$lv.control, lv.coefs = simfit$lv.coefs, 
+    X = X, traits = traits, traits.coefs = simfit$traits.coefs, 
+    family = "binomial") 
 
 
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
-     n.thin = 1)
+    n.thin = 1)
 
 example_which_traits <- vector("list",ncol(X)+1); 
 for(i in 1:length(example_which_traits)) 
-     example_which_traits[[i]] <- 1:ncol(traits)
+    example_which_traits[[i]] <- 1:ncol(traits)
 fit_traits <- boral(y = simy, X = X, traits = traits, 
-     which.traits = example_which_traits, family = "binomial", 
-     num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)
+    which.traits = example_which_traits, family = "binomial", 
+    lv.control = list(num.lv = 2), save.model = TRUE, 
+    mcmc.control = example_mcmc_control)
 }
 
 }

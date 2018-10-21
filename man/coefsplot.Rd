@@ -2,6 +2,8 @@
 
 \alias{coefsplot}
 
+\docType{package}
+
 \title{Caterpillar plots of the regression coefficients from a boral model} 
 
 \description{Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in \code{X} fitted in the boral model.}
@@ -41,7 +43,9 @@ Thanks to Robert O'Hara for suggesting and providing the original code for this 
 
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 
@@ -60,13 +64,13 @@ p <- ncol(y)
 
 X <- scale(spider$x)
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 2, mcmc.control = example_mcmc_control)
+    lv.control = list(num.lv = 2), mcmc.control = example_mcmc_control)
 
 
 ## Do separate line plots for all the coefficients of X
 par(mfrow=c(2,3), mar = c(5,6,1,1))
 sapply(colnames(spiderfit_nb$X), coefsplot, 
-	spiderfit_nb)
+    spiderfit_nb)
 }
 
 }

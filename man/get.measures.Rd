@@ -2,9 +2,11 @@
 
 \alias{get.measures}
 
+\docType{package}
+
 \title{Information Criteria for boral models}
 
-\description{Calculates some information criteria for an boral model, which could be used for model selection. WARNING: As of version 1.5, this function will no longer be updated...use at your own peril!!!}
+\description{Calculates some information criteria for an boral model, which could be used for model selection. WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!!!}
 
 \usage{
 get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none", 
@@ -83,7 +85,9 @@ Also, the use of information criterion in the presence of variable selection usi
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \note{
@@ -107,14 +111,14 @@ n <- nrow(y)
 p <- ncol(y)
 
 spiderfit_pois <- boral(y, family = "poisson", 
-	num.lv = 2, row.eff = "random",
-	mcmc.control = example_mcmc_control)
+    lv.control = list(num.lv = 2), row.eff = "random",
+    mcmc.control = example_mcmc_control)
 
 spiderfit_pois$ics ## Returns information criteria
 
 spiderfit_nb <- boral(y, family = "negative.binomial", 
-	num.lv = 2, row.eff = "random",
-	mcmc.control = example_mcmc_control)
+    lv.control = list(num.lv = 2), row.eff = "random",
+    mcmc.control = example_mcmc_control)
 
 spiderfit_nb$ics ## Returns the information criteria 
 }

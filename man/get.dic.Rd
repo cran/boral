@@ -2,6 +2,8 @@
 
 \alias{get.dic}
 
+\docType{package}
+
 \title{Extract Deviance Information Criterion for boral model}
 
 \description{Calculates the Deviance Information Criterion (DIC) for a boral model fitted using JAGS.}
@@ -35,7 +37,9 @@ DIC value for the jags model.
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \note{
@@ -55,9 +59,8 @@ y <- spider$abun
 n <- nrow(y)
 p <- ncol(y)
     
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     save.model = TRUE, calc.ics = TRUE, 
-     mcmc.control = example_mcmc_control)
+spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
+     save.model = TRUE, calc.ics = TRUE, mcmc.control = example_mcmc_control)
 
 spiderfit_nb$ics ## DIC returned as one of several information criteria.
 }

@@ -2,6 +2,8 @@
 
 \alias{plot.boral}
 
+\docType{package}
+
 \title{Plots of a fitted boral object}
 
 \description{Produces four plots relating to the fitted boral object, which can be used for residual analysis. If some of the columns are ordinal, then a single confusion matrix is also produced.}
@@ -38,7 +40,9 @@ As mentioned above, for ordinal responses things are much more challenging as th
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{\code{\link{fitted.boral}} to obtain the fitted values, \code{\link{ds.residuals}} to obtain Dunn-Smyth residuals and details as to what they are.}
@@ -48,14 +52,14 @@ Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
-     n.thin = 1)
+    n.thin = 1)
 
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
-spider.fit.p <- boral(y, family = "poisson", num.lv = 2, 
-	row.eff = "fixed", mcmc.control = example_mcmc_control)
+spider.fit.p <- boral(y, family = "poisson", lv.control = list(num.lv = 2),
+    row.eff = "fixed", mcmc.control = example_mcmc_control)
 
 par(mfrow = c(2,2))
 plot(spider.fit.p) 
@@ -63,8 +67,8 @@ plot(spider.fit.p)
 ## versus linear predictors plot. 
 
 
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", mcmc.control = example_mcmc_control)
+spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2), 
+    row.eff = "fixed", mcmc.control = example_mcmc_control)
 
 par(mfrow = c(2,2))
 plot(spiderfit_nb) 

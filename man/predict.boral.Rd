@@ -2,14 +2,17 @@
 
 \alias{predict.boral}
 
+\docType{package}
+
 \title{Predict using a boral model}
 
 \description{Obtain predictions and associated intervals (lower and upper limits) on the linear scale from a fitted boral object. Predictions can be made either conditionally on the predicted latent variables and any random row effects included in the model, or marginally (averaged) on the latent variables and any random effects included in the model.}
 
 \usage{
 \method{predict}{boral}(object, newX = NULL, newrow.ids = NULL, 
-     predict.type = "conditional", est = "median", prob = 0.95, 
-     lv.mc = 1000, ...)
+     distmat =  NULL, predict.type = "conditional", 
+     est = "median", prob = 0.95, lv.mc = 1000, return.alllinpred = FALSE, 
+     ...)
      }
 
 \arguments{
@@ -19,7 +22,9 @@
 
   \item{newrow.ids}{An optional matrix with the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}. Defaults to \code{NULL}, in which case row IDs are taken from the fitted boral object itself (if required) i.e., from \code{object$row.ids}.}  
 
-  \item{predict.type}{The type of prediction to be made. Either takes value \code{"conditional"} in which case the prediction is made conditionally on the predicted latent variables and any random row effects in the model, or \code{"marginal"} in which case the prediction marginalizes (averages) over the latent variables and random row effects in the model. Defaults to \code{"conditional"}.}  
+    \item{distmat}{A distance matrix required to calculate correlations across sites when a non-independence correlation structure on the latent variables is imposed.} 
+
+    \item{predict.type}{The type of prediction to be made. Either takes value \code{"conditional"} in which case the prediction is made conditionally on the predicted latent variables and any random row effects in the model, or \code{"marginal"} in which case the prediction marginalizes (averages) over the latent variables and random row effects in the model. Defaults to \code{"conditional"}.}  
 
   \item{est}{A choice of either whether to print the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}) of the parameters.}
 
@@ -27,12 +32,14 @@
 
   \item{lv.mc}{If the predictions are made marginalizing over the latent variables, then number of Monte-Carlo samples to take when performing the relevant integration.}
 
-     \item{...}{Not used.}
+  \item{return.alllinpred}{If \code{TRUE}, then the full array of predicted linear predictions across all MCMC samples is predicted. This is useful if the user wants to transform the predictions onto a different scale (say). Defaults to \code{FALSE}.}
+
+    \item{...}{Not used.}
 }
 
 
 \details{
-Due to the Bayesian MCMC framework, then predictive inference for boral models is based around the posterior predictive distribution, which is the integral of the quantity one wants to predict on, integrated or averaged over the posterior distribution of the parameters and latent variables. Currently, all predictions are made on the \emph{linear predictor scale} (although this might change in future updates) i.e., 
+Due to the Bayesian MCMC framework, then predictive inference for boral models is based around the posterior predictive distribution, which is the integral of the quantity one wants to predict on, integrated or averaged over the posterior distribution of the parameters and latent variables. Currently, all predictions are made on the \emph{linear predictor scale} i.e., 
 
 \deqn{\eta_{ij} = \alpha_i + \beta_{0j} + \bm{x}^\top_i\bm{\beta}_j + \bm{z}^\top_i\bm{\theta}_j; \quad i = 1,\ldots,n; j = 1,\ldots,p,}
 
@@ -52,12 +59,15 @@ More information on conditional versus marginal predictions in latent variable m
 
 \value{
 A list containing the following components:
-     \item{linpred}{A matrix containing posterior point predictions (either posterior mean or median depending on \code{est}), on the linear predictor scale.}
+    \item{linpred}{A matrix containing posterior point predictions (either posterior mean or median depending on \code{est}), on the linear predictor scale.}
      
-     \item{lower}{A matrix containing the lower bound of the 100\code{alpha}\% interval of the posterior predictions, on the linear predictor scale.}
+    \item{lower}{A matrix containing the lower bound of the 100\code{alpha}\% interval of the posterior predictions, on the linear predictor scale.}
 
-     \item{upper}{A matrix containing the upper bound of the 100\code{alpha}\% interval of the posterior predictions, on the linear predictor scale.}
-}
+    \item{upper}{A matrix containing the upper bound of the 100\code{alpha}\% interval of the posterior predictions, on the linear predictor scale.}
+
+    \item{all.linpred}{If \code{return.alllinpred = TRUE}, then an array of predicted linear predictions across all MCMC samples.}
+
+     }
 
 \references{
 \itemize{
@@ -68,7 +78,9 @@ A list containing the following components:
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \section{Warnings}{
@@ -95,8 +107,8 @@ example_mcmc_control <- list(n.burnin = 10, n.iteration = 100,
 ## Example 1 - model with two latent variables, random site effects, 
 ## 	and environmental covariates
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
-     row.eff = "random", num.lv = 2, 
-     mcmc.control = example_mcmc_control, save.model = TRUE)
+    row.eff = "random", lv.control = list(num.lv = 2), 
+    mcmc.control = example_mcmc_control, save.model = TRUE)
 
 
 ## Predictions conditional on predicted latent variables
@@ -120,6 +132,24 @@ new_row_ids <- matrix(sample(1:28,100,replace=TRUE), 100, 1)
 getmargpreds <- predict(spiderfit_nb, newX = newX, predict.type = "marginal", 
      newrow.ids = new_row_ids)
 
+     
+## Example 1b - Similar to 1a except with no random site effects, 
+## 	and a non-independence correlation structure for the latent variables
+##      based on a fake distance matrix
+fakedistmat <- as.matrix(distmat(1:n))
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
+     lv.control = list(type = "squared.exponential", num.lv = 2, distmat = fakedistmat),
+     mcmc.control = example_mcmc_control, save.model = TRUE)
+
+getmargpreds <- predict(spiderfit_nb, predict.type = "marginal", distmat = fakedistmat)
+
+## Now suppose you extrpolate to new sites
+newfakedistmat <- as.matrix(distmat(1:100))
+
+getmargpreds <- predict(spiderfit_nb, newX = newX, predict.type = "marginal", 
+     distmat = newfakedistmat)
+
+     
      
 ## Example 2 - simulate count data, based on a model with two latent variables, 
 ## no site variables, with two traits and one environmental covariates 
@@ -148,7 +178,8 @@ for(i in 1:length(example_which_traits))
      example_which_traits[[i]] <- 1:ncol(traits)
 fit_traits <- boral(y = simy, X = X, traits = traits, 
      which.traits = example_which_traits, family = "normal", 
-     num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)	
+     lv.control = list(num.lv = 2), save.model = TRUE, 
+     mcmc.control = example_mcmc_control)	
 
      
 ## Predictions conditional on predicted latent variables   

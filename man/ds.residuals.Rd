@@ -2,6 +2,8 @@
 
 \alias{ds.residuals}
 
+\docType{package}
+
 \title{Dunn-Smyth Residuals for a boral model}
 
 \description{Calculates the Dunn-Smyth residuals for a fitted boral model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
@@ -35,7 +37,9 @@ A list containing \code{agree.ordinal} which is a single confusion matrix for or
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
@@ -52,7 +56,7 @@ library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
+spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
      row.eff = "fixed", mcmc.control = example_mcmc_control)
 
 ds.residuals(spiderfit_nb) 

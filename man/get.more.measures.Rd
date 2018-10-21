@@ -2,9 +2,11 @@
 
 \alias{get.more.measures}
 
+\docType{package}
+
 \title{Additional Information Criteria for boral models}
 
-\description{Calculates some information criteria beyond those from \code{\link{get.measures}} for a boral model, although this set of criteria takes much longer to compute! WARNING: As of version 1.5, this function will no longer be updated...use at your own peril!!!}
+\description{Calculates some information criteria beyond those from \code{\link{get.measures}} for a boral model, although this set of criteria takes much longer to compute! WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!!!}
 
 \usage{
 get.more.measures(y, X = NULL, family, trial.size = 1, 
@@ -63,7 +65,7 @@ If calculated, then a list with the following components:
 }
 
 \section{Warning}{
-As of version 1.5, this function will no longer be updated...use at your own peril!!!
+As of version 1.6, this function will no longer be updated...use at your own peril!!!
 
 Using information criterion for variable selection should be done with extreme caution, for two reasons: 1) The implementation of these criteria are both \emph{heuristic} and experimental. 2) Deciding what model to fit for ordination purposes should be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables. However, if we interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are far more appropriate. As an another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = FALSE}) or in terms of species composition (\code{row.eff = "fixed"}).  
 
@@ -81,7 +83,9 @@ Also, the use of information criterion in the presence of variable selection usi
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{\code{\link{get.measures}} for several information criteria which take considerably less time to compute, and are automatically implemented in \code{\link{boral}} with \code{calc.ics = TRUE}.}
@@ -91,7 +95,7 @@ Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
-     n.thin = 1)
+    n.thin = 1)
      
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
@@ -99,17 +103,17 @@ y <- spider$abun
 n <- nrow(y)
 p <- ncol(y)
 
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-     row.eff = "fixed", save.model = TRUE, calc.ics = TRUE,
-     mcmc.control = example_mcmc_control)
+spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
+    row.eff = "fixed", save.model = TRUE, calc.ics = TRUE,
+    mcmc.control = example_mcmc_control)
 
 ## Extract MCMC samples
 fit_mcmc <- get.mcmcsamples(spiderfit_nb)
 
 ## WATCH OUT! The following takes a very long time to run!
 get.more.measures(y, family = "negative.binomial", 
-     num.lv = spiderfit_nb$num.lv, fit.mcmc = fit_mcmc, 
-     row.eff = "fixed", row.ids = spiderfit_nb$row.ids)		
+    num.lv = spiderfit_nb$num.lv, fit.mcmc = fit_mcmc, 
+    row.eff = "fixed", row.ids = spiderfit_nb$row.ids)		
 
      
 ## Illustrating what happens in a case where these criteria will 
@@ -121,16 +125,16 @@ X <- as.matrix(scale(antTraits$env))
 traits <- as.matrix(antTraits$traits[,c(1,2,5)])
 example_which_traits <- vector("list",ncol(X)+1)
 for(i in 1:length(example_which_traits))
-     example_which_traits[[i]] <- 1:ncol(traits)
+    example_which_traits[[i]] <- 1:ncol(traits)
 
-fit_traits <- boral(y, X = X, traits = traits, num.lv = 2, 
-	which.traits = example_which_traits, family = "negative.binomial", 
-	save.model = TRUE, mcmc.control = example_mcmc_control)
+fit_traits <- boral(y, X = X, traits = traits, lv.control = list(num.lv = 2), 
+    which.traits = example_which_traits, family = "negative.binomial", 
+    save.model = TRUE, mcmc.control = example_mcmc_control)
      
 ## Extract MCMC samples
 fit_mcmc <- get.mcmcsamples(fit_traits)
 
 get.more.measures(y, X = X, family = "negative.binomial", 
-     num.lv = fit.traits$num.lv, fit.mcmc = fit_mcmc)	
+    num.lv = fit.traits$num.lv, fit.mcmc = fit_mcmc)	
 }
 }

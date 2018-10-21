@@ -2,9 +2,14 @@
 
 \alias{about.distributions}
 
-\title{Distributions available in boral}
+\docType{package}
 
-\description{This help file provides more information regarding the distributions i.e., the \code{family} argument, available in the boral package, to handle various responses types.}
+\title{
+Distributions available in boral
+}
+
+\description{This help file provides more information regarding the distributions i.e., the \code{family} argument, available in the boral package, to handle various responses types.
+}
 
 
 \details{
@@ -18,13 +23,13 @@ For the tweedie distribution, a common power parameter is across all columns wit
 
 Normal responses are also implemented, just in case you encounter normal stuff in ecology (pun intended)! For the normal distribution, the variance is parameterized as \eqn{Var(y) = \phi^2}, where \eqn{\phi} is the column-specific standard deviation. 
 
-The beta distribution can be used to model data between values between but \emph{not} including 0 and 1. In principle, this would make it useful for percent cover data in ecology, if it not were for the fact that percent cover is commonly characterized by having lots of zeros (which are not permitted for beta regression). An \emph{ad-hoc} fix to this would be to add a very small value to shift the data away from exact zeros and/or ones. This is however heuristic, and pulls the model towards producing conservative results (see Smithson and Verkuilen, 2006, for a detailed discussion on beta regression, and Korhonen et al., 2007, for an example of an application to forest canopy cover data). Note the parameterization of the beta distribution used here is directly in terms of the mean \eqn{\mu} and the dispersion parameter \eqn{\phi} (more commonly know as the "sample size"). In terms of the two shape parameters, this is equivalent to \eqn{shape1 = a = \mu\phi} and \eqn{shape2 = b = (1-\mu)\phi}.
+The beta distribution can be used to model data between values between but \emph{not} including 0 and 1. In principle, this would make it useful for percent cover data in ecology, if it not were for the fact that percent cover is commonly characterized by having lots of zeros (which are not permitted for beta regression). An \emph{ad-hoc} fix to this would be to add a very small value to shift the data away from exact zeros and/or ones. This is however heuristic, and pulls the model towards producing conservative results (see Smithson and Verkuilen, 2006, for a detailed discussion on beta regression, and Korhonen et al., 2007, for an example of an application to forest canopy cover data). Note the parameterization of the beta distribution used here is directly in terms of the mean \eqn{\mu} and the dispersion parameter \eqn{\phi} (more commonly know as the "sample size"). In terms of the two shape parameters, if we denote the two shape parameters as the vector \eqn{(a,b)}, his is equivalent to \eqn{a = \mu\phi} and \eqn{b = (1-\mu)\phi}.
 
 For ordinal response columns, cumulative probit regression is used (Agresti, 2010). boral assumes all ordinal columns are measured using the same scale i.e., all columns have the same number of theoretical levels, even though some levels for some species may not be observed. The number of levels is then assumed to be given by the maximum value from all the ordinal columns of \code{y}. Because of this, all ordinal columns then assumed to have the \emph{same} cutoffs, \eqn{\bm{\tau}}, while the column-specific intercept, \eqn{\beta_{0j}}, allows for deviations away from these common cutoffs. That is, 
 
-\deqn{probit(P(y_{ij} \le k)) = \tau_k + \beta_{0j} + \ldots,}
+\deqn{\Phi(P(y_{ij} \le k)) = \tau_k + \beta_{0j} + \ldots,}
 
-where \eqn{probit(\cdot)} is the probit function, \eqn{P(y_{ij} \le k)} is the cumulative probability of element \eqn{y_{ij}} being less than or equal to level \eqn{k}, \eqn{\tau_k} is the cutoff linking levels \eqn{k} and \eqn{k+1} (and which are increasing in \eqn{k}), \eqn{\beta_{0j}} are the column effects, and \eqn{\ldots} denotes what else is included in the model, e.g. latent variables and related coefficients. To ensure model identifiability, and also because they are interpreted as column-specific deviations from the common cutoffs, the \eqn{\beta_{0j}}'s are treated as random effects and drawn from a normal distribution with mean zero and unknown standard deviation.
+where \eqn{\Phi(\cdot)} is the probit function, \eqn{P(y_{ij} \le k)} is the cumulative probability of element \eqn{y_{ij}} being less than or equal to level \eqn{k}, \eqn{\tau_k} is the cutoff linking levels \eqn{k} and \eqn{k+1} (and which are increasing in \eqn{k}), \eqn{\beta_{0j}} are the column effects, and \eqn{\ldots} denotes what else is included in the model, e.g. latent variables and related coefficients. To ensure model identifiability, and also because they are interpreted as column-specific deviations from the common cutoffs, the \eqn{\beta_{0j}}'s are treated as random effects and drawn from a normal distribution with mean zero and unknown standard deviation.
 
 The parameterization above is useful for modeling ordinal in ecology. When ordinal responses are recorded, usually the same scale is applied to all species e.g., level 1 = not there, level 2 = a bit there, level 3 = lots there, level 4 = everywhere! The quantity \eqn{\tau_k} can thus be interpreted as this common scale, while \eqn{\beta_{0j}} allows for deviations away from these to account for differences in species prevalence. Admittedly, the current implementation of boral for ordinal data can be quite slow. 
 
@@ -49,7 +54,9 @@ Finally, in the event different responses are collected for different columns, e
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \section{Warnings}{

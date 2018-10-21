@@ -2,6 +2,8 @@
 
 \alias{about.traits}
 
+\docType{package}
+
 \title{Including species traits in boral}
 
 \description{This help file provides more information regarding the how species can be included to help mediate environmental responses, analogous to the so-called fourth corner problem.}
@@ -42,7 +44,9 @@ Finally, note that from boral version 1.5, stochastic search variable selection 
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 
@@ -80,8 +84,8 @@ for(i in 1:length(example_which_traits))
 example_which_traits[[3]] <- 0
 
 fit_traits <- boral(y, X = X, traits = traits, 
-     which.traits = example_which_traits, family = "negative.binomial", 
-     mcmc.control = example_mcmc_control, save.model = TRUE)
+    which.traits = example_which_traits, family = "negative.binomial", 
+    mcmc.control = example_mcmc_control, save.model = TRUE)
 
 summary(fit_traits)
 
@@ -91,8 +95,8 @@ ssvs_traitsindex <- vector("list",ncol(X)+1)
 for(i in 1:length(ssvs_traitsindex)) ssvs_traitsindex[[i]] <- rep(0,ncol(traits))
 ssvs_traitsindex[[3]] <- -1
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
-	family = "negative.binomial", mcmc.control = example_mcmc_control, 
-	save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
+    family = "negative.binomial", mcmc.control = example_mcmc_control, 
+    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
 
 summary(fit_traits)
 
@@ -112,21 +116,22 @@ traits <- cbind(rbinom(s,1,0.5), rnorm(s))
 colnames(traits) <- c("thorns-dummy","SLA")
 
 simfit <- list(true.lv = rmvnorm(n, mean = rep(0,2)), 
-	lv.coefs = cbind(rnorm(s), rmvnorm(s, mean = rep(0,2))), 
-	traits.coefs = matrix(c(0.1,1,-0.5,1,0.5,0,-1,1), 2, byrow = TRUE))
+    lv.coefs = cbind(rnorm(s), rmvnorm(s, mean = rep(0,2))), 
+    traits.coefs = matrix(c(0.1,1,-0.5,1,0.5,0,-1,1), 2, byrow = TRUE))
 rownames(simfit$traits.coefs) <- c("beta0","elevation")
 colnames(simfit$traits.coefs) <- c("kappa0","thorns-dummy","SLA","sigma")
 
 simy = create.life(true.lv = simfit$true.lv, lv.coefs = simfit$lv.coefs, X = X, 
-	traits = traits, traits.coefs = simfit$traits.coefs, family = "binomial") 
+    traits = traits, traits.coefs = simfit$traits.coefs, family = "binomial") 
 
 
 example_which_traits <- vector("list",ncol(X)+1)
 for(i in 1:length(example_which_traits)) 
      example_which_traits[[i]] <- 1:ncol(traits)
 fit_traits <- boral(y = simy, X = X, traits = traits, 
-     which.traits = example_which_traits, family = "binomial", 
-     num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)	
+    which.traits = example_which_traits, family = "binomial", 
+    lv.control = list(num.lv = 2), save.model = TRUE, 
+    mcmc.control = example_mcmc_control)	
 }
 
 }

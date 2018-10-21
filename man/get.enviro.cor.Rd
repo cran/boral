@@ -2,6 +2,8 @@
 
 \alias{get.enviro.cor}
 
+\docType{package}
+
 \title{Extract covariances and correlations due to shared environmental responses from boral models}
 
 \description{Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables (i.e., shared environmental response)}
@@ -40,7 +42,9 @@ A list with the following components:
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{

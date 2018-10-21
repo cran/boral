@@ -2,13 +2,16 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 1.6}{
+\section{CHANGES IN boral VERSION 1.7}{
 This list below is written in terms of what is deemed to be most important to least important changes =P 
 
   \itemize{
-     \item As some consultation with new and fellow co-maintainer Wade Blanchard, we have decided that from version 1.6 onwards, functions to calculate information criteria will not longer be updated. This is for two reasons: 1) As more modifications and options are added to boral, calculation of information criteria for all of these modifications becomes too tedious and \emph{ad-hoc} that we believe it is not worth it implementing this; 2) we hope that future modifications (along with the currently available SSVS) will offer more viable alternatives to the use of information criteria (if one's goal is indeed to perform variable selection).
+	\item The syntax for how latent variables are included in the model has been revamped, with a new lv.control list argument controlling this. This was done as now structured latent variables are available, such that latent variables are allowed to be, say, spatially correlated based on some pre-defined distance matrix. Please see the about.lvs help file for more information.
+  
+     \item A X.ind argument is now implement in the main boral function, which allows users to manually force particular covariates to be excluded for particular species. The argument takes the form of a matrix with ones and zeros, where a zero indicates that a particular covariate is excluded for a particular species. Defaults to NULL, in which case all covariates are included for all species.
 
-     \item Thanks to Michael Bedward and Johannes Radinger for picking up a few bugs in the boral associated with the naming or row effects and grepping of objects respectively!
+     \item The predict.boral function now has the option of returning all the full array of linear predictors, which the user can then manipulate to their heart's content!
+
      }
 
 }

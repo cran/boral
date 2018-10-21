@@ -2,6 +2,8 @@
 
 \alias{get.mcmcsamples}
 
+\docType{package}
+
 \title{Extract MCMC samples from boral models}
 
 \description{Extract the MCMC samples from boral models, taking into account the burnin period and thinning.}
@@ -24,7 +26,9 @@ A matrix containing the MCMC samples, with the number of rows equal to the numbe
 
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 %\seealso{

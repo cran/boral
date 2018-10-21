@@ -2,7 +2,11 @@
 
 \alias{about.ssvs}
 
-\title{Stochastic search variable selection (SSVS) in boral}
+\docType{package}
+
+\title{
+Stochastic search variable selection (SSVS) in boral
+}
 
 \description{This help file provides more information regarding the implementation of the stochastic search variable selection (SSVS, George and McCulloch, 1993) as implemented in the boral package.}
 
@@ -57,7 +61,9 @@ Please keep in mind that because boral allows the user to manually decide which 
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \section{Warnings}{
@@ -91,8 +97,7 @@ example_mcmc_control <- list(n.burnin = 10, n.iteration = 100,
 example_prior_control <- list(type = c("normal","normal","normal","uniform"), 
      ssvs.index = c(-1,-1,-1,1,2,3))
 spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 0, mcmc.control = example_mcmc_control, 
-     prior.control = example_prior_control)
+    mcmc.control = example_mcmc_control, prior.control = example_prior_control)
      
 summary(spiderfit_nb2) 
 
@@ -102,8 +107,7 @@ summary(spiderfit_nb2)
 example_prior_control <- list(type = c("normal","normal","normal","uniform"), 
      ssvs.index = c(-1,-1,-1,0,0,0))
 spiderfit_nb3 <- boral(y, X = X, family = "negative.binomial", 
-	num.lv = 0, mcmc.control = example_mcmc_control, 
-	prior.control = example_prior_control)
+    mcmc.control = example_mcmc_control, prior.control = example_prior_control)
 summary(spiderfit_nb3) 
 
 
@@ -123,8 +127,8 @@ for(i in 1:length(example_which_traits))
 example_which_traits[[3]] <- 0
 
 fit_traits <- boral(y, X = X, traits = traits, 
-     which.traits = example_which_traits, family = "negative.binomial", 
-     mcmc.control = example_mcmc_control, save.model = TRUE)
+    which.traits = example_which_traits, family = "negative.binomial", 
+    mcmc.control = example_mcmc_control, save.model = TRUE)
 
 summary(fit_traits)
 
@@ -135,8 +139,8 @@ for(i in 1:length(ssvs_traitsindex))
      ssvs_traitsindex[[i]] <- rep(0,ncol(traits))
 ssvs_traitsindex[[3]] <- -1
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
-	family = "negative.binomial", mcmc.control = example_mcmc_control, 
-	save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
+    family = "negative.binomial", mcmc.control = example_mcmc_control, 
+    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
 
 summary(fit_traits)
 }

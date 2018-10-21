@@ -2,6 +2,8 @@
 
 \alias{calc.varpart}
 
+\docType{package}
+
 \title{Variance partitioning for a boral model}
 
 \description{For each response (species), partition the variance of the linear predictor into components associated with (groups of) the covariates, the latent variables, any row effects. If traits are also included in the model, then it also calculates an R-squared value for the proportion of the variance in the environmental response (due to the covariates) which can be explained by traits.}
@@ -55,7 +57,9 @@ A list containing the following components if applicable:
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \section{Warnings}{
@@ -80,7 +84,8 @@ example_mcmc_control <- list(n.burnin = 10, n.iteration = 100,
 
 ## Example 1 - model with X variables, two latent variables, and no row effects
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
-     num.lv = 2, save.model = TRUE, mcmc.control = example_mcmc_control)
+     lv.control = list(num.lv = 2), 
+     save.model = TRUE, mcmc.control = example_mcmc_control)
 
 ## Partition variance for each species into that explained by covariates 
 ## and by the latent variables
@@ -108,8 +113,8 @@ for(i in 1:length(example_which_traits))
 example_which_traits[[3]] <- 0
 
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
-	family = "negative.binomial", mcmc.control = example_mcmc_control, 
-	save.model = TRUE)
+    family = "negative.binomial", mcmc.control = example_mcmc_control, 
+    save.model = TRUE)
 
 ## Partition variance for each species due to covariates in X 
 ## and latent variables. Also calculate proportion of variance 

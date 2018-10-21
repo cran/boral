@@ -2,6 +2,8 @@
 
 \alias{lvsplot}
 
+\docType{package}
+
 \title{Plot the latent variables from an boral model} 
 
 \description{Construct a 1-D index plot or 2-D scatterplot of the latent variables, and their corresponding coefficients i.e., a biplot, from a fitted boral model.}
@@ -29,7 +31,7 @@ lvsplot(x, jitter = FALSE, biplot = TRUE, ind.spp = NULL, alpha = 0.5,
 
   \item{which.lvs}{A vector of length two, indicating which latent variables (ordination axes) to plot which \code{x} is an object with two or more latent variables. The argument is ignored is \code{x} only contains one latent variables. Defaults to \code{which.lvs = c(1,2)}.}
 
-  \item{return.vals}{If \code{return.vals = TRUE}, then the \emph{scaled} latent variables scores and corresponding scaled coefficients are returned (based on the value of \code{alpha} used). This is useful is the user wants to construct their own custom model-based ordinations. Defaults to \code{FALSE}.}
+  \item{return.vals}{If \code{TRUE}, then the \emph{scaled} latent variables scores and corresponding scaled coefficients are returned (based on the value of \code{alpha} used). This is useful if the user wants to construct their own custom model-based ordinations. Defaults to \code{FALSE}.}
 
   \item{...}{Additional graphical options to be included in. These include values for \cr \code{cex, cex.lab, cex.axis, cex.main, lwd}, and so on.}
 }
@@ -65,7 +67,9 @@ For latent variable models, we are generally interested in "symmetric plots" tha
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \examples{
@@ -80,8 +84,8 @@ y <- spider$abun
 n <- nrow(y)
 p <- ncol(y)
      
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
-	row.eff = "fixed", mcmc.control = example_mcmc_control)
+spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
+    row.eff = "fixed", mcmc.control = example_mcmc_control)
 
 lvsplot(spiderfit_nb) 
 }

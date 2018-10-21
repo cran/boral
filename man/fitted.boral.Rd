@@ -2,6 +2,8 @@
 
 \alias{fitted.boral}
 
+\docType{package}
+
 \title{Extract Model Fitted Values for an boral object}
 
 \description{Calculated the predicted mean responses based on the fitted boral model, by using the posterior medians or means of the parameters.}
@@ -27,7 +29,9 @@ A list containing \code{ordinal.probs} which is an array with dimensions (no. of
 }
 
 \author{
-Francis K.C. Hui \email{fhui28@gmail.com}; Wade Blanchard \email{wade.blanchard@anu.edu.au}
+\packageAuthor{boral}
+
+Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
@@ -45,7 +49,7 @@ library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
-spiderfit_nb <- boral(y, family = "negative.binomial", num.lv = 2, 
+spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
      row.eff = "fixed", mcmc.control = example_mcmc_control)
 
 fitted(spiderfit_nb)
