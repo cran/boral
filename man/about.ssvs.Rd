@@ -32,7 +32,7 @@ SSVS can be applied at a grouped or individual coefficient level, and this is go
 
 Note the last application of SSVS allows multiple covariates to be selected \emph{simultaneously}. For example, suppose \code{X} consists of five columns: the first two columns are environmental covariates, while the last three correspond to quadratic terms of the two covariates as well as their interaction. If we want to "test" whether any quadratic terms are required, then we can set \cr \code{prior.control$ssvs.index = c(-1,-1,1,1,1)}, so a single posterior probability of inclusion is returned for the last three columns of \code{X}. 
 
-Finally, note that summaries such as posterior medians and HPD intervals of the coefficients, as well as performing residual analysis, from a boral model that has implemented SSVS may be problematic because the posterior distribution is by definition multi-modal. It may be advisable instead to separate out their application of SSVS and posterior inference.
+Finally, note that summaries such as posterior medians and HPD intervals of the coefficients, as well as performing residual analysis, from a fitted model that has implemented SSVS may be problematic because the posterior distribution is by definition multi-modal. It may be advisable instead to separate out their application of SSVS and posterior inference.
 
 \bold{SSVS on trait coefficients:}
 If traits are included in boral, thereby leading to a fourth corner model (see \code{\link{about.traits}} for more details on this type of model), SSVS can also be performed on the associated trait coefficients. That is, in such model we have
@@ -91,13 +91,17 @@ p <- ncol(y)
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 \dontrun{
 ## Example 3a - Extend example 2 to demonstrate grouped covariate selection
 ## on the last three covariates. 
 example_prior_control <- list(type = c("normal","normal","normal","uniform"), 
      ssvs.index = c(-1,-1,-1,1,2,3))
 spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", 
-    mcmc.control = example_mcmc_control, prior.control = example_prior_control)
+    mcmc.control = example_mcmc_control, prior.control = example_prior_control,
+    model.name = testpath)
      
 summary(spiderfit_nb2) 
 
@@ -107,7 +111,8 @@ summary(spiderfit_nb2)
 example_prior_control <- list(type = c("normal","normal","normal","uniform"), 
      ssvs.index = c(-1,-1,-1,0,0,0))
 spiderfit_nb3 <- boral(y, X = X, family = "negative.binomial", 
-    mcmc.control = example_mcmc_control, prior.control = example_prior_control)
+    mcmc.control = example_mcmc_control, prior.control = example_prior_control,
+    model.name = testpath)
 summary(spiderfit_nb3) 
 
 
@@ -128,7 +133,8 @@ example_which_traits[[3]] <- 0
 
 fit_traits <- boral(y, X = X, traits = traits, 
     which.traits = example_which_traits, family = "negative.binomial", 
-    mcmc.control = example_mcmc_control, save.model = TRUE)
+    mcmc.control = example_mcmc_control, model.name = testpath,
+    save.model = TRUE)
 
 summary(fit_traits)
 
@@ -140,7 +146,8 @@ for(i in 1:length(ssvs_traitsindex))
 ssvs_traitsindex[[3]] <- -1
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
     family = "negative.binomial", mcmc.control = example_mcmc_control, 
-    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
+    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex),
+    model.name = testpath)
 
 summary(fit_traits)
 }

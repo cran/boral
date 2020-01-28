@@ -54,12 +54,16 @@ Maintainer: \packageMaintainer{boral}
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
     n.thin = 1)
 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
 spider.fit.p <- boral(y, family = "poisson", lv.control = list(num.lv = 2),
-    row.eff = "fixed", mcmc.control = example_mcmc_control)
+    row.eff = "fixed", mcmc.control = example_mcmc_control
+    model.name = testpath)
 
 par(mfrow = c(2,2))
 plot(spider.fit.p) 
@@ -68,7 +72,8 @@ plot(spider.fit.p)
 
 
 spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2), 
-    row.eff = "fixed", mcmc.control = example_mcmc_control)
+    row.eff = "fixed", mcmc.control = example_mcmc_control, 
+    model.name = testpath)
 
 par(mfrow = c(2,2))
 plot(spiderfit_nb) 

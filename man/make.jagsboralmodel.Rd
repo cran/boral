@@ -4,9 +4,9 @@
 
 \docType{package}
 
-\title{Write a text file containing an boral model for use into JAGS}
+\title{Write a text file containing a model for use into JAGS}
 
-\description{This function is designed to write boral models with one or more latent variables.}
+\description{This function is designed to write models with one or more latent variables.}
 
 \usage{
 make.jagsboralmodel(family, num.X = 0, X.ind =  NULL, num.traits = 0, 
@@ -48,7 +48,7 @@ make.jagsboralmodel(family, num.X = 0, X.ind =  NULL, num.traits = 0,
     Please see \code{\link{about.lvs}} for more information.
     }
 
- \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown standard deviation. Defaults to "none".} 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the fitted model. If fixed effects, then for parameter identifiability the first row effect is set to zero, which analogous to acting as a reference level when dummy variables are used. If random effects, they are drawn from a normal distribution with mean zero and unknown standard deviation. Defaults to "none". } 
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}       
 
@@ -60,7 +60,7 @@ make.jagsboralmodel(family, num.X = 0, X.ind =  NULL, num.traits = 0,
 
   \item{p}{The number of columns in the response matrix \code{y}.}
 
- \item{model.name}{Name of the text file that the JAGS model is written to. Defaults to \code{NULL}, in which case the default of "jagsboralmodel.txt" is used.}
+ \item{model.name}{Name of the text file that the JAGS script is written to. Defaults to \code{NULL}, in which case the default of "jagsboralmodel.txt" is used.}
 
   \item{prior.control}{A list of parameters for controlling the prior distributions. These include:
 	\itemize{
@@ -95,7 +95,7 @@ make.jagsboralmodel(family, num.X = 0, X.ind =  NULL, num.traits = 0,
 
  
 \details{
-This function is automatically executed inside \code{\link{boral}}, and therefore does not need to be run separately before fitting the boral model. It can however be run independently if one is: 1) interested in what the actual JAGS file for a particular boral model looks like, 2) wanting to modify a basic JAGS model file to construct more complex model e.g., include environmental variables. 
+This function is automatically executed inside \code{\link{boral}}, and therefore does not need to be run separately before fitting the model. It can however be run independently if one is: 1) interested in what the actual JAGS file for a particular model looks like, 2) wanting to modify a basic JAGS model file to construct more complex model e.g., include environmental variables. 
 
 Please note that \code{\link{boral}} currently does not allow the user to manually enter a script to be run. 
 
@@ -103,7 +103,7 @@ When running the main function \code{\link{boral}}, setting \code{save.model = T
 }
 
 \value{
-A text file is created, containing the JAGS model to be called by the boral function for entering into jags. This file is automatically deleted once boral has finished running \code{save.model = TRUE}.}
+A text file is created, containing the model to be called by the boral function for entering into JAGS. This file is automatically deleted once boral has finished running \code{save.model = TRUE}.}
 
 \references{
 \itemize{
@@ -118,7 +118,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
-\code{\link{make.jagsboralnullmodel}} for writing boral models JAGS scripts with no latent variables i.e., so-called "null models".}
+\code{\link{make.jagsboralnullmodel}} for writing JAGS scripts for models with no latent variables i.e., so-called "null models".}
 
 \examples{
 library(mvtnorm)
@@ -128,19 +128,22 @@ y <- spider$abun
 n <- nrow(y)
 p <- ncol(y)
 
-## Example 1 - Create a boral model JAGS script, where distributions alternative 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
+## Example 1 - Create a JAGS model file, where distributions alternative 
 ## between Poisson and negative binomial distributions 
 ##   across the rows of y.
 make.jagsboralmodel(family = rep(c("poisson","negative.binomial"),length=p), 
-    row.eff = "fixed", num.X = 0, n = n, p = p)
+    row.eff = "fixed", num.X = 0, n = n, p = p, model.name = testpath)
 
-## Example 2 - Create a boral model JAGS script, where distributions are all 
+## Example 2 - Create a JAGS model file, where distributions are all 
 ##	negative binomial distributions and covariates will be included.
 make.jagsboralmodel(family = "negative.binomial", num.X = ncol(spider$x),
-    n = n, p = p)
+    n = n, p = p, model.name = testpath)
 
 	
-## Example 3 - Simulate some ordinal data and create a JAGS model script
+## Example 3 - Simulate some ordinal data and create a JAGS model file
 ## 30 rows (sites) with two latent variables 
 true.lv <- rbind(rmvnorm(15,mean=c(-2,-2)),rmvnorm(15,mean=c(2,2)))
 ## 10 columns (species)
@@ -153,10 +156,10 @@ simy <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs,
     family = "ordinal", cutoffs = true.ordinal.cutoffs) 
 
 make.jagsboralmodel(family = "ordinal", num.X = 0, 
-    row.eff = FALSE, n=30, p=10, model.name = "myawesomeordmodel.txt")
+    row.eff = FALSE, n=30, p=10, model.name = testpath)
 
 
-## Have a look at the JAGS model file for a boral model involving traits,
+## Have a look at the JAGS model file for a model involving traits,
 ## based on the ants data from mvabund.
 library(mvabund)
 data(antTraits)
@@ -177,8 +180,9 @@ example_mcmc_control <- list(n.burnin = 10, n.iteration = 100,
     n.thin = 1)
 
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
-    family = "negative.binomial", lv.control = list(num.lv = 2),
-    model.name = "anttraits.txt", mcmc.control = example_mcmc_control)
+    family = "negative.binomial", lv.control = list(num.lv = 2), 
+    model.name = testpath, mcmc.control = example_mcmc_control,
+    do.fit = FALSE)
 }
 
 }

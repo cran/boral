@@ -30,13 +30,13 @@ boral(y, ...)
 \arguments{
   \item{y}{A response matrix of multivariate data e.g., counts, binomial or Bernoulli responses, continuous response, and so on. With multivariate abundance data ecology for instance, rows correspond to sites and columns correspond to species. Any categorical (multinomial) responses \bold{must} be converted to integer values. For ordinal data, the minimum level of \code{y} must be 1 instead of 0.}
   
-  \item{X}{A model matrix of covariates, which can be included as part of the boral model. Defaults to \code{NULL}, in which case no model matrix was used. No intercept column should be included in \code{X}.}  
+  \item{X}{A model matrix of covariates, which can be included as part of the model. Defaults to \code{NULL}, in which case no model matrix was used. No intercept column should be included in \code{X}.}  
 
   \item{X.ind}{An matrix of 1s and 0s, indicating whether a particular covariate should be included (1) or excluded (0) in the mean structure of a particular response. The matrix should the number of rows equal to the number of columns in \code{y}, and the number of columns equal to the number of columns in \code{X}. Defaults to \code{NULL}, in which case it is assumed that all covariates are included in the mean structure of all responses i.e., all 1s.}  
 
   \item{x}{An object for class "boral".}
 
-  \item{traits}{A model matrix of species covariates, which can be included as part of the boral model. Defaults to \code{NULL}, in which case no matrix was used. No intercept column should be included in \code{traits}, as it is included automatically.}  
+  \item{traits}{A model matrix of species traits, which can be included as part of the model. Defaults to \code{NULL}, in which case no matrix was used. No intercept column should be included in \code{traits}, as it is included automatically.}  
 
   \item{which.traits}{A list of length equal to (number of columns in \code{X} + 1), informing which columns of \code{traits} the column-specific intercepts and each of the column-specific regression coefficients should be regressed against. The first element in the list applies to the column-specific intercept, while the remaining elements apply to the regression coefficients. Each element of \code{which.traits} is a vector indicating which traits are to be used.
   
@@ -62,7 +62,7 @@ boral(y, ...)
     Please see \code{\link{about.lvs}} for more information.
     }
 
- \item{row.eff}{Single element indicating whether (multiple) row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown variance, analogous to a random intercept in mixed models. Defaults to "none".}    
+ \item{row.eff}{Single element indicating whether (multiple) row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the model. If fixed effects, then for parameter identifiability the first row effect is set to zero, which analogous to acting as a reference level when dummy variables are used. If random effects, they are drawn from a normal distribution with mean zero and unknown variance, analogous to a random intercept in mixed models. Defaults to "none".}    
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}. This matrix is useful if one wants to specify more complicated row effect structures beyond a single, row effect unique to each row; please see details below as well as examples below. Whether these row effects are included as fixed or random effects is governed by \code{row.eff}. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \code{row.eff = "fixed"} or \code{"random"}, then \cr \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
@@ -113,7 +113,7 @@ boral(y, ...)
  
  \item{do.fit}{If \code{do.fit = FALSE}, then only the JAGS model file is written to the current working directly (as text file with name based on \code{model.name}). No MCMC sampling is performed, and \emph{nothing else} is returned. Defaults to \code{TRUE}.}    
 
- \item{model.name}{Name of the text file that the JAGS model is written to. Defaults to \code{NULL}, in which case the default of "jagsboralmodel.txt" is used.}
+ \item{model.name}{Name of the text file that the JAGS script is written to. Defaults to \code{NULL}, in which case the default of "jagsboralmodel.txt" is used.}
 
 % \item{new.format}{If \code{new.format = TRUE}, then the new (and hopefully simpler) format is used for the output, as implemented in versions \eqn{>= 1.2}. If \code{FALSE}, then the old outpt format is used. Defaults to \code{TRUE}.}
 
@@ -132,7 +132,7 @@ Without latent variables, i.e. \code{lv.control$num.lv = 0}, boral fits separate
 
 \deqn{g(\mu_{ij}) = \alpha_i + \beta_{0j} + \bm{x}\top_i\bm{\beta}_j; \quad i = 1,\ldots,n; j = 1,\ldots,p,}
 
-where the mean response for element (i,j), denoted as \eqn{mu_{ij}}, is regressed against the covariates \eqn{\bm{x}_i} via a link function \eqn{g(\cdot)}. The quantities \eqn{beta_{0j}} and \eqn{\bm{beta}_j} denote the column-specific intercepts and coefficients respectively, while \code{alpha_i} is an optional row effect that may be treated as a fixed or random effect. The latter assumes the row effects are drawn from a normal distribution with unknown variance \eqn{\phi^2}. One reason we might want to include row effects is to account differences in sampling intensity between sites: these can lead to differences in site total abundance, and so by including fixed effects they play the same role as an offset to account for these differences. 
+where the mean response for element (i,j), denoted as \eqn{mu_{ij}}, is regressed against the covariates \eqn{\bm{x}_i} via a link function \eqn{g(\cdot)}. The quantities \eqn{beta_{0j}} and \eqn{\bm{beta}_j} denote the column-specific intercepts and coefficients respectively, while \code{alpha_i} is an optional row effect that may be treated as a fixed or random effect. In the former, the first row effect is constrained to be zero for parameter identifiability reasons, while the latter assumes the row effects are drawn from a normal distribution with unknown variance \eqn{\phi^2}. One reason we might want to include row effects is to account differences in sampling intensity between sites: these can lead to differences in site total abundance, and so by including fixed effects they play the same role as an offset to account for these differences. 
 
 boral can also handle multiple, hierarchical row effects, which may be useful to account for sampling design. This is controlled using the \code{row.ids} argument. For example, if the first five rows of \eqn{y} correspond to replications from site 1, the next five rows correspond to replications from site 2, and so on, then one can set \code{row.ids = matrix(c(1,1,1,1,1,2,2,2,2,2,...), ncol = 1)} to take this in account. While this way of coding row effects via the \code{row.ids} argument takes some getting used to, it has been done this way partly to force the user to think more carefully about exactly the structure of the data i.e., with great power comes great responsibility...
 
@@ -164,7 +164,7 @@ This model is thus a mash of the first two types of models. The linear predictor
 \bold{Including species traits:} When covariates \code{X} are included i.e. both the independent and correlated response models, one has the option of also including traits to help explain differences in species environmental responses to these covariates. Please see \code{\link{about.traits}} for more information on this.
 
 
-\bold{Estimation:} For boral models, estimation is performed using Bayesian Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). Please note that only \emph{one} MCMC chain in run: this point is discussed later in this help file. Regarding prior distributions, the default settings, based on the \code{prior.control} argument, are as follows: 
+\bold{Estimation:} Estimation for all models is performed using Bayesian Markov Chain Monte Carlo (MCMC) methods via JAGS (Plummer, 2003). Please note that only \emph{one} MCMC chain in run: this point is discussed later in this help file. Regarding prior distributions, the default settings, based on the \code{prior.control} argument, are as follows: 
 
 \itemize{
 \item Normal priors with mean zero and variance given by element 1 in \code{hypparams} are assigned to all intercepts, cutoffs for ordinal responses, and row effects. 
@@ -307,7 +307,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
-\code{\link{lvsplot}} for a scatter plot of the latent variables (and their coefficients if applicable), \code{\link{coefsplot}} for horizontal line or "caterpillar plot" of the regression coefficients corresponding to \code{X} (if applicable), \code{\link{summary.boral}} for a summary of the fitted boral model, \code{\link{get.enviro.cor}} and \code{\link{get.residual.cor}} for calculating the correlation matrix between the explanatory variables in \code{X} and the residual correlation matrix respectively, \code{\link{calc.varpart}} to calculate variance partitioning of the explanatory variables in \code{X}, and \code{\link{predict.boral}} for calculating predictions from a boral model.
+\code{\link{lvsplot}} for a scatter plot of the latent variables (and their coefficients if applicable), \code{\link{coefsplot}} for horizontal line or "caterpillar plot" of the regression coefficients corresponding to \code{X} (if applicable), \code{\link{summary.boral}} for a summary of the fitted model, \code{\link{get.enviro.cor}} and \code{\link{get.residual.cor}} for calculating the correlation matrix between the explanatory variables in \code{X} and the residual correlation matrix respectively, \code{\link{calc.varpart}} to calculate variance partitioning of the explanatory variables in \code{X}, and \code{\link{predict.boral}} for calculating predictions from a fitted model.
 }
 
 \examples{
@@ -323,12 +323,14 @@ p <- ncol(y)
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
-     
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+ 
+ 
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
 spiderfit_nb <- boral(y, family = "negative.binomial", 
     lv.control = list(num.lv = 2), row.eff = "fixed", 
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 summary(spiderfit_nb)
 
@@ -344,7 +346,7 @@ lvsplot(spiderfit_nb) ## Biplot of the latent variables,
 ## Example 2a - model with no latent variables, no site effects, 
 ##      and environmental covariates
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 summary(spiderfit_nb) 
 ## The results can be compared with the default example from 
@@ -360,7 +362,7 @@ sapply(colnames(spiderfit_nb$X), coefsplot, x = spiderfit_nb)
 ## Let us account for this as a fixed effect
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
     row.eff = "fixed", row.ids = matrix(rep(1:7,each=4),ncol=1),
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 spiderfit_nb$row.coefs
 
@@ -370,7 +372,7 @@ spiderfit_nb$row.coefs
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
     row.eff = "random", 
     row.ids = cbind(1:n, rep(1:7,each=4)), 
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 spiderfit_nb$row.coefs
 
@@ -378,7 +380,9 @@ spiderfit_nb$row.coefs
 ##  two structured latent variables using fake distance matrix
 fakedistmat <- as.matrix(dist(1:n))
 spiderfit_lvstruc <- boral(y, X = X, family = "negative.binomial", 
-    lv.control = list(num.lv = 2, type = "exponential", distmat = fakedistmat))
+    lv.control = list(num.lv = 2, type = "exponential", distmat = fakedistmat), 
+     mcmc.control = example_mcmc_control, model.name = testpath)
+
 
 summary(spiderfit_lvstruc)
 
@@ -388,7 +392,7 @@ example_prior_control <- list(type = c("normal","normal","normal","uniform"),
      ssvs.index = c(-1,-1,-1,1,2,3))
 spiderfit_nb2 <- boral(y, X = X, family = "negative.binomial", 
     mcmc.control = example_mcmc_control,
-    prior.control = example_prior_control)
+    prior.control = example_prior_control, model.name = testpath)
      
 summary(spiderfit_nb2) 
 
@@ -398,8 +402,8 @@ summary(spiderfit_nb2)
 example_prior_control <- list(type = c("normal","normal","normal","uniform"), 
     ssvs.index = c(-1,-1,-1,0,0,0))
 spiderfit_nb3 <- boral(y, X = X, family = "negative.binomial", 
-    mcmc.control = example_mcmc_control,
-    prior.control = example_prior_control)
+    mcmc.control = example_mcmc_control, prior.control = example_prior_control, 
+    model.name = testpath)
 summary(spiderfit_nb3) 
 
 	
@@ -411,11 +415,11 @@ y[y > 0] <- 1
 y <- y[1:20,] ## Consider only years 1981 and 1983
 y <- y[,apply(y > 0,2,sum) > 2] ## Consider only spp with more than 2 presences
      
-tikus.fit <- boral(y, family = "binomial", 
-    lv.control = list(num.lv = 2), 
-    mcmc.control = example_mcmc_control)
+tikusfit <- boral(y, family = "binomial", 
+    lv.control = list(num.lv = 2), mcmc.control = example_mcmc_control,
+    model.name = testpath)
      
-lvsplot(tikus.fit, biplot = FALSE) 
+lvsplot(tikusfit, biplot = FALSE) 
 ## A strong location between the two sampling years 
 
 
@@ -437,7 +441,8 @@ example_which_traits[[3]] <- 0
 fit_traits <- boral(y, X = X, traits = traits, 
     lv.control = list(num.lv = 2),
     which.traits = example_which_traits, family = "negative.binomial",
-    mcmc.control = example_mcmc_control, save.model = TRUE)
+    mcmc.control = example_mcmc_control, model.name = testpath,
+    save.model = TRUE)
 
 summary(fit_traits)
 
@@ -450,7 +455,8 @@ ssvs_traitsindex[[3]] <- -1
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
     family = "negative.binomial", 
     lv.control = list(num.lv = 2), mcmc.control = example_mcmc_control, 
-    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
+    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex),
+    model.name = testpath)
 
 summary(fit_traits)
 
@@ -485,7 +491,7 @@ for(i in 1:length(example_which_traits))
 fit_traits <- boral(y = simy, X = X, traits = traits, 
     which.traits = example_which_traits, family = "binomial", 
     lv.control = list(num.lv = 2), save.model = TRUE, 
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 }
 

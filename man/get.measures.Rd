@@ -4,9 +4,9 @@
 
 \docType{package}
 
-\title{Information Criteria for boral models}
+\title{Information Criteria for models}
 
-\description{Calculates some information criteria for an boral model, which could be used for model selection. WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!!!}
+\description{Calculates some information criteria for a fitted model, which could be used for model selection. WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!!!}
 
 \usage{
 get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none", 
@@ -14,9 +14,9 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
 }
 
 \arguments{
-  \item{y}{The response matrix that the boral model was fitted to.}
+  \item{y}{The response matrix that the model was fitted to.}
   
-  \item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
+  \item{X}{The model matrix used in the model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
   
   \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
@@ -25,15 +25,15 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
   
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
   
-  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and unknown standard deviation. Defaults to "none". } 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the fitted model. If fixed effects, then for parameter identifiability the first row effect is set to zero, which analogous to acting as a reference level when dummy variables are used. If random effects, they are drawn from a normal distribution with mean zero and estimated standard deviation. Defaults to "none". } 
   
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
  \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
 
- \item{num.lv}{The number of latent variables used in the fitted boral model.}
+ \item{num.lv}{The number of latent variables used in the model.}
   
-  \item{fit.mcmc}{All MCMC samples for the fitted boral model. These can be extracted by fitting an boral model using \code{\link{boral}} with \code{save.model = TRUE}, and then applying \code{get.mcmcsamples(fit)}.} 
+  \item{fit.mcmc}{All MCMC samples for the fitted model. These can be extracted by fitting a model using \code{\link{boral}} with \code{save.model = TRUE}, and then applying \code{get.mcmcsamples(fit)}.} 
 }
 
 \details{
@@ -45,7 +45,7 @@ The following information criteria are currently calculated, when permitted: 1) 
 
 4 & 5) AIC and BIC take the form -2*(marginal log-likelihood) + penalty*(no. of parameters in the model), where the log-likelihood is evaluated at the posterior median. If the parameter-wise posterior distributions are unimodal and approximately symmetric, these will produce similar results to an AIC and BIC where the log-likelihood is evaluated at the posterior mode. EAIC applies a penalty of 2, while EBIC applies a penalty of \eqn{log(n)}.
 
-Intuitively, comparing boral models with and without latent variables (using information criteria such as those returned) amounts to testing whether the columns of the response matrix \code{y} are correlated. With multivariate abundance data for example, where \code{y} is a matrix of \eqn{n} sites and \eqn{p} species, comparing models with and without latent variables tests whether there is any evidence of correlation between species.
+Intuitively, comparing models with and without latent variables (using information criteria such as those returned) amounts to testing whether the columns of the response matrix \code{y} are correlated. With multivariate abundance data for example, where \code{y} is a matrix of \eqn{n} sites and \eqn{p} species, comparing models with and without latent variables tests whether there is any evidence of correlation between species.
 
 Please note that criteria 4 and 5 are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), or more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), then criteria 4 and 5 are will not calculated. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; please see the details in \code{calc.logLik.lv0} and \code{calc.marglogLik}.
 }
@@ -91,7 +91,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \note{
-When a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRUE}, then this function is applied and the information criteria are returned as part of the model output. 
+When a model is fitted using \code{\link{boral}} with \code{calc.ics = TRUE}, then this function is applied and the information criteria are returned as part of the model output. 
 }
 
 \seealso{
@@ -104,6 +104,9 @@ When a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRU
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -118,7 +121,7 @@ spiderfit_pois$ics ## Returns information criteria
 
 spiderfit_nb <- boral(y, family = "negative.binomial", 
     lv.control = list(num.lv = 2), row.eff = "random",
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 spiderfit_nb$ics ## Returns the information criteria 
 }

@@ -58,19 +58,14 @@ create.life <- function(true.lv = NULL, lv.coefs,
         if(!is.matrix(X)) 
             X <- as.matrix(X)
         if(any(apply(X,2,function(x) all(x == 1)))) 
-            stop("No intercept column should be included in X") 
+            stop("No intercept column should be included in X.") 
         }
 
     if((is.null(traits) & !is.null(traits.coefs)) | (!is.null(traits) & is.null(traits.coefs))) 
-        stop("If traits is supplied, then traits.coefs must also be supplied")
+        stop("If traits is supplied, then traits.coefs must also be supplied.")
     if(!is.null(traits.coefs)) 
         message("Since trait.coefs has been supplied, then X.coefs will be ignored (X.coefs will instead be drawn as random effects based off trait.coefs)")
-    if(!is.null(traits)) { 
-        if(!is.matrix(traits)) 
-            traits <- as.matrix(traits) 
-        if(any(apply(traits,2,function(x) all(x == 1)))) 
-            stop("No intercept column should be included in traits. It will be included automatically")
-        }
+     check_traits <- function(traits = traits, y = matrix(NA,nrow=1,ncol=p)) 
 
 
     if(length(family) != p & length(family) != 1)
@@ -79,8 +74,7 @@ create.life <- function(true.lv = NULL, lv.coefs,
         family <- rep(family, p)
     if(!all(family %in% c("negative.binomial", "poisson", "binomial", "normal", "lnormal", "tweedie", "ordinal", "exponential", "beta"))) 
         stop("One of the elements in family is not compatible with current version of boral...sorry!")
-    if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
-        stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of rows in lv.coefs/X.coefs/second number in manual dim. The latter will assume the specified trial size for all rows labelled binomial in the family argument")
+     check_trial_size(family = family, trial.size = trial.size)
     if(length(trial.size) == 1) 
         trial.size <- rep(trial.size, p)
 		
@@ -104,10 +98,10 @@ create.life <- function(true.lv = NULL, lv.coefs,
             row.ids <- matrix(1:nrow(sim_y), ncol = 1)
             colnames(row.ids) <- "ID1"
             }
-        row.ids <- check.row.ids(row.ids = row.ids, y = sim_y)
-        check.row.params(row.params = row.params, y = sim_y, row.ids = row.ids)
+        row.ids <- check_row_ids(row.ids = row.ids, y = sim_y)
+        check_row_params(row.params = row.params, y = sim_y, row.ids = row.ids)
         }
-    check.offset(offset = offset, y = sim_y)
+    check_offset(offset = offset, y = sim_y)
     if(row.eff == "fixed") 
         row.coefs <- row.params
     if(row.eff == "random") {
@@ -166,7 +160,7 @@ create.life <- function(true.lv = NULL, lv.coefs,
         if(family[j] == "tweedie") 
             sim_y[, j] <- rTweedie(n, mu = exp(eta[, j]), phi = lv.coefs[j,ncol(lv.coefs)], p = powerparam)
         if(family[j] == "ordinal") {
-            get_probs <- ordinal.conversion.spp(n = n, lv = true.lv, lv.coefs.j = lv.coefs[j, ], num.lv = num.lv, row.coefs = row.coefs, row.ids = row.ids, X = X, X.coefs.j = X.coefs[j,], cutoffs = cutoffs, est = "ignore")
+            get_probs <- ordinal_conversion(n = n, lv = true.lv, lv.coefs.j = lv.coefs[j, ], num.lv = num.lv, row.coefs = row.coefs, row.ids = row.ids, X = X, X.coefs.j = X.coefs[j,], cutoffs = cutoffs, est = "ignore")
             for(i in 1:n) 
                 sim_y[i, j] <- sample(1:num.ord.levels, 1, prob = get_probs[i,])
             }
@@ -191,17 +185,17 @@ simulate.boral <- function(object, nsim = 1, seed = NULL, new.lvs = FALSE, distm
     if(est == "mean") {
         true_mod <- list(lv.coefs = object$lv.coefs.mean, lv = object$lv.mean, X.coefs = object$X.coefs.mean, traits = object$traits, traits.coefs = object$traits.coefs.mean, cutoffs = object$cutoffs.mean, powerparam = object$powerparam.mean, lv.covparams = object$lv.covparams.mean) 
         if(object$row.eff == "fixed") 
-            true_mod$row.params <- object$row.coefs.mean
+            true_mod$row.params <- lapply(object$row.coefs, function(x) x$mean)
         if(object$row.eff == "random") 
-            true_mod$row.params <- object$row.sigma.mean
+            true_mod$row.params <- lapply(object$row.sigma, function(x) x$mean)
         }
     
     if(est == "median") {
         true_mod <- list(lv.coefs = object$lv.coefs.median, lv = object$lv.median, X.coefs = object$X.coefs.median, traits = object$traits, traits.coefs = object$traits.coefs.median, cutoffs = object$cutoffs.median, powerparam = object$powerparam.median, lv.covparams = object$lv.covparams.median) 
         if(object$row.eff == "fixed") 
-            true_mod$row.params <- object$row.coefs.median
+            true_mod$row.params <- lapply(object$row.coefs, function(x) x$median)
         if(object$row.eff == "random") 
-            true_mod$row.params <- object$row.sigma.median
+            true_mod$row.params <- lapply(object$row.sigma, function(x) x$median)
         }
 
     if(!is.null(seed)) 

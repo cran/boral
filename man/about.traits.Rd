@@ -67,6 +67,8 @@ p <- ncol(y)
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
 \dontrun{
 ## Example 5a - model fitted to count data, no site effects, and
 ## two latent variables, plus traits included to explain environmental responses
@@ -85,7 +87,8 @@ example_which_traits[[3]] <- 0
 
 fit_traits <- boral(y, X = X, traits = traits, 
     which.traits = example_which_traits, family = "negative.binomial", 
-    mcmc.control = example_mcmc_control, save.model = TRUE)
+    mcmc.control = example_mcmc_control, model.name = testpath,
+    save.model = TRUE)
 
 summary(fit_traits)
 
@@ -96,7 +99,8 @@ for(i in 1:length(ssvs_traitsindex)) ssvs_traitsindex[[i]] <- rep(0,ncol(traits)
 ssvs_traitsindex[[3]] <- -1
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
     family = "negative.binomial", mcmc.control = example_mcmc_control, 
-    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex))
+    save.model = TRUE, prior.control = list(ssvs.traitsindex = ssvs_traitsindex),
+    model.name = testpath)
 
 summary(fit_traits)
 
@@ -131,7 +135,7 @@ for(i in 1:length(example_which_traits))
 fit_traits <- boral(y = simy, X = X, traits = traits, 
     which.traits = example_which_traits, family = "binomial", 
     lv.control = list(num.lv = 2), save.model = TRUE, 
-    mcmc.control = example_mcmc_control)	
+    mcmc.control = example_mcmc_control, model.name = testpath)
 }
 
 }

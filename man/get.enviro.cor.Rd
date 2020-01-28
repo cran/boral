@@ -4,9 +4,9 @@
 
 \docType{package}
 
-\title{Extract covariances and correlations due to shared environmental responses from boral models}
+\title{Extract covariances and correlations due to shared environmental responses}
 
-\description{Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables (i.e., shared environmental response)}
+\description{Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables i.e., shared environmental response}
 
 \usage{
 get.enviro.cor(object, est = "median", prob = 0.95)
@@ -28,9 +28,11 @@ For multivariate abundance data, the correlation calculated by this function can
 
 \value{
 A list with the following components:
-\item{cor}{A \eqn{p \times p} correlation matrix based on model matrix and the posterior or mean estimators of the associated regression coefficients.}
-\item{sig.cor}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose 95\% highest posterior interval does not contain zero. All non-significant correlations are zero to zero.}
-\item{cov}{A \eqn{p \times p} covariance matrix based on model matrix and the posterior or mean estimators of the associated regression coefficients.}
+\item{cor, cor.lower, cor.upper}{A set of \eqn{p \times p} correlation matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding 95\% highest posterior interval.}
+
+\item{sig.cor}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose 95\% highest posterior interval does not contain zero. All non-significant correlations are set to zero.}
+
+\item{cov}{A \eqn{p \times p} covariance matrix.}
 }
 
 \references{
@@ -48,7 +50,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
-\code{\link{get.residual.cor}}, which calculates the residual correlation matrix for boral models involving latent variables.
+\code{\link{get.residual.cor}}, which calculates the residual correlation matrix for models involving latent variables.
 }
 
 \examples{
@@ -58,6 +60,9 @@ Maintainer: \packageMaintainer{boral}
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 library(mvabund) ## Load a dataset from the mvabund package
 library(corrplot) ## For plotting correlations
 data(spider)
@@ -67,7 +72,8 @@ n <- nrow(y)
 p <- ncol(y)
     
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
-     save.model = TRUE, mcmc.control = example_mcmc_control)
+     save.model = TRUE, mcmc.control = example_mcmc_control,
+     model.name = testpath)
 
 enviro.cors <- get.enviro.cor(spiderfit_nb)
 

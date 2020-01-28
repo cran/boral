@@ -4,7 +4,7 @@
 
 \docType{package}
 
-\title{Extract residual correlations and precisions from boral models}
+\title{Extract residual correlations and precisions from models}
 
 \description{Calculates the residual correlation and precision matrices from models that include latent variables.}
 
@@ -36,15 +36,15 @@ In addition to the residual correlation and precision matrices, the median or me
 
 \value{
 A list with the following components:
-     \item{correlation}{A \eqn{p \times p} residual correlation matrix based on posteriori median or mean estimators of the latent variables and coefficients.}
+     \item{cor, cor.lower, cor.upper}{A set of \eqn{p \times p} correlation matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding 95\% highest posterior interval.}
      
-     \item{sig.correlation}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose 95\% highest posterior interval does not contain zero. All non-significant correlations are set to zero.}
+     \item{sig.cor}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose 95\% highest posterior interval does not contain zero. All non-significant correlations are set to zero.}
      
-     \item{covariance}{A \eqn{p \times p} covariance correlation matrix based on posteriori median or mean estimators of the latent variables and coefficients.}
+     \item{cov}{A \eqn{p \times p} covariance matrix.}
      
-     \item{precision}{A \eqn{p \times p} residual precision matrix based on posteriori median or mean estimators of inverse of the residual correlation matrix.}
+     \item{prec, prec.lower, prec.upper}{A set of \eqn{p \times p} precision matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding 95\% highest posterior interval.}
      
-     \item{sig.precision}{A \eqn{p \times p} residual precision matrix containing only the ``significant" precisions whose 95\% highest posterior interval does not contain zero. All non-significant precision are set to zero.}
+     \item{sig.prec}{A \eqn{p \times p} residual precision matrix containing only the ``significant" precisions whose 95\% highest posterior interval does not contain zero. All non-significant precision are set to zero.}
 
      \item{trace}{The median/mean point estimator of the trace (sum of the diagonal elements) of the residual covariance matrix.}
 }
@@ -79,6 +79,9 @@ Residual correlation and precision matrices are reliably modeled only with two o
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 library(mvabund) ## Load a dataset from the mvabund package
 library(corrplot) ## For plotting correlations
 data(spider)
@@ -88,7 +91,7 @@ p <- ncol(y)
     
 spiderfit_nb <- boral(y, X = spider$x, family = "negative.binomial", 
     lv.control = list(num.lv = 2), save.model = TRUE, 
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 res.cors <- get.residual.cor(spiderfit_nb)
 

@@ -4,13 +4,13 @@
 
 \docType{package}
 
-\title{Predict using a boral model}
+\title{Predict using a model}
 
 \description{Obtain predictions and associated intervals (lower and upper limits) on the linear scale from a fitted boral object. Predictions can be made either conditionally on the predicted latent variables and any random row effects included in the model, or marginally (averaged) on the latent variables and any random effects included in the model.}
 
 \usage{
 \method{predict}{boral}(object, newX = NULL, newrow.ids = NULL, 
-     distmat =  NULL, predict.type = "conditional", 
+     distmat =  NULL, predict.type = "conditional", scale = "link", 
      est = "median", prob = 0.95, lv.mc = 1000, return.alllinpred = FALSE, 
      ...)
      }
@@ -26,6 +26,8 @@
 
     \item{predict.type}{The type of prediction to be made. Either takes value \code{"conditional"} in which case the prediction is made conditionally on the predicted latent variables and any random row effects in the model, or \code{"marginal"} in which case the prediction marginalizes (averages) over the latent variables and random row effects in the model. Defaults to \code{"conditional"}.}  
 
+  \item{scale}{The type of prediction required.  The default "link" is on the scale of the linear predictors; the alternative \code{scale == "response"} is on the scale of the response variable. For example, if the binomial family is used, then the default predictions (and associated uncertainty intervals) provide probabilities on linear predictor scale, while \code{scale == "response"} gives the predicted probabilities between 0 and 1.}
+
   \item{est}{A choice of either whether to print the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}) of the parameters.}
 
   \item{prob}{A numeric scalar in the interval (0,1) giving the target probability coverage of the intervals. Defaults to 0.95.}   
@@ -39,7 +41,7 @@
 
 
 \details{
-Due to the Bayesian MCMC framework, then predictive inference for boral models is based around the posterior predictive distribution, which is the integral of the quantity one wants to predict on, integrated or averaged over the posterior distribution of the parameters and latent variables. Currently, all predictions are made on the \emph{linear predictor scale} i.e., 
+Due to the Bayesian MCMC framework, then predictive inference for models is based around the posterior predictive distribution, which is the integral of the quantity one wants to predict on, integrated or averaged over the posterior distribution of the parameters and latent variables. Currently, all predictions are made on the \emph{linear predictor scale} i.e., 
 
 \deqn{\eta_{ij} = \alpha_i + \beta_{0j} + \bm{x}^\top_i\bm{\beta}_j + \bm{z}^\top_i\bm{\theta}_j; \quad i = 1,\ldots,n; j = 1,\ldots,p,}
 
@@ -49,7 +51,7 @@ Note that for the above to work, one must have saved the MCMC samples in the fit
 
 Two types of predictions are possible using this function:
 \itemize{
-     \item The first type is \code{predict.type = "conditional"}, meaning predictions are made conditionally on the predicted latent variables and any (random) row effects in the model. This is mainly used when predictions are made onto the \emph{same} set of sites that the boral model was fitted to, although a \code{newX} can be supplied in this case if we want to extrapolate on to the same set of sites but under different environmental conditions. 
+     \item The first type is \code{predict.type = "conditional"}, meaning predictions are made conditionally on the predicted latent variables and any (random) row effects in the model. This is mainly used when predictions are made onto the \emph{same} set of sites that the model was fitted to, although a \code{newX} can be supplied in this case if we want to extrapolate on to the same set of sites but under different environmental conditions. 
 
      \item The second type of prediction is \code{predict.type = "marginal"}, meaning predictions are made marginally or averaging over the latent variables and any (random) row effects in the model. This is mainly used when predictions are made onto a \emph{new} set of sites where the latent variables and/or row effects are unknown. A \code{newX} and/or \code{newrow.ids} is often supplied since we are extrapolating to new sites. The integration over the latent variables and random row effects is done via Monte-Carlo integration. Please note however that, as mentioned before, the integration will be done on the linear predictor scale. 
      }
@@ -104,11 +106,15 @@ p <- ncol(y)
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 ## Example 1 - model with two latent variables, random site effects, 
 ## 	and environmental covariates
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
     row.eff = "random", lv.control = list(num.lv = 2), 
-    mcmc.control = example_mcmc_control, save.model = TRUE)
+    mcmc.control = example_mcmc_control, save.model = TRUE,
+    model.name = testpath)
 
 
 ## Predictions conditional on predicted latent variables
@@ -124,7 +130,7 @@ getmargpreds <- predict(spiderfit_nb, predict.type = "marginal")
 newX <- rmvnorm(100, mean = rep(0,ncol(X)))
 
 ## Below won't work since conditional predictions are made to the same sites
-getcondpreds <- predict(spiderfit_nb, newX = newX)
+#getcondpreds <- predict(spiderfit_nb, newX = newX)
 
 ## Marginal predictions will work though provided newrow.ids is set up 
 ## properly. For example,
@@ -136,18 +142,20 @@ getmargpreds <- predict(spiderfit_nb, newX = newX, predict.type = "marginal",
 ## Example 1b - Similar to 1a except with no random site effects, 
 ## 	and a non-independence correlation structure for the latent variables
 ##      based on a fake distance matrix
-fakedistmat <- as.matrix(distmat(1:n))
+fakedistmat <- as.matrix(dist(1:n))
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
-     lv.control = list(type = "squared.exponential", num.lv = 2, distmat = fakedistmat),
+     lv.control = list(type = "squared.exponential", num.lv = 2, 
+          distmat = fakedistmat), model.name = testpath, 
      mcmc.control = example_mcmc_control, save.model = TRUE)
 
-getmargpreds <- predict(spiderfit_nb, predict.type = "marginal", distmat = fakedistmat)
+getmargpreds <- predict(spiderfit_nb, predict.type = "marginal", 
+     distmat = fakedistmat)
 
 ## Now suppose you extrpolate to new sites
-newfakedistmat <- as.matrix(distmat(1:100))
+newfakedistmat <- as.matrix(dist(1:100))
 
-getmargpreds <- predict(spiderfit_nb, newX = newX, predict.type = "marginal", 
-     distmat = newfakedistmat)
+getmargpreds <- predict(spiderfit_nb, newX = newX, 
+     predict.type = "marginal", distmat = newfakedistmat)
 
      
      
@@ -179,7 +187,8 @@ for(i in 1:length(example_which_traits))
 fit_traits <- boral(y = simy, X = X, traits = traits, 
      which.traits = example_which_traits, family = "normal", 
      lv.control = list(num.lv = 2), save.model = TRUE, 
-     mcmc.control = example_mcmc_control)	
+     mcmc.control = example_mcmc_control,
+     model.name = testpath)
 
      
 ## Predictions conditional on predicted latent variables   

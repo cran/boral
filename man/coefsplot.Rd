@@ -4,16 +4,16 @@
 
 \docType{package}
 
-\title{Caterpillar plots of the regression coefficients from a boral model} 
+\title{Caterpillar plots of the regression coefficients from a fitted model} 
 
-\description{Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in \code{X} fitted in the boral model.}
+\description{Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in \code{X} fitted in the model.}
 
 \usage{
 coefsplot(covname, x, labely = NULL, est = "median", ...) 
 	}
 	
 \arguments{
-  \item{covname}{The name of one of the covariates fitted in the boral model. That is, it must be a character vector corresponding to one of the elements in \code{colnames(x)$X.coefs.median}.}
+  \item{covname}{The name of one of the covariates in the fitted model. That is, it must be a character vector corresponding to one of the elements in \code{colnames(x)$X.coefs.median}.}
 
   \item{x}{An object for class "boral".}
              
@@ -34,7 +34,7 @@ Thanks to Robert O'Hara for suggesting and providing the original code for this 
 
 
 \value{
-	If SSVS was applied individually to each coefficient of \code{X} when fitting the boral model, then the posterior probabilities of including the specified covariate are printed out i.e., \cr those from \code{x$ssvs.indcoefs.mean}.
+	If SSVS was applied individually to each coefficient of \code{X} when fitting the model, then the posterior probabilities of including the specified covariate are printed out i.e., \cr those from \code{x$ssvs.indcoefs.mean}.
 	}
 
 \seealso{
@@ -56,6 +56,9 @@ Maintainer: \packageMaintainer{boral}
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -64,7 +67,8 @@ p <- ncol(y)
 
 X <- scale(spider$x)
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
-    lv.control = list(num.lv = 2), mcmc.control = example_mcmc_control)
+    lv.control = list(num.lv = 2), mcmc.control = example_mcmc_control, 
+    model.name = testpath)
 
 
 ## Do separate line plots for all the coefficients of X

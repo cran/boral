@@ -4,9 +4,9 @@
 
 \docType{package}
 
-\title{Dunn-Smyth Residuals for a boral model}
+\title{Dunn-Smyth Residuals for a fitted model}
 
-\description{Calculates the Dunn-Smyth residuals for a fitted boral model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
+\description{Calculates the Dunn-Smyth residuals for a fitted model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
 
 \usage{ds.residuals(object, est = "median")}
 
@@ -43,7 +43,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
-\code{\link{plot.boral}} for constructing residual analysis plots directly; \code{\link{fitted.boral}} which calculated fitted values from a boral model.}
+\code{\link{plot.boral}} for constructing residual analysis plots directly; \code{\link{fitted.boral}} which calculated fitted values from a model.}
 
 \examples{
 \dontrun{
@@ -52,12 +52,15 @@ Maintainer: \packageMaintainer{boral}
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
 spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
-     row.eff = "fixed", mcmc.control = example_mcmc_control)
+     row.eff = "fixed", mcmc.control = example_mcmc_control, model.name = testpath)
 
 ds.residuals(spiderfit_nb) 
 }

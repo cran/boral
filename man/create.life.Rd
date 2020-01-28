@@ -57,7 +57,7 @@ create.life(true.lv = NULL, lv.coefs,
 
   \item{X.coefs}{The coefficients relating to \code{X}. Defaults to \code{NULL}. This argument needs to be supplied if \code{X} is supplied and no \code{traits} are supplied.}
 
-  \item{traits}{A model matrix of species covariates, which can be included as part of the data generation. Defaults to \code{NULL}, in which case no matrix is used. No intercept column should be included in \code{traits}, as it is included automatically.}  
+  \item{traits}{A model matrix of species traits, which can be included as part of the model. Defaults to \code{NULL}, in which case no matrix was used. No intercept column should be included in \code{traits}, as it is included automatically.}  
 
   \item{traits.coefs}{A matrix of coefficients that are used to generate "new" column-specific intercepts and \code{X.coefs}. The number of rows should equal to (\code{ncol(X)+1}) and the number of columns should equal to (\code{ncol(traits)}+2). 
   
@@ -72,9 +72,9 @@ create.life(true.lv = NULL, lv.coefs,
   Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
   }
 
-  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and standard deviation given by \code{row.params}. Defaults to "none". } 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the fitted model. If fixed effects, then for parameter identifiability the first row effect is set to zero, which analogous to acting as a reference level when dummy variables are used. If random effects, they are drawn from a normal distribution with mean zero and standard deviation given by \code{row.params}. Defaults to "none". } 
 
-  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is the standard deviation for the random effects normal distribution. \cr If \code{row.eff = "none"}, then this argument is ignored.}
+  \item{row.params}{Parameters corresponding to the row effect from the fitted model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is the standard deviation for the random effects normal distribution. \cr If \code{row.eff = "none"}, then this argument is ignored.}
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \cr  \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
 
@@ -96,7 +96,7 @@ create.life(true.lv = NULL, lv.coefs,
 \details{
 \code{create.life} gives the user full capacity to control the true parameters of the model from which the multivariate responses matrices are generated from. If \code{true.lv} is supplied, then the data generation mechanism is based on this. If \code{true.lv = NULL}, then the function looks to \code{lv.control} to determine whether and how the true latent variables are to be simulated. 
 
-\code{simulate} makes use of the generic function of the same name in \code{R}: it takes a fitted boral model, treats either the posterior medians and mean estimates from the model as the true parameters, and generates response matrices based off that.
+\code{simulate} makes use of the generic function of the same name in \code{R}: it takes a fitted model, treats either the posterior medians and mean estimates from the model as the true parameters, and generates response matrices based off that.
 }
 
 \value{
@@ -112,7 +112,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
-\code{\link{boral}} for the default function for fitting a boral model. 
+\code{\link{boral}} for the default function for model fitting. 
 }
 
 \examples{
@@ -120,6 +120,9 @@ Maintainer: \packageMaintainer{boral}
 ## they are only used here to make the examples run quick!!!
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
+
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
 
 ## Example 1a - Simulate a response matrix of normally distributed data
 library(mvtnorm)
@@ -138,7 +141,7 @@ simy <- create.life(true.lv = true.lv, lv.coefs = lv.coefs,
 
 \dontrun{
 fit.boral <- boral(simy, X = X, family = "normal", lv.control = list(num.lv = 2),
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 summary(fit.boral)
 }
@@ -166,7 +169,8 @@ simy <- create.life(true.lv = NULL, lv.coefs = lv.coefs,
 ## with a non-independent correlation structure using a fake distance matrix
 makedistmat <- as.matrix(dist(1:30))
 simy <- create.life(true.lv = NULL, lv.coefs = lv.coefs, 
-    lv.control = list(num.lv = 2, type = "exponential", lv.covparams = 5, distmat = makedistmat),
+    lv.control = list(num.lv = 2, type = "exponential", lv.covparams = 5, 
+          distmat = makedistmat),
     X = X, X.coefs = X.coefs, row.eff = "random",
     row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
     save.params = TRUE)
@@ -185,12 +189,12 @@ simy <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs,
 
 \dontrun{
 fit.boral <- boral(y = simy$resp, family = "ordinal", lv.control = list(num.lv = 2),
-      mcmc.control = example_mcmc_control)
+      mcmc.control = example_mcmc_control, model.name = testpath)
 }
 
 \dontrun{
 ## Example 3 - Simulate a response matrix of count data based off
-## a fitted boral model involving traits (ants data from mvabund)
+## a fitted model involving traits (ants data from mvabund)
 library(mvabund)
 data(antTraits)
 
@@ -205,7 +209,7 @@ for(i in 1:length(example_which_traits))
 
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
     family = "negative.binomial", lv.control = list(num.lv = 2),
-     mcmc.control = example_mcmc_control)
+     mcmc.control = example_mcmc_control, model.name = testpath)
 
 ## The hard way
 simy <- create.life(true.lv = fit_traits$lv.mean, 
@@ -213,7 +217,7 @@ simy <- create.life(true.lv = fit_traits$lv.mean,
      X.coefs = fit_traits$X.coefs.median, traits = traits, 
      traits.coefs = fit_traits$traits.coefs.median, family = "negative.binomial")
 
-## The easy way, using the same latent variables as the fitted boral model
+## The easy way, using the same latent variables as the fitted model
 simy <- simulate(object = fit_traits)
 
 ## The easy way, generating new latent variables
@@ -249,8 +253,6 @@ simy <- create.life(lv.control = simfit$lv.control, lv.coefs = simfit$lv.coefs,
 \dontrun{
 ## NOTE: The values below MUST NOT be used in a real application;
 ## they are only used here to make the examples run quick!!!
-example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
-    n.thin = 1)
 
 example_which_traits <- vector("list",ncol(X)+1); 
 for(i in 1:length(example_which_traits)) 
@@ -258,7 +260,7 @@ for(i in 1:length(example_which_traits))
 fit_traits <- boral(y = simy, X = X, traits = traits, 
     which.traits = example_which_traits, family = "binomial", 
     lv.control = list(num.lv = 2), save.model = TRUE, 
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 }
 
 }

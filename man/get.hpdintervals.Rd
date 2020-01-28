@@ -4,9 +4,9 @@
 
 \docType{package}
 
-\title{Highest posterior density intervals for an boral model}
+\title{Highest posterior density intervals for a fitted model}
 
-\description{Calculates the lower and upper bounds of the highest posterior density intervals for parameters and latent variables in a fitted boral model.}
+\description{Calculates the lower and upper bounds of the highest posterior density intervals for parameters and latent variables in a fitted model.}
 
 \usage{
 get.hpdintervals(y, X = NULL, traits = NULL, row.ids = NULL, 
@@ -14,15 +14,15 @@ get.hpdintervals(y, X = NULL, traits = NULL, row.ids = NULL,
 }
 
 \arguments{
-  \item{y}{The response matrix that the boral model was fitted to.}
+  \item{y}{The response matrix that the model was fitted to.}
   
-  \item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
+  \item{X}{The model matrix used in the model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
   
-  \item{traits}{The matrix of species traits used in the boral model. Defaults to \code{NULL}, in which case it is assumed no traits were included.}  
+  \item{traits}{The matrix of species traits used in the model. Defaults to \code{NULL}, in which case it is assumed no traits were included.}  
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, in which case iti assumed no random effects were included in the model.}    
 
- \item{fit.mcmc}{All MCMC samples for the fitted boral model. These can be extracted by fitting an boral model using \code{boral} with \code{save.model = TRUE}, and then applying \code{get.mcmcsamples(fit)}.} 
+ \item{fit.mcmc}{All MCMC samples for the fitted model. These can be extracted by fitting a model using \code{boral} with \code{save.model = TRUE}, and then applying \code{get.mcmcsamples(fit)}.} 
   
  \item{lv.control}{A list (currently) with the following arguments:
     \itemize{
@@ -73,7 +73,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \note{
-\code{\link{boral}} fits the boral model and returns the HPD intervals by default. 
+\code{\link{boral}} fits the model and returns the HPD intervals by default. 
 }
 
 \section{Warnings}{
@@ -93,6 +93,8 @@ Maintainer: \packageMaintainer{boral}
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
     n.thin = 1)
      
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -102,7 +104,8 @@ p <- ncol(y)
 ## Example 1 - model with two latent variables, site effects, 
 ## 	and no environmental covariates
 spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
-    row.eff = "fixed", save.model = TRUE, mcmc.control = example_mcmc_control)
+    row.eff = "fixed", save.model = TRUE, mcmc.control = example_mcmc_control,
+    model.name = testpath)
 
 ## Returns a list with components corresponding to values described above.
 spiderfit_nb$hpdintervals 
@@ -111,7 +114,7 @@ spiderfit_nb$hpdintervals
 ## 	and environmental covariates
 spiderfit_nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
     lv.control = list(num.lv = 2), row.eff = "fixed", save.model = TRUE,
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 ## Returns a list with components corresponding to values described above.
 spiderfit_nb2$hpdintervals 

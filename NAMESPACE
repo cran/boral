@@ -1,5 +1,6 @@
-export(boral,
-	boral.default,
+export(
+     boral,
+     boral.default,
 	calc.condlogLik,
 	calc.logLik.lv0,
 	calc.marglogLik,
@@ -19,7 +20,9 @@ export(boral,
 	make.jagsboralnullmodel,
      predict.boral,
 	plot.boral,
-	summary.boral)
+	summary.boral,
+	tidyboral
+	)
 
 
 exportClasses(boral)
@@ -32,16 +35,15 @@ S3method(predict, boral)
 S3method(simulate, boral)
 S3method(summary, boral)
 
-
 importFrom("utils", "packageDescription")
 
-import(coda, mvtnorm, fishMod, MASS)
-
-importFrom(R2jags, jags)
-
 importFrom(abind, abind)
-
+import(coda, mvtnorm, fishMod, MASS)
+importFrom(corpcor, cor2pcor, pseudoinverse)
+importFrom(R2jags, jags)
+importFrom(reshape2, melt)
 importFrom(stats, dbeta, pbeta, qbeta, rbeta)
+importFrom(stats, binomial, poisson, gaussian)
 importFrom(stats, dbinom, pbinom, qbinom, rbinom)
 importFrom(stats, dexp, pexp, qexp, rexp)
 importFrom(stats, dgamma, pgamma, qgamma, rgamma)

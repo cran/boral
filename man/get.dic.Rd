@@ -4,9 +4,9 @@
 
 \docType{package}
 
-\title{Extract Deviance Information Criterion for boral model}
+\title{Extract Deviance Information Criterion for a fitted model}
 
-\description{Calculates the Deviance Information Criterion (DIC) for a boral model fitted using JAGS.}
+\description{Calculates the Deviance Information Criterion (DIC) for a model fitted using JAGS.}
 
 \usage{
 get.dic(jagsfit)
@@ -43,7 +43,7 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \note{
-This function and consequently the DIC value is automatically returned when a boral model is fitted using \code{\link{boral}} with \code{calc.ics = TRUE}. 
+This function and consequently the DIC value is automatically returned when a model is fitted using \code{\link{boral}} with \code{calc.ics = TRUE}. 
 }
 
 \examples{
@@ -53,6 +53,9 @@ This function and consequently the DIC value is automatically returned when a bo
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
      
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
@@ -60,7 +63,8 @@ n <- nrow(y)
 p <- ncol(y)
     
 spiderfit_nb <- boral(y, family = "negative.binomial", lv.control = list(num.lv = 2),
-     save.model = TRUE, calc.ics = TRUE, mcmc.control = example_mcmc_control)
+     save.model = TRUE, calc.ics = TRUE, mcmc.control = example_mcmc_control,
+     model.name = testpath)
 
 spiderfit_nb$ics ## DIC returned as one of several information criteria.
 }

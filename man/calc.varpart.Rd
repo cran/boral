@@ -4,7 +4,7 @@
 
 \docType{package}
 
-\title{Variance partitioning for a boral model}
+\title{Variance partitioning for a latent variable model}
 
 \description{For each response (species), partition the variance of the linear predictor into components associated with (groups of) the covariates, the latent variables, any row effects. If traits are also included in the model, then it also calculates an R-squared value for the proportion of the variance in the environmental response (due to the covariates) which can be explained by traits.}
 
@@ -20,7 +20,7 @@ calc.varpart(object, groupX = NULL)
 
 
 \details{
-As an alternative to looking at differences in trace of the residual covariance matrix (Hui et al., 2014; Warton et al., 2015), an alternative way to quantify the amount of variance explained by covariates, traits, row effects, is to perform a variance decomposition of the linear predictor of a boral model. In particular, for a general boral model the linear predictor for response \eqn{j = 1,\ldots,p} at row \eqn{i = 1,\ldots,n} is given by
+As an alternative to looking at differences in trace of the residual covariance matrix (Hui et al., 2014; Warton et al., 2015), an alternative way to quantify the amount of variance explained by covariates, traits, row effects, is to perform a variance decomposition of the linear predictor of a latent variable model. In particular, for a general model the linear predictor for response \eqn{j = 1,\ldots,p} at row \eqn{i = 1,\ldots,n} is given by
 
 \deqn{\eta_{ij} = \alpha_i + \beta_{0j} + \bm{x}^\top_i\bm{\beta}_j, + \bm{z}^\top_i\bm{\theta}_j,}
 
@@ -30,7 +30,7 @@ For the response, a variation partitioning of the linear is performed by calcula
 
 If \code{groupX} is supplied, the variance due to the \code{X} covariates is done based on subsets of \code{X} variables (including the intercept) as identified by code{groupX}, and then rescaled correspondingly. This is useful if one was to, for example, quantify the proportion of variation in each species which is explained by each \code{X} covariate.
 
-If the fitted boral model also contains traits, which are included to help explain/mediate differences in species environmental responses, then the function calculates \eqn{R^2} value for the proportion of variance in the \code{X} variables which is explained by the traits. In brief, this is calculated based the correlation between \eqn{\beta_{0j} + \bm{x}^\top_i\bm{\beta}_j} and \eqn{\tau_{0j} + \bm{x}^\top_i\bm{\tau}_j}, where \eqn{\tau_{0j}} and \eqn{\bm{\tau}_j} are the ``predicted" values of the species coefficients based on values i.e., \eqn{\tau_{0j} = \kappa_{01} + \bm{traits}^\top_j\bm{\kappa}_1} and \eqn{\tau_{jk} = \kappa_{0k} + \bm{traits}^\top_j\bm{\kappa}_k} for element \eqn{k} in \eqn{\bm{\tau}_j}. 
+If a fitted model also containing traits, which are included to help explain/mediate differences in species environmental responses, then the function calculates \eqn{R^2} value for the proportion of variance in the \code{X} variables which is explained by the traits. In brief, this is calculated based the correlation between \eqn{\beta_{0j} + \bm{x}^\top_i\bm{\beta}_j} and \eqn{\tau_{0j} + \bm{x}^\top_i\bm{\tau}_j}, where \eqn{\tau_{0j}} and \eqn{\bm{\tau}_j} are the ``predicted" values of the species coefficients based on values i.e., \eqn{\tau_{0j} = \kappa_{01} + \bm{traits}^\top_j\bm{\kappa}_1} and \eqn{\tau_{jk} = \kappa_{0k} + \bm{traits}^\top_j\bm{\kappa}_k} for element \eqn{k} in \eqn{\bm{\tau}_j}. 
 }
 
 \value{
@@ -82,10 +82,14 @@ p <- ncol(y)
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
 
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
+
 ## Example 1 - model with X variables, two latent variables, and no row effects
 spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
      lv.control = list(num.lv = 2), 
-     save.model = TRUE, mcmc.control = example_mcmc_control)
+     save.model = TRUE, mcmc.control = example_mcmc_control,
+     model.name = testpath)
 
 ## Partition variance for each species into that explained by covariates 
 ## and by the latent variables
@@ -114,7 +118,7 @@ example_which_traits[[3]] <- 0
 
 fit_traits <- boral(y, X = X, traits = traits, which.traits = example_which_traits, 
     family = "negative.binomial", mcmc.control = example_mcmc_control, 
-    save.model = TRUE)
+    save.model = TRUE, model.name = testpath)
 
 ## Partition variance for each species due to covariates in X 
 ## and latent variables. Also calculate proportion of variance 

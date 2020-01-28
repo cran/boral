@@ -4,9 +4,9 @@
 
 \docType{package}
 
-\title{Marginal log-likelihood for an boral model}
+\title{Marginal log-likelihood for a fitted model}
 
-\description{Calculates the marginal log-likelihood for a set of parameter estimates from an boral model, whereby the latent variables and random effects (if applicable) are integrated out. The integration is performed using Monte Carlo integration. WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!!!}
+\description{Calculates the marginal log-likelihood for a set of parameter estimates from a fitted model, whereby the latent variables and random effects (if applicable) are integrated out. The integration is performed using Monte Carlo integration. WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!}
 
 \usage{
 calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 
@@ -16,9 +16,9 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 }
 
 \arguments{
-\item{y}{The response matrix that the boral model was fitted to.}
+\item{y}{The response matrix that the model was fitted to.}
 
-\item{X}{The model matrix used in the boral model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
+\item{X}{The model matrix used in the model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
 
   \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
 
@@ -27,29 +27,29 @@ calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs,
 
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
-  \item{lv.coefs}{The column-specific intercept, coefficient estimates relating to the latent variables, and dispersion parameters from the boral model.}
+  \item{lv.coefs}{The column-specific intercept, coefficient estimates relating to the latent variables, and dispersion parameters from the fitted model.}
 
-  \item{X.coefs}{The coefficients estimates relating to \code{X} from the boral model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
+  \item{X.coefs}{The coefficients estimates relating to \code{X} from the fitted model. Defaults to \code{NULL}, in which it is assumed there are no covariates in the model.}
 
-  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the boral model. If random effects, they are drawn from a normal distribution with mean zero and standard deviation given by \code{row.params}. Defaults to "none". } 
+  \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the fitted model. If fixed effects, then for parameter identifiability the first row effect is set to zero, which analogous to acting as a reference level when dummy variables are used. If random effects, they are drawn from a normal distribution with mean zero and standard deviation given by \code{row.params}. Defaults to "none". } 
 
-  \item{row.params}{Parameters corresponding to the row effect from the boral model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is standard deviation for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
+  \item{row.params}{Parameters corresponding to the row effect from the fitted model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is standard deviation for the random effects normal distribution. If \code{row.eff = "none"}, then this argument is ignored.}
 
  \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \cr \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
 
  \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
 
- \item{num.lv}{The number of latent variables used in the boral model. For boral models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the log-likelihood.}
+ \item{num.lv}{The number of latent variables used in the fitted model. For models with no latent variables, please use \code{\link{calc.logLik.lv0}} to calculate the log-likelihood.}
 
   \item{lv.mc}{A matrix used for performing the Monte Carlo integration. Defaults to \code{NULL}, in which case a matrix is generated within the function.}
 
-  \item{cutoffs}{Common cutoff estimates from the boral model when any of the columns of \code{y} are ordinal responses. Defaults to \code{NULL}.}
+  \item{cutoffs}{Common cutoff estimates from the fitted model when any of the columns of \code{y} are ordinal responses. Defaults to \code{NULL}.}
 
-\item{powerparam}{Common power parameter from the boral model when any of the columns of \code{y} are tweedie responses. Defaults to \code{NULL}.}
+\item{powerparam}{Common power parameter from the fitted model when any of the columns of \code{y} are tweedie responses. Defaults to \code{NULL}.}
 }
 
 \details{
-For an \eqn{n x p} response matrix \code{y}, suppose we fit an boral model with one or more latent variables. If we denote the latent variables by \eqn{\bm{z}_i; i = 1,\ldots,n}, then the marginal log-likelihood is given by
+For an \eqn{n x p} response matrix \code{y}, suppose we fit a model with one or more latent variables. If we denote the latent variables by \eqn{\bm{z}_i; i = 1,\ldots,n}, then the marginal log-likelihood is given by
 
 \deqn{ \log(f) = \sum_{i=1}^n \log ( \int \prod_{j=1}^p \{f(y_{ij} | \bm{z}_i, \beta_{0j}, \bm{\theta}_j, \ldots) \} f(\bm{z}_i) d\bm{z}_i), }
 
@@ -78,9 +78,12 @@ A list with the following components:
 Maintainer: \packageMaintainer{boral}
 }
 
+\section{Warnings}{As of version 1.6, this function will no longer be updated...use at your own peril!}
+
+
 \seealso{
 \code{\link{calc.condlogLik}} for calculation of the conditional log-likelihood; 
-\code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for an boral model with no latent variables.
+\code{\link{calc.logLik.lv0}} to calculate the conditional/marginal log-likelihood for a model with no latent variables.
 }
 
 \examples{
@@ -89,6 +92,9 @@ Maintainer: \packageMaintainer{boral}
 ## they are only used here to make the examples run quick!!!
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
+
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
+
 
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
@@ -100,7 +106,7 @@ p <- ncol(y)
 ## 	and no environmental covariates
 spiderfit_nb <- boral(y, family = "negative.binomial", 
     lv.control = list(num.lv = 2), row.eff = "fixed", save.model = TRUE, 
-    mcmc.control = example_mcmc_control)
+    mcmc.control = example_mcmc_control, model.name = testpath)
 
 ## Extract all MCMC samples
 fit_mcmc <- get.mcmcsamples(spiderfit_nb) 
@@ -122,7 +128,7 @@ calc.marglogLik(y, family = "negative.binomial",
 ## 	and environmental covariates
 spiderfit_nb2 <- boral(y, X = spider$x, family = "negative.binomial", 
      lv.control = list(num.lv = 2), save.model = TRUE, 
-     mcmc.control = example_mcmc_control)
+     mcmc.control = example_mcmc_control, model.name = testpath)
 
 ## Extract all MCMC samples
 fit_mcmc <- get.mcmcsamples(spiderfit_nb2) 

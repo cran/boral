@@ -57,21 +57,22 @@ X <- scale(spider$x)
 n <- nrow(y)
 p <- ncol(y)
 
-## NOTE: The two examples below and taken directly from the boral help file
+## NOTE: The examples below and taken directly from the boral help file
 
 example_mcmc_control <- list(n.burnin = 10, n.iteration = 100, 
      n.thin = 1)
+
+testpath <- file.path(tempdir(), "jagsboralmodel.txt")
 
 \dontrun{
 ## Example 2d - model with environmental covariates and 
 ##  two structured latent variables using fake distance matrix
 fakedistmat <- as.matrix(dist(1:n))
 spiderfit_lvstruc <- boral(y, X = X, family = "negative.binomial", 
-    lv.control = list(num.lv = 2, type = "powered.exponential", 
-    distmat = fakedistmat))
+    lv.control = list(num.lv = 2, type = "exponential", distmat = fakedistmat), 
+     mcmc.control = example_mcmc_control, model.name = testpath)
 
 summary(spiderfit_lvstruc)
-
     }
 
 }

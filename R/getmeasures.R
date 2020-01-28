@@ -14,10 +14,9 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
             complete_family <- family
     index_ordinal_cols <- which(family == "ordinal")
     
-    if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
-    stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of columns in y. The latter will assume the specified trial size for all rows labelled binomial in the family argument")
+     check_trial_size(family = family, trial.size = trial.size)
     
-# 	lv.control <- check.lv.control(num.lv, lv.control)
+# 	lv.control <- check_lv_control(num.lv, lv.control)
 # 	num.lv <- lv.control$num.lv
     
     if(row.eff != "none") {
@@ -25,18 +24,18 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
                     row.ids <- matrix(1:nrow(y), ncol = 1)
                     colnames(row.ids) <- "ID1"
                     }
-        row.ids <- check.row.ids(row.ids = row.ids, y = y)	
+        row.ids <- check_row_ids(row.ids = row.ids, y = y)	
         }
-    check.offset(offset = offset, y = y) 
+    check_offset(offset = offset, y = y) 
 
     if(length(grep("ssvs",colnames(fit.mcmc))) > 0)
         warnings("Calculation of information criterion in the presence of any SSVS is problematic at best!")
 
-    do.marglik.ics <- check.domarglik.ics(fit.mcmc.names = colnames(fit.mcmc), index.ordinal.cols = index_ordinal_cols)
+    do.marglik.ics <- check_domarglik_ics(fit.mcmc.names = colnames(fit.mcmc), index.ordinal.cols = index_ordinal_cols)
         
-    ##################
+    ##-----------------------------
     ## Checks done 
-    ##################
+    ##-----------------------------
 
     n <- nrow(y); p <- ncol(y)
     all.lppd <- matrix(NA, nrow = nrow(fit.mcmc), ncol = n*p)
@@ -152,10 +151,9 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
     if(length(family) > 1) 
             complete_family <- family
     
-    if(any(family == "binomial") & !(length(trial.size) %in% c(1, length(family)))) 
-            stop("trial.size needs to be specified if any columns are binomially distributed; can either be a single element or a vector equal to the # of columns in y. The latter will assume the specified trial size for all rows labelled binomial in the family argument")
+     check_trial_size(family = family, trial.size = trial.size)
 
-# 	lv.control <- check.lv.control(num.lv, lv.control)
+# 	lv.control <- check_lv_control(num.lv, lv.control)
 # 	num.lv <- lv.control$num.lv
 
 if(row.eff != "none") {
@@ -163,14 +161,14 @@ if(row.eff != "none") {
                     row.ids <- matrix(1:nrow(y), ncol = 1)
                     colnames(row.ids) <- "ID1"
                     }
-    row.ids <- check.row.ids(row.ids = row.ids, y = y)	
+    row.ids <- check_row_ids(row.ids = row.ids, y = y)	
     }
-    check.offset(offset = offset, y = y) 
+    check_offset(offset = offset, y = y) 
 
 if(length(grep("ssvs",colnames(fit.mcmc))) > 0)
     warnings("Calculation of information criterion in the presence of any SSVS is problematic at best!")
 
-do.marglik.ics <- check.domarglik.ics(fit.mcmc.names = colnames(fit.mcmc), index.ordinal.cols = index_ordinal_cols)
+do.marglik.ics <- check_domarglik_ics(fit.mcmc.names = colnames(fit.mcmc), index.ordinal.cols = index_ordinal_cols)
     
             
     ## Checks done ##
