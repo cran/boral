@@ -15,6 +15,8 @@
 ## - A tidyboral function has been created to reformat output for boral so that instead of a separate element for mean,median,IQR,sd, a long data frame is used instead 
 
 
+## 0) lvsplot version 2.0; after some consultation with David and inspired by a problem of Hao Ran -- see playingaround_lvsplot2
+## 0.5) Define creator/author/contributor roles
 ## 1) How to allow for multiple sets of LVs, 
 ## 2) Allow for phylogenetic correlations on species coefficients between species
 ## 3) Reduce rank species coefficients to get constrained ordination? HARD!!! Phase out functions to calculate likelihoods for no LV model???

@@ -1,7 +1,7 @@
-618aa90826a4077b16d38d577e271015 *DESCRIPTION
-d5ac034724bf1ea944e56dea76a0b2ce *NAMESPACE
+7f1de662afa80d64c33eb324ed4137a2 *DESCRIPTION
+dd95a410cce665e06fb1c563ae1e1056 *NAMESPACE
 92b2d3303f344e4d17a4011e18bf5de5 *R/auxilaryfunctions.R
-859b54e892c92a6cae7fb4348de86739 *R/boral.jags.R
+7458dd970117006d713dce1ba7b51e9d *R/boral.jags.R
 67e7b039ca8c9a8c2a736d6a1436407e *R/calclogLfunctions.R
 33b38b70868e13765fdc89574b4d702c *R/checkfunctions.R
 0d568f3df0f661aab521fa0228fbd2b5 *R/getcorrelations.R
@@ -16,9 +16,9 @@ daeebc5467ce3196382a398f4745befe *R/simdatafunctions.R
 396c56ef73501838a53fd2a47db456b5 *R/summaryboral.R
 f70d920a22b17aff8b01e4814ad38fb4 *R/tidyboral.R
 35593dbf3bc23be6450b2c8ec659ae61 *R/unseenfunctions.R
-36c244d3c9797a74509761be9ef29454 *build/partial.rdb
+2ce76221b51cbdb3a0249c2f220a5886 *build/partial.rdb
 ae58d1c2d2fe9504161fe11fd10873ac *inst/CITATION
-ee6227de7bc78974ade0153647787d8c *inst/NEWS.Rd
+6c05946c2b9a79b2b3db32231b0ff41f *inst/NEWS.Rd
 2153d8d88e928294968a827c420f24fb *man/about.distributions.Rd
 675a1d9f58922f25e1f76d131960a819 *man/about.lvs.Rd
 8aafc96ac36c28d28d8435a3785fe243 *man/about.ssvs.Rd

@@ -25,9 +25,6 @@ export(
 	)
 
 
-exportClasses(boral)
-
-
 S3method(boral, default)
 S3method(fitted, boral)
 S3method(plot, boral)

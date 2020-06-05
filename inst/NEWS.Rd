@@ -3,9 +3,11 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN boral VERSION 1.8}{
-This list below is written in terms of what is deemed to be most important to least important changes =P 
+This list below is written in terms of what is deemed to be most important to least important changes.
 
   \itemize{
+     \item Fixed a change in 1.8.1 that was required as part of the latest developmental version of R
+  
      \item Both \code{get.enviro.cor} and \code{get.residual.cor} functions now return highest posterior density intervals for each element in the relevant correlation and precision matrix. The probability defining the interval is given by a new prob argument.
 
      \item The \code{predict.boral} function now has a \code{scale} argument which allows prediction on the response scale (although note actual predicted responses are not simulated). Previously, and by default, predictions are done the linear predictor scale.
