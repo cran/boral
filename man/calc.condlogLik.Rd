@@ -6,7 +6,10 @@
 
 \title{Conditional log-likelihood for a fitted model}
 
-\description{Calculates the conditional log-likelihood for a set of parameter estimates from a fitted model, where everything is treated as "fixed effects" including latent variables, row effects, and so on.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("soft-deprecated")}
+
+Calculates the conditional log-likelihood for a set of parameter estimates from a fitted model, where everything is treated as "fixed effects" including latent variables, row effects, and so on.}
 
 \usage{
 calc.condlogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 

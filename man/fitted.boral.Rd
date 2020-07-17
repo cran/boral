@@ -6,16 +6,21 @@
 
 \title{Extract Model Fitted Values for an boral object}
 
-\description{Calculated the predicted mean responses based on the fitted model, by using the posterior medians or means of the parameters.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Calculated the predicted mean responses based on the fitted model, by using the posterior medians or means of the parameters.}
 
 \usage{ 
-\method{fitted}{boral}(object, est = "median",...) 
+\method{fitted}{boral}(object, est = "median", linear.predictor = FALSE, ...) 
 }
 
 \arguments{
   \item{object}{An object of class "boral".}
 
   \item{est}{A choice of either the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
+
+  \item{linear.predictor}{Determines the scale on which to return the fitted values. When set to \code{TRUE}, it returns the fitted mean values on the linear predictor scale. When set to \code{FALSE}, which is the defaul behavior, the fitted mean values are on the response scale. Note things are slightly more complicated for zero truncated distributions because, the log-link connects the mean of the \emph{untruncated} distribution to the linear predictor. Therefore if \code{linear.predictor = TRUE}, then the linear predictor is returned. But if \code{linear.predictor = FALSE}, then actual fitted mean value is returned.}
 
   \item{...}{Not used.}
 }

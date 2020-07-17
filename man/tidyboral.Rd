@@ -6,7 +6,10 @@
 
 \title{Reformats output from a boral fit}
 
-\description{Reformats estimates from a fitted boral model to be in a slightly tidier format, meaning everything is presented as a long data frame.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("maturing")}
+
+Reformats estimates from a fitted boral model to be in a slightly tidier format, meaning everything is presented as a long data frame.}
 
 \usage{
 tidyboral(object)

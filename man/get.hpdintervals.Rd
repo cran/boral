@@ -6,7 +6,10 @@
 
 \title{Highest posterior density intervals for a fitted model}
 
-\description{Calculates the lower and upper bounds of the highest posterior density intervals for parameters and latent variables in a fitted model.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Calculates the lower and upper bounds of the highest posterior density intervals for parameters and latent variables in a fitted model.}
 
 \usage{
 get.hpdintervals(y, X = NULL, traits = NULL, row.ids = NULL, 

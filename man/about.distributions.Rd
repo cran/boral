@@ -8,7 +8,10 @@
 Distributions available in boral
 }
 
-\description{This help file provides more information regarding the distributions i.e., the \code{family} argument, available in the boral package, to handle various responses types.
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+This help file provides more information regarding the distributions i.e., the \code{family} argument, available in the boral package, to handle various responses types.
 }
 
 
@@ -33,6 +36,8 @@ where \eqn{\Phi(\cdot)} is the probit function, \eqn{P(y_{ij} \le k)} is the cum
 
 The parameterization above is useful for modeling ordinal in ecology. When ordinal responses are recorded, usually the same scale is applied to all species e.g., level 1 = not there, level 2 = a bit there, level 3 = lots there, level 4 = everywhere! The quantity \eqn{\tau_k} can thus be interpreted as this common scale, while \eqn{\beta_{0j}} allows for deviations away from these to account for differences in species prevalence. Admittedly, the current implementation of boral for ordinal data can be quite slow. 
 
+For count distributions where zeros are not permitted, then the zero truncated Poisson (\code{family = "ztpoisson"}) and zero truncated negative binomial distributions (\code{family = "ztnegative.binomial"}) are possible. Note for these two distributions, and as is commonly implemented in other regression models e.g., the \code{countreg} package (Zeileis and Kleiber, 2018), the models are set up such that a log-link connects the mean of the \emph{untruncated} distribution to the linear predictor. While not necessarily useful on its own, the zero truncated distributions may often be used in conjunction with an model for modeling presence-absence data, and together they can be used to construct the hurdle class of models (noting direct implementation of hurdle models is currently not available). 
+
 Finally, in the event different responses are collected for different columns, e.g., some columns of \code{y} are counts, while other columns are presence-absence, one can specify different distributions for each column. Aspects such as variable selection, residual analysis, and plotting of the latent variables are, in principle, not affected by having different distributions. Naturally though, one has to be more careful with interpretation of the row effects \eqn{\alpha_i} and latent variables \eqn{\bm{z}_i}, as different link functions will be applied to each column of \code{y}. A situation where different distributions may prove useful is when \code{y} is a species--traits matrix, where each row is a species and each column a trait such as specific leaf area. In this case, traits could be of different response types, and the goal perhaps is to perform unconstrained ordination to look for patterns between species on an underlying trait surface e.g., a defense index for a species (Moles et al., 2013).
 
 }
@@ -50,6 +55,7 @@ Finally, in the event different responses are collected for different columns, e
 
 \item Smithson, M., and Verkuilen, J. (2006). A better lemon squeezer? Maximum-likelihood regression with beta-distributed dependent variables. Psychological methods, 11, 54-71.
 
+\item Zeileis, A., and Kleiber C. (2018). countreg: Count Data Regression. R package version 0.2-1. URL http://R-Forge.R-project.org/projects/countreg/
 }
 }
 

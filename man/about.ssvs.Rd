@@ -8,7 +8,10 @@
 Stochastic search variable selection (SSVS) in boral
 }
 
-\description{This help file provides more information regarding the implementation of the stochastic search variable selection (SSVS, George and McCulloch, 1993) as implemented in the boral package.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+This help file provides more information regarding the implementation of the stochastic search variable selection (SSVS, George and McCulloch, 1993) as implemented in the boral package.}
 
 \details{
 Stochastic search variable selection (SSVS, George and McCulloch, 1993) is a approach for model selection, which is applicable specifically to the Bayesian MCMC framework. As of boral version 1.5, SSVS is implemented in two ways.

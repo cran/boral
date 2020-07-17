@@ -8,7 +8,10 @@
 
 \title{Fitting boral (Bayesian Ordination and Regression AnaLysis) models}
 
-\description{Bayesian ordination and regression models for analyzing multivariate data in ecology. Three "types" of models may be fitted: 1) With covariates and no latent variables, boral fits independent response GLMs; 2) With no covariates, boral fits a pure latent variable model; 3) With covariates and latent variables, boral fits correlated response GLMs.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Bayesian ordination and regression models for analyzing multivariate data in ecology. Three "types" of models may be fitted: 1) With covariates and no latent variables, boral fits independent response GLMs; 2) With no covariates, boral fits a pure latent variable model; 3) With covariates and latent variables, boral fits correlated response GLMs.}
 
 \usage{
 boral(y, ...)
@@ -19,7 +22,7 @@ boral(y, ...)
     row.eff = "none", row.ids = NULL,
     offset = NULL, save.model = FALSE, calc.ics = FALSE, 
     mcmc.control = list(n.burnin = 10000, n.iteration = 40000, 
-    n.thin = 30, seed = 123), 
+    n.thin = 30, seed = NULL), 
     prior.control = list(type = c("normal","normal","normal","uniform"), 
     hypparams = c(10, 10, 10, 30), ssvs.index = -1, ssvs.g = 1e-6, 
     ssvs.traitsindex = -1), do.fit = TRUE, model.name = NULL, num.lv = NULL, ...)
@@ -44,7 +47,7 @@ boral(y, ...)
   
   Defaults to \code{NULL}, and used in conjunction with \code{traits} and \cr \code{prior.control$ssvs.traitsindex}.}
 
-  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
+  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression), "ztpoisson" (zero truncated Poisson with log link), "ztnegative.binomial" (zero truncated negative binomial with log link). 
 
   Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
   }
@@ -70,7 +73,7 @@ boral(y, ...)
 
  \item{save.model}{If \code{save.model = TRUE}, then the JAGS model file is saved as a text file (with name given by \code{model.name}) in the current working directory as well as the MCMC samples, which themselves can be extracted using the \code{get.mcmcsamples} function. Various functions available in the \code{coda} package can be applied to the MCMC samples for diagnosing convergence. Note MCMC samples can take up a lot of memory. Defaults to \code{FALSE}.}
 
-\item{calc.ics}{If \code{calc.ics = TRUE}, then various information criteria values are also returned, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to \code{FALSE}. WARNING: As of version 1.5, functions to calculate information criteria will no longer be updated...use at your own peril!!!}
+\item{calc.ics}{If \code{calc.ics = TRUE}, then various information criteria values are also returned, which could be used to perform model selection (see \code{\link{get.measures}}). Defaults to \code{FALSE}. WARNING: As of version 1.6, this function is longer updated!}
 
 \item{mcmc.control}{A list of parameters for controlling the MCMC sampling. Values not set will assume default values. These include:
     \itemize{
@@ -80,7 +83,7 @@ boral(y, ...)
 
         \item \emph{n.thin:} Thinning rate. Must be a positive integer. Defaults to 30.
 
-        \item \emph{seed:} Seed for JAGS sampler. A \code{set.seed(seed)} command is run immediately before starting the MCMC sampler. Defaults to the value 123.
+        \item \emph{seed:} Seed for JAGS sampler. A \code{set.seed(seed)} command is run immediately before starting the MCMC sampler. Defaults to the value \code{NULL}, so the MCMC estimation is not seeded.
         }
     }
 	
@@ -294,7 +297,7 @@ Maintainer: \packageMaintainer{boral}
 \itemize{
 \item \emph{No} intercept column is required in \code{X}. Column-specific intercepts are estimated automatically and given by the first column of \code{lv.coefs}. Similarly, \emph{no} intercept column is required in \code{traits}, as it is included automatically.
 
-\item As of version 1.6, functions to calculate information criteria along with \code{\link{calc.marglogLik}} will no longer be updated...use \code{calc.ics = TRUE} at your own peril!!!
+\item As of version 1.6, functions to calculate information criteria along with \code{\link{calc.marglogLik}} are no longer updated!
 
 \item MCMC with a non-independence correlation structure for the latent variables takes an especially long time to run!
 

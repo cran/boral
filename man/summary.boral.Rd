@@ -7,7 +7,10 @@
 
 \title{Summary of fitted boral object}
 
-\description{A summary of the fitted boral objects including the type of model fitted e.g., error distribution, number of latent variables parameter estimates, and so on.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+A summary of the fitted boral objects including the type of model fitted e.g., error distribution, number of latent variables parameter estimates, and so on.}
 
 \usage{
 \method{summary}{boral}(object, est = "median", ...)

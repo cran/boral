@@ -6,7 +6,10 @@
 
 \title{Caterpillar plots of the regression coefficients from a fitted model} 
 
-\description{Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in \code{X} fitted in the model.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in \code{X} fitted in the model.}
 
 \usage{
 coefsplot(covname, x, labely = NULL, est = "median", ...) 

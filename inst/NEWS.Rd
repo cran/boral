@@ -2,27 +2,19 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 1.8}{
+\section{CHANGES IN boral VERSION 1.9}{
 This list below is written in terms of what is deemed to be most important to least important changes.
 
   \itemize{
-     \item Fixed a change in 1.8.1 that was required as part of the latest developmental version of R
-  
-     \item Both \code{get.enviro.cor} and \code{get.residual.cor} functions now return highest posterior density intervals for each element in the relevant correlation and precision matrix. The probability defining the interval is given by a new prob argument.
+     \item Zero truncated Poisson and zero truncated negative binomial distributions are now available, and fingers crossed they work! They are accessed by setting \code{family = "ztpoisson"} and \code{family = "ztnegative.binomial"}. Please note that, as is commonly used in other regression models, the models are set up such that a log-link function connects the mean of the \emph{untruncated} distribution to the linear predictor.
 
-     \item The \code{predict.boral} function now has a \code{scale} argument which allows prediction on the response scale (although note actual predicted responses are not simulated). Previously, and by default, predictions are done the linear predictor scale.
+     \item Creator, author, and contributor have been more formally defined now. Furthermore. lifecycle stickers have also been included for each function, courtesy of the \code{lifecycle} package although, it is all a bit ``opinionated" in the way it is applied. This are most clearly visible when using \code{boral} in RStudio.
+       
+     \item The function \code{fitted.boral} now has an additional argument \code{linear.predictor}. When set to \code{TRUE}, it allows one to return the fitted values on the linear predictor scale. When set to \code{FALSE}, which is the defaul behavior, the fitted mean values are on the response scale. Note things are slightly more complicated for the two newly implemented zero truncated distributions because, as mentioned above, the log-link function connects the mean of the \emph{untruncated} distribution to the linear predictor. Therefore if \code{linear.predictor = TRUE}, then the linear predictor is returned. But if \code{linear.predictor = FALSE}, then actual fitted mean value is returned. 
 
-     \item The \code{predict.boral} function now allows marginal predictions extrapolate to new X and row IDs. This works as you would expect (hopefully!), by sampling new row effects from relevant normal random effects distribution.
-     
-     \item The get.residual.cor function now makes use of the \code{cor2pcor} function from \code{corpcor} package to calculate the inverse correlation or precision matrix. 
+     \item The default for value for \code{mcmc.control$seed} has been changed from \code{123} to \code{NULL}. Thus the user must now specify a seed if they wish to "seed" the MCMC fitting algorithm. 
 
-     \item A \code{tidyboral} function has been created to reformat output for boral so that instead of a separate element for mean/median/IQR/sd, a long data frame is outputed. This may be useful for researchers wanting to wrangle/ggplot some of the estimated parameters from a fitted boral model 
-
-     \item For analyzing presence-absence responses, the parameterization of the LVM has been changed to use a direct probit link function rather than the step function with normal auxilary random variable parameterization. Hopefully this better handles the issue of calculating residual correlations correctly.
-
-     \item Fixed an identifiablity constraint issue when row effects are fixed i.e., the first element in each fixed row effect is now constrained to be zero
-
-     \item Fixed an issue found by co-maintainder Wade Blanchard to check that the dimensions of the trait matrix supplied to boral is consistant with other elements supplied.
+     \item An issue pertaining to the calculation of the Dunn-Smyth residuals for Tweedie responses has been fixed. Thaks to an ongoing collobration with Adrien Chevallier to leading to this issue being rectified.
      }
 
 }

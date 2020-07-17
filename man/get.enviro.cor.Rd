@@ -6,7 +6,10 @@
 
 \title{Extract covariances and correlations due to shared environmental responses}
 
-\description{Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables i.e., shared environmental response}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables i.e., shared environmental response}
 
 \usage{
 get.enviro.cor(object, est = "median", prob = 0.95)

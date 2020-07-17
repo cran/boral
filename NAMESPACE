@@ -1,28 +1,28 @@
 export(
-     boral,
-     boral.default,
-	calc.condlogLik,
-	calc.logLik.lv0,
-	calc.marglogLik,
-	calc.varpart,
-	coefsplot,
-	create.life,
-	ds.residuals,
-	fitted.boral, 
-	get.enviro.cor,
-	get.hpdintervals, 
-	get.measures, 
-	get.more.measures, 
-     get.mcmcsamples,
-	get.residual.cor, 
-	lvsplot,
-	make.jagsboralmodel, 
-	make.jagsboralnullmodel,
-     predict.boral,
-	plot.boral,
-	summary.boral,
-	tidyboral
-	)
+boral,
+boral.default,
+calc.condlogLik,
+calc.logLik.lv0,
+calc.marglogLik,
+calc.varpart,
+coefsplot,
+create.life,
+ds.residuals,
+fitted.boral, 
+get.enviro.cor,
+get.hpdintervals, 
+get.measures, 
+get.more.measures, 
+get.mcmcsamples,
+get.residual.cor, 
+lvsplot,
+make.jagsboralmodel, 
+make.jagsboralnullmodel,
+predict.boral,
+plot.boral,
+summary.boral,
+tidyboral
+)
 
 
 S3method(boral, default)
@@ -37,6 +37,7 @@ importFrom("utils", "packageDescription")
 importFrom(abind, abind)
 import(coda, mvtnorm, fishMod, MASS)
 importFrom(corpcor, cor2pcor, pseudoinverse)
+importFrom(lifecycle,deprecate_stop, deprecate_warn, deprecate_soft)
 importFrom(R2jags, jags)
 importFrom(reshape2, melt)
 importFrom(stats, dbeta, pbeta, qbeta, rbeta)
@@ -51,8 +52,8 @@ importFrom(stats, dpois, ppois, qpois, rpois)
 importFrom(stats, dunif, runif, punif, qunif)
 importFrom(stats, rWishart)
 importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor, simulate, qqline)
-importFrom(stats, offset, quantile)
+importFrom(stats, offset, quantile, splinefun)
 importFrom(graphics, abline,axis,layout,legend,lines,matplot,par,points,plot,text,mtext,segments)
 importFrom(grDevices,palette, rainbow)
-
+importFrom(utils, packageVersion)
 

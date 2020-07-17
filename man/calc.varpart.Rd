@@ -6,7 +6,10 @@
 
 \title{Variance partitioning for a latent variable model}
 
-\description{For each response (species), partition the variance of the linear predictor into components associated with (groups of) the covariates, the latent variables, any row effects. If traits are also included in the model, then it also calculates an R-squared value for the proportion of the variance in the environmental response (due to the covariates) which can be explained by traits.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+For each response (species), partition the variance of the linear predictor into components associated with (groups of) the covariates, the latent variables, any row effects. If traits are also included in the model, then it also calculates an R-squared value for the proportion of the variance in the environmental response (due to the covariates) which can be explained by traits.}
 
 \usage{
 calc.varpart(object, groupX = NULL)

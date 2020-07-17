@@ -6,7 +6,10 @@
 
 \title{Log-likelihood for a model fitted with no latent variables}
 
-\description{Calculates the log-likelihood for a set of parameter estimates from a model with no latent variables. If the row effects are assumed to be random, they are integrated over using Monte Carlo integration.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("soft-deprecated")}
+
+Calculates the log-likelihood for a set of parameter estimates from a model with no latent variables. If the row effects are assumed to be random, they are integrated over using Monte Carlo integration.}
 
 \usage{
 calc.logLik.lv0(y, X = NULL, family, trial.size = 1, lv.coefs, 

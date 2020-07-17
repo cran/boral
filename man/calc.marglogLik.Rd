@@ -6,7 +6,10 @@
 
 \title{Marginal log-likelihood for a fitted model}
 
-\description{Calculates the marginal log-likelihood for a set of parameter estimates from a fitted model, whereby the latent variables and random effects (if applicable) are integrated out. The integration is performed using Monte Carlo integration. WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("deprecated")}
+
+Calculates the marginal log-likelihood for a set of parameter estimates from a fitted model, whereby the latent variables and random effects (if applicable) are integrated out. The integration is performed using Monte Carlo integration. WARNING: As of version 1.6, this function is longer updated!}
 
 \usage{
 calc.marglogLik(y, X = NULL, family, trial.size = 1, lv.coefs, 
@@ -78,7 +81,7 @@ A list with the following components:
 Maintainer: \packageMaintainer{boral}
 }
 
-\section{Warnings}{As of version 1.6, this function will no longer be updated...use at your own peril!}
+\section{Warnings}{As of version 1.6, this function is longer updated!}
 
 
 \seealso{

@@ -5,7 +5,10 @@
 
 \docType{package}
 
-\title{Simulate a Multivariate Response Matrix}
+\title{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Simulate a Multivariate Response Matrix}
 
 \description{Simulate a multivariate response matrix, given parameters such as but not necessarily all of: family, number of latent variables and related coefficients, an matrix of explanatory variables and related coefficients, row effects, cutoffs for cumulative probit regression of ordinal responses.}
 
@@ -67,7 +70,7 @@ create.life(true.lv = NULL, lv.coefs,
 
   Defaults to \code{NULL}, in conjuction with \code{traits = NULL}.}  
 
-  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
+  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression), "ztpoisson" (zero truncated Poisson with log link), "ztnegative.binomial" (zero truncated negative binomial with log link). 
 
   Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
   }

@@ -6,7 +6,10 @@
 
 \title{Including species traits in boral}
 
-\description{This help file provides more information regarding the how species can be included to help mediate environmental responses, analogous to the so-called fourth corner problem.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+This help file provides more information regarding the how species can be included to help mediate environmental responses, analogous to the so-called fourth corner problem.}
 
 \details{
 In the main boral function, when covariates \code{X} are included i.e. both the independent and correlated response models, one has the option of also including traits to help explain differences in species environmental responses to these covariates. Specifically, when \code{traits} and \code{which.traits} are supplied, then the \eqn{\beta_{0j}}'s and \eqn{\bm{\beta}_j}'s are then regarded as random effects drawn from a normal distribution. For the column-specific intercepts, we have

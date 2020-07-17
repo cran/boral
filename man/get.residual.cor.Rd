@@ -6,7 +6,10 @@
 
 \title{Extract residual correlations and precisions from models}
 
-\description{Calculates the residual correlation and precision matrices from models that include latent variables.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Calculates the residual correlation and precision matrices from models that include latent variables.}
 
 \usage{
 get.residual.cor(object, est = "median", prob = 0.95)

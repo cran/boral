@@ -6,7 +6,10 @@
 
 \title{Information Criteria for models}
 
-\description{Calculates some information criteria for a fitted model, which could be used for model selection. WARNING: As of version 1.6, this function will no longer be updated...use at your own peril!!!}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("deprecated")}
+
+Calculates some information criteria for a fitted model, which could be used for model selection. WARNING: As of version 1.6, this function is no longer updated!}
 
 \usage{
 get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none", 
@@ -18,7 +21,7 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
   
   \item{X}{The model matrix used in the model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
   
-  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression). 
+  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression), "ztpoisson" (zero truncated Poisson with log link), "ztnegative.binomial" (zero truncated negative binomial with log link). 
 
   Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
   }
@@ -67,7 +70,7 @@ If \code{do.marglik.ics = TRUE}, then we also have:
 }
 
 \section{Warning}{
-As of version 1.5, this function will no longer be updated...use at your own peril!!!
+As of version 1.6, this function is no longer updated!
 
 Using information criterion for variable selection should be done with extreme caution, for two reasons: 1) The implementation of these criteria are both \emph{heuristic} and experimental. 2) Deciding what model to fit for ordination purposes should be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables. However, if we interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are far more appropriate. As an another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = FALSE}) or in terms of species composition (\code{row.eff = "fixed"}).  
 

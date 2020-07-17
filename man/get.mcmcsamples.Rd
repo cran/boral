@@ -6,7 +6,10 @@
 
 \title{Extract MCMC samples from models}
 
-\description{Extract the MCMC samples from fitted models, taking into account the burnin period and thinning.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Extract the MCMC samples from fitted models, taking into account the burnin period and thinning.}
 
 \usage{
 get.mcmcsamples(object)

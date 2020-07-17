@@ -6,7 +6,10 @@
 
 \title{Predict using a model}
 
-\description{Obtain predictions and associated intervals (lower and upper limits) on the linear scale from a fitted boral object. Predictions can be made either conditionally on the predicted latent variables and any random row effects included in the model, or marginally (averaged) on the latent variables and any random effects included in the model.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Obtain predictions and associated intervals (lower and upper limits) on the linear scale from a fitted boral object. Predictions can be made either conditionally on the predicted latent variables and any random row effects included in the model, or marginally (averaged) on the latent variables and any random effects included in the model.}
 
 \usage{
 \method{predict}{boral}(object, newX = NULL, newrow.ids = NULL, 
@@ -26,7 +29,10 @@
 
     \item{predict.type}{The type of prediction to be made. Either takes value \code{"conditional"} in which case the prediction is made conditionally on the predicted latent variables and any random row effects in the model, or \code{"marginal"} in which case the prediction marginalizes (averages) over the latent variables and random row effects in the model. Defaults to \code{"conditional"}.}  
 
-  \item{scale}{The type of prediction required.  The default "link" is on the scale of the linear predictors; the alternative \code{scale == "response"} is on the scale of the response variable. For example, if the binomial family is used, then the default predictions (and associated uncertainty intervals) provide probabilities on linear predictor scale, while \code{scale == "response"} gives the predicted probabilities between 0 and 1.}
+  \item{scale}{The type of prediction required.  The default "link" is on the scale of the linear predictors; the alternative \code{scale == "response"} is on the scale of the response variable. For example, if the binomial family is used, then the default predictions (and associated uncertainty intervals) provide probabilities on linear predictor scale, while \code{scale == "response"} gives the predicted probabilities between 0 and 1. 
+  
+  Note things are slightly more complicated for zero truncated distributions because the log-link connects the mean of the \emph{untruncated} distribution to the linear predictor. Therefore if \code{scale = "link"}, then the linear predictor is returned. But if \code{scale = "response"}, then actual predicted mean is returned. 
+  }
 
   \item{est}{A choice of either whether to print the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}) of the parameters.}
 

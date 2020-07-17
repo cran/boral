@@ -6,7 +6,10 @@
 
 \title{Plots of a fitted boral object}
 
-\description{Produces four plots relating to the fitted boral object, which can be used for residual analysis. If some of the columns are ordinal, then a single confusion matrix is also produced.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Produces four plots relating to the fitted boral object, which can be used for residual analysis. If some of the columns are ordinal, then a single confusion matrix is also produced.}
 
 \usage{
 \method{plot}{boral}(x, est = "median", jitter = FALSE, ...)

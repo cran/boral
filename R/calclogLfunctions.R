@@ -13,7 +13,9 @@
 calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coefs = NULL, 
      row.coefs = NULL, row.ids = NULL, offset = NULL, lv = NULL, cutoffs = NULL, powerparam = NULL) {
 
-    if(length(family) != ncol(y) & length(family) != 1) { 
+     deprecate_warn("1.9", "boral::calc.marglogLik()", details = "We will be phasing out all functions to calculate log-likelihoods of any sort (too hard to maintain)!")
+
+     if(length(family) != ncol(y) & length(family) != 1) { 
         stop("Number of elements in family is either 1 or equal to # of columns in y") }
     if(length(family) == 1) 
         complete_family <- rep(family,ncol(y))
@@ -21,9 +23,9 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
         complete_family <- family
 
     if(any(complete_family == "ordinal") & is.null(cutoffs)) 
-        stop("Ordinal data requires cutoffs to be supplied") 
+        stop("Ordinal data requires cutoffs to be supplied.") 
     if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) 
-        stop("Common power parameter for tweedie must be between 1 and 2") 
+        stop("Common power parameter for tweedie must be between 1 and 2.") 
     #if(any(complete_family == "multinom") & is.null(X.multinom.coefs)) stop("Multinomial data requires X.multinom.coefs to be supplied") 
 
     if(!is.null(row.coefs)) {
@@ -68,11 +70,15 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
         if(!is.null(row.coefs)) { for(k in 1:ncol(row.ids)) species_etas <- species_etas + row.coefs[[k]][row.ids[,k]] }
             
         if(complete_family[j] == "binomial") 
-            loglik_comp[,j] <- dbinom(as.vector(unlist(y[,j])), complete_trial_size[j], prob = pnorm(species_etas), log = TRUE)
+            loglik_comp[,j] <- dbinom(as.vector(unlist(y[,j])), size = complete_trial_size[j], prob = pnorm(species_etas), log = TRUE)
         if(complete_family[j] == "poisson") 
-            loglik_comp[,j] <- dpois(as.vector(unlist(y[,j])), exp(species_etas), log = TRUE)
+            loglik_comp[,j] <- dpois(as.vector(unlist(y[,j])), lambda = exp(species_etas), log = TRUE)
+        if(complete_family[j] == "ztpoisson") 
+            loglik_comp[,j] <- dztpois(as.vector(unlist(y[,j])), lambda = exp(species_etas), log = TRUE)
         if(complete_family[j] == "negative.binomial") 
             loglik_comp[,j] <- dnbinom(as.vector(unlist(y[,j])), size=1/(lv.coefs[j,ncol(lv.coefs)]+1e-5), mu=exp(species_etas), log = TRUE)
+        if(complete_family[j] == "ztnegative.binomial") 
+            loglik_comp[,j] <- dztnbinom(as.vector(unlist(y[,j])), size=1/(lv.coefs[j,ncol(lv.coefs)]+1e-5), mu=exp(species_etas), log = TRUE)
         if(complete_family[j] == "exponential") 
             loglik_comp[,j] <- dexp(as.vector(unlist(y[,j])), 1/exp(species_etas), log = TRUE)
         if(complete_family[j] == "gamma") 
@@ -111,8 +117,10 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
      X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL, offset = NULL, 
      cutoffs = NULL, powerparam = NULL) {
 
-    if(length(family) != ncol(y) & length(family) != 1) 
-        stop("Number of elements in family is either 1 or equal to # of columns in y") 
+     deprecate_warn("1.9", "boral::calc.marglogLik()", details = "We will be phasing out all functions to calculate log-likelihoods of any sort (too hard to maintain)!")
+
+     if(length(family) != ncol(y) & length(family) != 1) 
+        stop("Number of elements in family is either 1 or equal to the number of columns in y.") 
     if(length(family) == 1) 
         complete_family <- rep(family, ncol(y))
     if(length(family) > 1) 
@@ -134,9 +142,9 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
     check_offset(offset = offset, y = y)
 
     if(any(complete_family == "ordinal") & is.null(cutoffs)) 
-        stop("Ordinal data requires cutoffs to be supplied")
+        stop("Ordinal data requires cutoffs to be supplied.")
     if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) 
-        stop("Common power parameter for tweedie must be between 1 and 2")
+        stop("Common power parameter for tweedie must be between 1 and 2.")
     if(length(trial.size) == 1) 
         complete_trial_size <- rep(trial.size, ncol(y))
     if(length(trial.size) > 1) 
@@ -163,10 +171,14 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
 
             if(complete_family[j] == "poisson")
                 loglik_comp[, j] <- (dpois(as.vector(unlist(y[, j])), lambda = exp(eta), log = TRUE))
+            if(complete_family[j] == "ztpoisson")
+                loglik_comp[, j] <- (dztpois(as.vector(unlist(y[, j])), lambda = exp(eta), log = TRUE))
             if(complete_family[j] == "binomial") 
                 loglik_comp[, j] <- (dbinom(as.vector(unlist(y[, j])), complete_trial_size[j], prob = pnorm(eta), log = TRUE))
             if(complete_family[j] == "negative.binomial") 
                 loglik_comp[, j] <- (dnbinom(as.vector(unlist(y[, j])), mu = exp(eta), size = 1/(lv.coefs[j, 2]+1e-5), log = TRUE))
+            if(complete_family[j] == "ztnegative.binomial") 
+                loglik_comp[, j] <- (dztnbinom(as.vector(unlist(y[, j])), mu = exp(eta), size = 1/(lv.coefs[j, 2]+1e-5), log = TRUE))
             if(complete_family[j] == "exponential") 
                 loglik_comp[, j] <- (dexp(as.vector(unlist(y[, j])), rate = 1/exp(eta), log = TRUE))
             if(complete_family[j] == "gamma") 
@@ -225,50 +237,54 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
 
         for(i in 1:n) {
             spp_f <- eta <- matrix(lv.coefs[, 1], nrow = mc_row_eff, ncol = p, byrow = TRUE)
-        for(k in 1:ncol(row.ids)) 
-            eta <- eta + mc_row_coefs[[k]][,row.ids[i,k]]
+          for(k in 1:ncol(row.ids)) 
+               eta <- eta + mc_row_coefs[[k]][,row.ids[i,k]]
 
-            if(!is.null(X.coefs)) 
-                eta <- eta + matrix(t(as.matrix(X[i, ])) %*% t(X.coefs), nrow = mc_row_eff, ncol = p, byrow = TRUE)
-            if(!is.null(offset)) 
-                eta <- eta + matrix(offset[i,], nrow = mc_row_eff, ncol = p, byrow = TRUE)
+               if(!is.null(X.coefs)) 
+                    eta <- eta + matrix(t(as.matrix(X[i, ])) %*% t(X.coefs), nrow = mc_row_eff, ncol = p, byrow = TRUE)
+               if(!is.null(offset)) 
+                    eta <- eta + matrix(offset[i,], nrow = mc_row_eff, ncol = p, byrow = TRUE)
 
-                for(j in 1:p) {
-                    if(complete_family[j] == "binomial") 
-                        spp_f[, j] <- dbinom(rep(as.vector(y[i, j]), mc_row_eff), complete_trial_size[j], prob = pnorm(eta[, j]))
-                    if(complete_family[j] == "poisson") 
-                        spp_f[, j] <- dpois(rep(as.vector(y[i, j]), mc_row_eff), exp(eta[, j]))
-                    if(complete_family[j] == "negative.binomial") 
-                        spp_f[, j] <- dnbinom(rep(as.vector(y[i, j]), mc_row_eff), size =1/(lv.coefs[j, ncol(lv.coefs)]+1e-5), mu = exp(eta[, j]))
-                    if(complete_family[j] == "exponential") 
-                        spp_f[, j] <- dexp(rep(as.vector(y[i, j]), mc_row_eff), rate = 1/exp(eta[, j]))
-                    if(complete_family[j] == "gamma") 
-                        spp_f[, j] <- dgamma(rep(as.vector(y[i, j]), mc_row_eff), shape = exp(eta[, j]) * lv.coefs[j, ncol(lv.coefs)], rate = lv.coefs[j, ncol(lv.coefs)])
-                    if(complete_family[j] == "beta") 
-                        spp_f[, j] <- dbeta(rep(as.vector(y[i, j]), mc_row_eff), lv.coefs[j, ncol(lv.coefs)] * exp(eta[, j])/(1 + exp(eta[, j])), lv.coefs[j, ncol(lv.coefs)] * (1 - exp(eta[, j])/(1 + exp(eta[, j]))))
-                    if(complete_family[j] == "normal") 
-                        spp_f[, j] <- dnorm(rep(as.vector(y[i, j]), mc_row_eff), mean = eta[, j], sd = (lv.coefs[j, ncol(lv.coefs)]))
-                    if(complete_family[j] == "lnormal") 
-                        spp_f[, j] <- dlnorm(rep(as.vector(y[i, j]), mc_row_eff), meanlog = eta[, j], sdlog = (lv.coefs[j,ncol(lv.coefs)]))
-                    if(complete_family[j] == "tweedie") { 
-                        spp_f[, j] <- dTweedie(rep(as.vector(y[i, j]), mc_row_eff), mu = exp(eta[, j]), phi = lv.coefs[j, ncol(lv.coefs)] + 1e-06, p = powerparam, LOG = FALSE)
-                        spp_f[, j][which(spp_f[, j] == 0)] <- 1 
-                        }
-                    if(complete_family[j] == "ordinal") {
-                        get_probs <- ordinal.conversion.special(lv.coefs.j = lv.coefs[j, ], row.coefs.i = rnorm(mc_row_eff, 0, sd = row.params[[1]]), X.i = X[i, ], X.coefs.j = X.coefs[j, ], cutoffs = cutoffs)
-                        spp_f[, j] <- get_probs[, as.vector(y[i, j])] + 1e-05 
-                        }
-                    }
-                        
-                spp_f[!is.finite(spp_f)] = 1
-                spp_f <- matrix(spp_f, nrow = mc_row_eff, byrow = FALSE)
-                Q <- mean(apply(spp_f, 1, prod))
-                loglik <- loglik + log(Q)
-                loglik_comp[i] <- log(Q)
-            }
+                    for(j in 1:p) {
+                         if(complete_family[j] == "binomial") 
+                         spp_f[, j] <- dbinom(rep(as.vector(y[i, j]), mc_row_eff), size = complete_trial_size[j], prob = pnorm(eta[, j]))
+                         if(complete_family[j] == "poisson") 
+                         spp_f[, j] <- dpois(rep(as.vector(y[i, j]), mc_row_eff), lambda = exp(eta[, j]))
+                         if(complete_family[j] == "ztpoisson") 
+                         spp_f[, j] <- dztpois(rep(as.vector(y[i, j]), mc_row_eff), lambda = exp(eta[, j]))
+                         if(complete_family[j] == "negative.binomial") 
+                         spp_f[, j] <- dnbinom(rep(as.vector(y[i, j]), mc_row_eff), size =1/(lv.coefs[j, ncol(lv.coefs)]+1e-5), mu = exp(eta[, j]))
+                         if(complete_family[j] == "ztnegative.binomial") 
+                         spp_f[, j] <- dztnbinom(rep(as.vector(y[i, j]), mc_row_eff), size =1/(lv.coefs[j, ncol(lv.coefs)]+1e-5), mu = exp(eta[, j]))
+                         if(complete_family[j] == "exponential") 
+                         spp_f[, j] <- dexp(rep(as.vector(y[i, j]), mc_row_eff), rate = 1/exp(eta[, j]))
+                         if(complete_family[j] == "gamma") 
+                         spp_f[, j] <- dgamma(rep(as.vector(y[i, j]), mc_row_eff), shape = exp(eta[, j]) * lv.coefs[j, ncol(lv.coefs)], rate = lv.coefs[j, ncol(lv.coefs)])
+                         if(complete_family[j] == "beta") 
+                         spp_f[, j] <- dbeta(rep(as.vector(y[i, j]), mc_row_eff), lv.coefs[j, ncol(lv.coefs)] * exp(eta[, j])/(1 + exp(eta[, j])), lv.coefs[j, ncol(lv.coefs)] * (1 - exp(eta[, j])/(1 + exp(eta[, j]))))
+                         if(complete_family[j] == "normal") 
+                         spp_f[, j] <- dnorm(rep(as.vector(y[i, j]), mc_row_eff), mean = eta[, j], sd = (lv.coefs[j, ncol(lv.coefs)]))
+                         if(complete_family[j] == "lnormal") 
+                         spp_f[, j] <- dlnorm(rep(as.vector(y[i, j]), mc_row_eff), meanlog = eta[, j], sdlog = (lv.coefs[j,ncol(lv.coefs)]))
+                         if(complete_family[j] == "tweedie") { 
+                         spp_f[, j] <- dTweedie(rep(as.vector(y[i, j]), mc_row_eff), mu = exp(eta[, j]), phi = lv.coefs[j, ncol(lv.coefs)] + 1e-06, p = powerparam, LOG = FALSE)
+                         spp_f[, j][which(spp_f[, j] == 0)] <- 1 
+                         }
+                         if(complete_family[j] == "ordinal") {
+                         get_probs <- ordinal.conversion.special(lv.coefs.j = lv.coefs[j, ], row.coefs.i = rnorm(mc_row_eff, 0, sd = row.params[[1]]), X.i = X[i, ], X.coefs.j = X.coefs[j, ], cutoffs = cutoffs)
+                         spp_f[, j] <- get_probs[, as.vector(y[i, j])] + 1e-05 
+                         }
+                         }
+                         
+                    spp_f[!is.finite(spp_f)] = 1
+                    spp_f <- matrix(spp_f, nrow = mc_row_eff, byrow = FALSE)
+                    Q <- mean(apply(spp_f, 1, prod))
+                    loglik <- loglik + log(Q)
+                    loglik_comp[i] <- log(Q)
+               }
 
-    return(list(logLik = loglik, logLik.comp = loglik_comp)) 
-    }
+          return(list(logLik = loglik, logLik.comp = loglik_comp)) 
+          }
     }
 
 	
@@ -284,12 +300,12 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
      X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL, offset = NULL, num.lv, 
      lv.mc = NULL, cutoffs = NULL, powerparam = NULL) { 
 	
-    warning("Please note that as of version 1.6, this function to calculate marginal log-likelihoods will no longer be updated. Use at your own peril!")
-
+     deprecate_warn("1.6", "boral::calc.marglogLik()")
+     
     if(num.lv == 0) 
-        stop("Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables")
+        stop("Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")
     if(is.null(lv.coefs)) 
-        stop("lv.coefs must be given. Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables")
+        stop("lv.coefs must be given. Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")
 
     if(is.null(lv.mc))
         lv.mc <- rmvnorm(1000, mean = rep(0, num.lv))
@@ -298,7 +314,7 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
         numrows_mclv <- nrow(lv.mc)
 
     if(length(family) != ncol(y) & length(family) != 1) { 
-        stop("Number of elements in family is either 1 or equal to # of columns in y") }
+        stop("Number of elements in family is either 1 or equal to # of columns in y.") }
     if(length(family) == 1) 
         complete_family <- rep(family, ncol(y))
     if(length(family) > 1) 
@@ -324,9 +340,9 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
     check_offset(offset = offset, y = y)
     
     if(any(complete_family == "ordinal") & is.null(cutoffs)) 
-        stop("Ordinal data requires cutoffs to be supplied")
+        stop("Ordinal data requires cutoffs to be supplied.")
     if(any(family == "tweedie") & (powerparam < 1 || powerparam > 2)) 
-        stop("Common power parameter for tweedie must be between 1 and 2")
+        stop("Common power parameter for tweedie must be between 1 and 2.")
     #if(any(complete_family == "multinom") & is.null(X.multinom.coefs)) stop("Multinomial data requires X.multinom.coefs to be supplied") 
 
             
@@ -382,22 +398,26 @@ calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
             spp.att.eta <- spp.att.eta + matrix(offset[i,], nrow = numrows_mclv, ncol = p, byrow = TRUE)
             
         for(j in 1:p) {
-            if(complete_family[j] == "binomial") { 
-                spp_f[, j] <- dbinom(rep(as.vector(y[i, j]), numrows_mclv), complete_trial_size[j], prob = pnorm(spp.att.eta[, j])) }
-            if(complete_family[j] == "poisson") { 	
-                spp_f[, j] <- dpois(rep(as.vector(y[i, j]), numrows_mclv), exp(spp.att.eta[, j])) }
-            if(complete_family[j] == "negative.binomial") { 
-                spp_f[, j] <- dnbinom(rep(as.vector(y[i, j]), numrows_mclv), size = 1/(lv.coefs[j, ncol(lv.coefs)]+1e-5), mu = exp(spp.att.eta[, j])) }
-            if(complete_family[j] == "exponential") { 
-                spp_f[, j] <- dexp(rep(as.vector(y[i, j]), numrows_mclv), rate = 1/exp(spp.att.eta[, j])) }
-            if(complete_family[j] == "gamma") { 
-                spp_f[, j] <- dgamma(rep(as.vector(y[i, j]), numrows_mclv), shape = exp(spp.att.eta[, j]) * lv.coefs[j, ncol(lv.coefs)], rate = lv.coefs[j, ncol(lv.coefs)]) }
-            if(complete_family[j] == "beta") {
-                spp_f[, j] <- dbeta(rep(as.vector(y[i, j]), numrows_mclv), lv.coefs[j, ncol(lv.coefs)] * exp(spp.att.eta[, j])/(1 + exp(spp.att.eta[, j])), lv.coefs[j, ncol(lv.coefs)] * (1 - exp(spp.att.eta[, j])/(1 + exp(spp.att.eta[, j])))) }
-            if(complete_family[j] == "normal") {
-                spp_f[, j] <- dnorm(rep(as.vector(y[i, j]), numrows_mclv), mean = spp.att.eta[, j], sd = (lv.coefs[j, ncol(lv.coefs)])) }
-            if(complete_family[j] == "lnormal") {
-                spp_f[, j] <- dlnorm(rep(as.vector(y[i, j]), numrows_mclv), meanlog = spp.att.eta[, j], sdlog = (lv.coefs[j, ncol(lv.coefs)])) }
+            if(complete_family[j] == "binomial") 
+                spp_f[, j] <- dbinom(rep(as.vector(y[i, j]), numrows_mclv), size = complete_trial_size[j], prob = pnorm(spp.att.eta[, j])) 
+            if(complete_family[j] == "poisson") 	
+                spp_f[, j] <- dpois(rep(as.vector(y[i, j]), numrows_mclv), lambda = exp(spp.att.eta[, j])) 
+            if(complete_family[j] == "poisson") 
+                spp_f[, j] <- dztpois(rep(as.vector(y[i, j]), numrows_mclv), lambda = exp(spp.att.eta[, j])) 
+            if(complete_family[j] == "negative.binomial") 
+                spp_f[, j] <- dnbinom(rep(as.vector(y[i, j]), numrows_mclv), size = 1/(lv.coefs[j, ncol(lv.coefs)]+1e-5), mu = exp(spp.att.eta[, j])) 
+            if(complete_family[j] == "ztnegative.binomial") 
+                spp_f[, j] <- dztnbinom(rep(as.vector(y[i, j]), numrows_mclv), size = 1/(lv.coefs[j, ncol(lv.coefs)]+1e-5), mu = exp(spp.att.eta[, j])) 
+            if(complete_family[j] == "exponential") 
+                spp_f[, j] <- dexp(rep(as.vector(y[i, j]), numrows_mclv), rate = 1/exp(spp.att.eta[, j])) 
+            if(complete_family[j] == "gamma")  
+                spp_f[, j] <- dgamma(rep(as.vector(y[i, j]), numrows_mclv), shape = exp(spp.att.eta[, j]) * lv.coefs[j, ncol(lv.coefs)], rate = lv.coefs[j, ncol(lv.coefs)]) 
+            if(complete_family[j] == "beta") 
+                spp_f[, j] <- dbeta(rep(as.vector(y[i, j]), numrows_mclv), lv.coefs[j, ncol(lv.coefs)] * exp(spp.att.eta[, j])/(1 + exp(spp.att.eta[, j])), lv.coefs[j, ncol(lv.coefs)] * (1 - exp(spp.att.eta[, j])/(1 + exp(spp.att.eta[, j])))) 
+            if(complete_family[j] == "normal") 
+                spp_f[, j] <- dnorm(rep(as.vector(y[i, j]), numrows_mclv), mean = spp.att.eta[, j], sd = (lv.coefs[j, ncol(lv.coefs)])) 
+            if(complete_family[j] == "lnormal") 
+                spp_f[, j] <- dlnorm(rep(as.vector(y[i, j]), numrows_mclv), meanlog = spp.att.eta[, j], sdlog = (lv.coefs[j, ncol(lv.coefs)])) 
             if(complete_family[j] == "tweedie") {
                 spp_f[, j] <- dTweedie(rep(as.vector(y[i, j]), numrows_mclv), mu = exp(spp.att.eta[, j]), phi = lv.coefs[j, ncol(lv.coefs)] + 1e-06, p = powerparam, LOG = FALSE)
                 spp_f[, j][which(spp_f[, j] == 0)] <- 1 

@@ -1,5 +1,4 @@
-coefsplot <- function(covname, x, labely = NULL, est = "median", ...) 
-     {
+coefsplot <- function(covname, x, labely = NULL, est = "median", ...) {
      if(!is.null(labely)) if(!(length(labely) == nrow(x$X.coefs.median) || length(labely)==1)) 
           stop("If labely is not NULL, then it must be either of length one or a vector as long as the number of rows in x$X.coefs.median (number of species). Thanks!")
      if(!(covname %in% colnames(x$X.coefs.mean))) 
@@ -20,14 +19,12 @@ coefsplot <- function(covname, x, labely = NULL, est = "median", ...)
      
      if(is.null(labely)) 
           axis(2, at=At.y, labels = rownames(x$X.coefs.mean), las=1, ...) 
-     if(!is.null(labely)) 
-          {
+     if(!is.null(labely)) {
           if(length(labely) == nrow(x$X.coefs.mean)) axis(2, at=At.y, labels=labely, las=1, ...) 
           if(length(labely) == 1) mtext(text = labely, side = 2, line = 3, las = 3, ...)
           } 
 
-     if(exists("ssvs.indcoefs.mean", x)) 
-          {
+     if(exists("ssvs.indcoefs.mean", x)) {
           message("Posterior probabilities of inclusion for ", covname, ":")
           print(round(x$ssvs.indcoefs.mean[,covname],3))
           message()
@@ -36,29 +33,31 @@ coefsplot <- function(covname, x, labely = NULL, est = "median", ...)
 
 		
 
-plot.boral <- function(x, est = "median", jitter = FALSE, ...) 
-     {
+plot.boral <- function(x, est = "median", jitter = FALSE, ...) {
      #if(all(x$family %in% c("ordinal","multinom"))) stop("Residuals are not defined, and therefore residual analysis cannot be performed, if all columns of y are ordinal")
      if(any(x$family %in% c("ordinal","multinom"))) 
           warning("For all columns of y that are ordinal, the first plot constructed is of Dunn-Smyth residuals against fitted values (i.e., the level with the highest predicted probability). Note this can make things very confusing to interpret if only SOME of the columns in the response matrix are ordinal")
-     get_mus <- fitted.boral(x, est = est)$out
-     get_etas <- get_mus
+     get_etas <- fitted.boral(x, est = est, linear.predictor = TRUE) #fitted.boral(x, est = est)$out
+     #get_etas <- get_mus
      get_ds_res <- ds.residuals(object = x, est = est)
      print(get_ds_res$agree.ordinal)
      get_ds_res <- get_ds_res$residuals
           
-     for(j in 1:ncol(x$y)) 
-               {
-               if(x$family[j] %in% c("beta")) 
-                    get_etas[,j] <- log((get_mus[,j]+1e-5)/(1-get_mus[,j]+1e-5))
-               if(x$family[j] %in% c("binomial")) 
-                    get_etas[,j] <- qnorm(get_mus[,j]+1e-5)
-               if(x$family[j] %in% c("poisson","lnormal","negative.binomial","tweedie","exponential")) 
-                    get_etas[,j] <- log(get_mus[,j]+1e-5)
-               if(x$family[j] == "normal") 
-                    get_etas[,j] <- (get_mus[,j]) 
-               if(x$family[j] == "ordinal") { } ## Fitted values are the class with highest probability, which is already attained from fitted.boral
-               }
+#      for(j in 1:ncol(x$y)) {
+#           if(x$family[j] %in% c("beta")) 
+#                get_etas[,j] <- log((get_mus[,j]+1e-5)/(1-get_mus[,j]+1e-5))
+#           if(x$family[j] %in% c("binomial")) 
+#                get_etas[,j] <- binomial(link = "probit")$linkfun(get_mus[,j]+1e-5)
+#           if(x$family[j] %in% c("poisson","lnormal","negative.binomial","tweedie","exponential")) 
+#                get_etas[,j] <- log(get_mus[,j]+1e-5)
+#           if(x$family[j] %in% c("ztpoisson")) 
+#                get_etas[,j] <- ztpoisson()$linkfun(get_mus[,j])
+#           if(x$family[j] %in% c("ztnegative.binomial")) 
+#                get_etas[,j] <- ztpoisson()$linkfun(get_mus[,j])
+#           if(x$family[j] == "normal") 
+#                get_etas[,j] <- get_mus[,j] 
+#           if(x$family[j] == "ordinal") { } ## Fitted values are the class with highest probability, which is already attained from fitted.boral
+#           }
 
 
      #.pardefault <- par(no.readonly = TRUE)	
@@ -76,16 +75,14 @@ plot.boral <- function(x, est = "median", jitter = FALSE, ...)
 
      matplot(get_ds_res, ylab = "Dunn-Smyth Residuals", xlab = "Row index",type="n", xaxt = "n", ...)
      axis(side = 1, at = 1:nrow(x$y), labels = rownames(x$lv.mean), ...)
-     for (i in 1:ncol(get_mus)) 
-          { 
+     for (i in 1:ncol(get_etas)) { 
           points(seq(1,nrow(x$y)),get_ds_res[,i], col=palette()[i], ...) 
           }
      abline(0,0,lty=2)
 
      matplot(t(get_ds_res), ylab = "Dunn-Smyth Residuals", xlab = "Column index", type="n", xaxt = "n", ...)
      axis(side = 1, at = 1:ncol(x$y), labels = rownames(x$coefs.mean), ...)
-     for(i in 1:ncol(get_mus)) 
-          { 
+     for(i in 1:ncol(get_etas)) { 
           points(rep(i,nrow(get_etas)), get_ds_res[,i], col=palette()[i], ...) 
           }
      abline(h=0, lty = 2, lwd = 2)

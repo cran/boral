@@ -6,7 +6,10 @@
 
 \title{Dunn-Smyth Residuals for a fitted model}
 
-\description{Calculates the Dunn-Smyth residuals for a fitted model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Calculates the Dunn-Smyth residuals for a fitted model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
 
 \usage{ds.residuals(object, est = "median")}
 

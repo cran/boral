@@ -6,7 +6,10 @@
 
 \title{Plot the latent variables from a fitted model} 
 
-\description{Construct a 1-D index plot or 2-D scatterplot of the latent variables, and their corresponding coefficients i.e., a biplot, from a fitted model.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Construct a 1-D index plot or 2-D scatterplot of the latent variables, and their corresponding coefficients i.e., a biplot, from a fitted model.}
 
 \usage{
 lvsplot(x, jitter = FALSE, biplot = TRUE, ind.spp = NULL, alpha = 0.5, 

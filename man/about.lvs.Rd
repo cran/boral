@@ -6,7 +6,10 @@
 
 \title{Correlation structure for latent variables}
 
-\description{This help file provides more information how (non-independence) correlation structures can be assumed for latent variables.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+This help file provides more information how (non-independence) correlation structures can be assumed for latent variables.}
 
 \details{
 In the main boral function, when latent varaibles are included, the default option is to assume that the latent variables are independent across the rows (sites) of the response matrix i.e., \code{lv.type = "independent"}. That is, \eqn{\bm{z}_i \sim N(\bm{0},\bm{I}_d)} where \code{d = num.lv}. This is useful when we want to model between species correlations (is a parsimonious manner), but it does make an assumption that sites are independent. 

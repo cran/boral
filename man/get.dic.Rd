@@ -6,7 +6,10 @@
 
 \title{Extract Deviance Information Criterion for a fitted model}
 
-\description{Calculates the Deviance Information Criterion (DIC) for a model fitted using JAGS.}
+\description{
+\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+
+Calculates the Deviance Information Criterion (DIC) for a model fitted using JAGS.}
 
 \usage{
 get.dic(jagsfit)
