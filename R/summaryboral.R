@@ -15,24 +15,29 @@ print.summary.boral <- function(x, ...) {
           print(x$lv.covparams) 
           message() 
           }
-     if(!is.null(x$row.coefficients)) { 
-          message("Row coefficients\n")
-          print(x$row.coefficients) 
-          message() 
-          }
      if(!is.null(x$X.coefficients)) { 
           message("X coefficients (betas)\n")
           print(x$X.coefficients)
           message() 
           }
      if(!is.null(x$X.multinom.coefficients)) 
-          message("There are also coefficients corresponding to multinomial columns which have not been printed")
+          message("There are also coefficients corresponding to multinomial columns which have not been printed.")
      if(!is.null(x$traits.coefficients)) { 
           message("Trait coefficients")
           print(x$traits.coefficients)
           message() 
           }
      
+     if(!is.null(x$row.coefficients)) { 
+          message("Row coefficients\n")
+          print(x$row.coefficients) 
+          message() 
+          }
+     if(!is.null(x$ranef.coefficients)) { 
+          message("There are also response-specific random intercepts which have not been printed.")
+          message() 
+          }
+
      if(any(x$family == "ordinal")) { 
           message("Proportional odds (Cumulative probit) cutoffs") 
           print(x$cutoffs)
@@ -54,8 +59,12 @@ summary.boral <- function(object, est = "median", ...) {
           if(object$lv.control$type != "independent")
                gather_output$lv.covparams <- round(object$lv.covparams.median,3)
           if(object$row.eff != "none") {
-               for(k in 1:ncol(object$row.ids)) 
-                    gather_output$row.coefficients[[k]] = round(object$row.coefs[[k]]$median,3)
+               for(k0 in 1:ncol(object$row.ids)) 
+                    gather_output$row.coefficients[[k0]] = round(object$row.coefs[[k0]]$median,3)
+               }
+          if(!is.null(object$ranef.ids)) {
+               for(k0 in 1:ncol(object$ranef.ids)) 
+                    gather_output$ranef.coefficients[[k0]] = round(object$ranef.coefs.median[[k0]],3)
                }
           if(object$num.X > 0) 
                gather_output$X.coefficients <- round(object$X.coefs.median,3)
@@ -75,10 +84,13 @@ summary.boral <- function(object, est = "median", ...) {
                gather_output$lvs <- round(object$lv.mean,3)
           if(object$lv.control$type != "independent")
                gather_output$lv.covparams <- round(object$lv.covparams.mean,3)
-          if(object$row.eff != "none") 
-               {
-               for(k in 1:ncol(object$row.ids)) 
-                    gather_output$row.coefficients[[k]] = round(object$row.coefs[[k]]$mean,3)
+          if(object$row.eff != "none") {
+               for(k0 in 1:ncol(object$row.ids)) 
+                    gather_output$row.coefficients[[k0]] = round(object$row.coefs[[k0]]$mean,3)
+               }
+          if(!is.null(object$ranef.ids)) {
+               for(k0 in 1:ncol(object$ranef.ids)) 
+                    gather_output$ranef.coefficients[[k0]] = round(object$ranef.coefs.mean[[k0]],3)
                }
           if(object$num.X > 0) 
                gather_output$X.coefficients <- round(object$X.coefs.mean,3)
@@ -94,7 +106,6 @@ summary.boral <- function(object, est = "median", ...) {
 
 
      gather_output$est <- est
-     gather_output$calc.ics <- object$calc.ics
      gather_output$trial.size <- object$trial.size
      gather_output$num.ord.levels <- object$num.ord.levels
      gather_output$prior.control$ssvs.index <- object$prior.control$ssvs.index 

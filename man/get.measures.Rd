@@ -7,9 +7,9 @@
 \title{Information Criteria for models}
 
 \description{
-\Sexpr[results=rd, stage=render]{lifecycle::badge("deprecated")}
+\Sexpr[results=rd, stage=render]{lifecycle::badge("defunct")}
 
-Calculates some information criteria for a fitted model, which could be used for model selection. WARNING: As of version 1.6, this function is no longer updated!}
+Calculates some information criteria for a fitted model, which could be used for model selection. WARNING: As of version 1.6, this function is no longer maintained (and probably doesn't work properly, if at all)!}
 
 \usage{
 get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none", 
@@ -19,9 +19,9 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
 \arguments{
   \item{y}{The response matrix that the model was fitted to.}
   
-  \item{X}{The model matrix used in the model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
+  \item{X}{The covariate matrix used in the model. Defaults to \code{NULL}, in which case it is assumed no model matrix was used.}  
   
-  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression), "ztpoisson" (zero truncated Poisson with log link), "ztnegative.binomial" (zero truncated negative binomial with log link). 
+  \item{family}{Either a single element, or a vector of length equal to the number of columns in the response matrix. The former assumes all columns of the response matrix come from this distribution. The latter option allows for different distributions for each column of the response matrix. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression), "ztpoisson" (zero truncated Poisson with log link), "ztnegative.binomial" (zero truncated negative binomial with log link). 
 
   Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
   }
@@ -30,9 +30,9 @@ get.measures(y, X = NULL, family, trial.size = 1, row.eff = "none",
   
   \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the fitted model. If fixed effects, then for parameter identifiability the first row effect is set to zero, which analogous to acting as a reference level when dummy variables are used. If random effects, they are drawn from a normal distribution with mean zero and estimated standard deviation. Defaults to "none". } 
   
- \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in the response matrix, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates the cluster ID of row \eqn{i} in the response matrix for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.eff = "none"} then the argument is ignored, otherwise if \cr \code{row.eff = "fixed"} or \code{"random"}, \cr then \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
- \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
+ \item{offset}{A matrix with the same dimensions as the response matrix, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
 
  \item{num.lv}{The number of latent variables used in the model.}
   
@@ -48,7 +48,7 @@ The following information criteria are currently calculated, when permitted: 1) 
 
 4 & 5) AIC and BIC take the form -2*(marginal log-likelihood) + penalty*(no. of parameters in the model), where the log-likelihood is evaluated at the posterior median. If the parameter-wise posterior distributions are unimodal and approximately symmetric, these will produce similar results to an AIC and BIC where the log-likelihood is evaluated at the posterior mode. EAIC applies a penalty of 2, while EBIC applies a penalty of \eqn{log(n)}.
 
-Intuitively, comparing models with and without latent variables (using information criteria such as those returned) amounts to testing whether the columns of the response matrix \code{y} are correlated. With multivariate abundance data for example, where \code{y} is a matrix of \eqn{n} sites and \eqn{p} species, comparing models with and without latent variables tests whether there is any evidence of correlation between species.
+Intuitively, comparing models with and without latent variables (using information criteria such as those returned) amounts to testing whether the columns of the response matrix are correlated. With multivariate abundance data for example, where the response matrix comprises of \eqn{n} sites and \eqn{p} species, comparing models with and without latent variables tests whether there is any evidence of correlation between species.
 
 Please note that criteria 4 and 5 are not calculated all the time. In models where traits are included in the model (such that the regression coefficients \eqn{\beta_{0j}, \bm{\beta}_j} are random effects), or more than two columns are ordinal responses (such that the intercepts \eqn{\beta_{0j}} for these columns are random effects), then criteria 4 and 5 are will not calculated. This is because the calculation of the marginal log-likelihood in such cases currently fail to marginalize over such random effects; please see the details in \code{calc.logLik.lv0} and \code{calc.marglogLik}.
 }
@@ -70,7 +70,7 @@ If \code{do.marglik.ics = TRUE}, then we also have:
 }
 
 \section{Warning}{
-As of version 1.6, this function is no longer updated!
+As of version 1.6, this function is no longer maintained (and probably doesn't work properly, if at all)!
 
 Using information criterion for variable selection should be done with extreme caution, for two reasons: 1) The implementation of these criteria are both \emph{heuristic} and experimental. 2) Deciding what model to fit for ordination purposes should be driven by the science. For example, it may be the case that a criterion suggests a model with 3 or 4 latent variables. However, if we interested in visualizing the data for ordination purposes, then models with 1 or 2 latent variables are far more appropriate. As an another example, whether or not we include row effects when ordinating multivariate abundance data depends on if we are interested in differences between sites in terms of relative species abundance (\code{row.eff = FALSE}) or in terms of species composition (\code{row.eff = "fixed"}).  
 

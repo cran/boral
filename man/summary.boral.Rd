@@ -23,7 +23,7 @@ A summary of the fitted boral objects including the type of model fitted e.g., e
 
   \item{x}{An object of class "boral".}
 
-  \item{est}{A choice of either whether to print the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}) of the parameters.}
+  \item{est}{A choice of either whether to print the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}) of the parameters.}
 
   \item{...}{Not used.}
 }

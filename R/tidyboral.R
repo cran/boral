@@ -24,10 +24,10 @@ tidyboral <- function(object) {
           rm(lv_arr)
           
           if(dim(lv_coefs_arr)[2] == (object$num.lv+2)) 
-               dimnames(lv_coefs_arr) <- list(cols = colnames(object$y), 
+               dimnames(lv_coefs_arr) <- list(resp = colnames(object$y), 
                     coefficients = c("beta0", paste0("theta", 1:object$num.lv), "Dispersion"), type = c("median","mean","iqr","sd"))
           if(dim(lv_coefs_arr)[2] == (object$num.lv+1)) 
-               dimnames(lv_coefs_arr) <- list(cols = colnames(object$y), 
+               dimnames(lv_coefs_arr) <- list(resp = colnames(object$y), 
                     coefficients = c("beta0", paste0("theta", 1:object$num.lv)), type = c("median","mean","iqr","sd"))
 
           if(object$lv.control$type != "independent") {
@@ -45,10 +45,10 @@ tidyboral <- function(object) {
     
     if(object$num.lv == 0){
           if(dim(lv_coefs_arr)[2] == 2) 
-            dimnames(lv_coefs_arr) <- list(cols = colnames(object$y), 
+            dimnames(lv_coefs_arr) <- list(resp = colnames(object$y), 
                coefficients = c("beta0", "Dispersion"), type = c("median","mean","iqr","sd"))
         if(dim(lv_coefs_arr)[2] == 1) 
-            dimnames(lv_coefs_arr) <- list(cols = colnames(object$y), 
+            dimnames(lv_coefs_arr) <- list(resp = colnames(object$y), 
                coefficients = c("beta0"), type = c("median","mean","iqr","sd"))
           }
      
@@ -71,14 +71,40 @@ tidyboral <- function(object) {
           if(object$row.eff == "random") {
                tidyout_fit$row.sigma <- vector("list", ncol(object$row.ids))
                names(tidyout_fit$row.sigma) <- colnames(object$row.ids)
-               for(k in 1:ncol(object$row.ids)) 
-                    {
+               for(k in 1:ncol(object$row.ids)) {
                     tidyout_fit$row.sigma[[k]] <- melt(object$row.sigma[[k]], value.name = "estimate")
                     }
                }
           }
+          
 
-                    
+     if(!is.null(object$ranef.ids)) {
+          tidyout_fit$ranef.coefs <- vector("list", ncol(object$ranef.ids))
+          names(tidyout_fit$ranef.coefs) <- colnames(object$ranef.ids)
+          for(k0 in 1:ncol(object$ranef.ids)) {
+               ranef_coefs_arr <- abind(object$ranef.coefs.median[[k0]], 
+                    object$ranef.coefs.mean[[k0]], 
+                    object$ranef.coefs.iqr[[k0]], 
+                    object$ranef.coefs.mean[[k0]],
+                    along = 3)
+               dimnames(ranef_coefs_arr) <- list(resp = colnames(object$y), ID = 1:length(unique(object$ranef.ids[,k0])), type = c("median","mean","iqr","sd"))
+               ranef_coefs_arr <- melt(ranef_coefs_arr, value.name = "estimate", varnames = names(dimnames(ranef_coefs_arr)))
+               tidyout_fit$ranef.coefs[[k0]] <- ranef_coefs_arr
+               rm(ranef_coefs_arr)
+               }
+    
+          tidyout_fit$ranef.sigma <- vector("list", ncol(object$ranef.ids))
+          names(tidyout_fit$ranef.sigma) <- colnames(object$ranef.ids)
+          for(k0 in 1:ncol(object$ranef.ids)) {
+               ranef_sigma_arr <- cbind(object$ranef.sigma.median[,k0], object$ranef.sigma.mean[,k0], object$ranef.sigma.iqr[,k0], object$ranef.sigma.sd[,k0])
+               rownames(ranef_sigma_arr) <- colnames(object$y)
+               colnames(ranef_sigma_arr) <- c("median","mean","iqr","sd")
+               tidyout_fit$ranef.sigma[[k0]] <- melt(ranef_sigma_arr, value.name = "estimate")
+               rm(ranef_sigma_arr)
+               }
+          }
+
+          
      if(object$num.X > 0) {
           X_coefs_arr <- abind(
             object$X.coefs.median,
@@ -86,7 +112,7 @@ tidyboral <- function(object) {
             object$X.coefs.iqr,
             object$X.coefs.sd,
             along = 3)
-          dimnames(X_coefs_arr) <- list(cols = colnames(object$y), coefficients = colnames(object$X), type = c("median","mean","iqr","sd"))
+          dimnames(X_coefs_arr) <- list(resp = colnames(object$y), coefficients = colnames(object$X), type = c("median","mean","iqr","sd"))
           X_coefs_arr <- melt(X_coefs_arr, value.name = "estimate", varnames = names(dimnames(X_coefs_arr)))
           tidyout_fit$X.coefs <- X_coefs_arr
           rm(X_coefs_arr)
@@ -96,7 +122,7 @@ tidyboral <- function(object) {
                     object$ssvs.indcoefs.mean,
                     object$ssvs.indcoefs.sd,
                     along = 3)
-               dimnames(ssvs_indcoefs_arr) <- list(cols = colnames(object$y), coefficients = colnames(object$X), type = c("mean","sd"))
+               dimnames(ssvs_indcoefs_arr) <- list(resp = colnames(object$y), coefficients = colnames(object$X), type = c("mean","sd"))
                ssvs_indcoefs_arr <- melt(ssvs_indcoefs_arr, value.name = "estimate", varnames = names(dimnames(ssvs_indcoefs_arr)))
                tidyout_fit$ssvs.indcoefs <- ssvs_indcoefs_arr
                rm(ssvs_indcoefs_arr)

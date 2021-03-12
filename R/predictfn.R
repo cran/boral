@@ -1,10 +1,11 @@
+## predict.type = "conditonal": Predictions conditional on the latent variables observed and everything else e.g., random row effects, response-specific random intercepts
+## predict.type = "marginal": marginalizes anything at the "row" level i.e., LVs, random row effects, response-specific random intercepts. Does not marginalize over anything at the "column/response" level e.g., fourth corncer models, as it is both harder and not clear that you need to take into account their uncertainty i.e., you are not predicting to new response!
+## In both cases, if newX is supplied, then some checks are made to ensure things are compatible e.g., row effects and lv match nrow(newX), 
+
 ## Intervals from marginal predictions will typically be wider than those from conditional predictions, because the former takes into account the additional uncertainty due to the lv being unknown. 
-## predict.type = "conditonal": Predictions conditional on the latent variables observed and everything else e.g., random row effects. 
-## predict.type = "marginal": marginalizes from the linear predictor down i.e., LVs and random row effects. Does not marginalize over species random effects as it is not clear that you need to take into account their uncertainty i.e., you are not predicting to new species!
-## In both cases, if newX is supplied, then checks are made to ensure things are compatible e.g., row effects and lv match nrow(newX), 
 # object = fit.traits; newX = NULL; newrow.ids = NULL; predict.type = "marginal"; est = "median"; prob = 0.95; lv.mc = 1000
 
-predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL, predict.type = "conditional", 
+predict.boral <- function(object, newX = NULL, newrow.ids = NULL, newranef.ids = NULL, distmat = NULL, predict.type = "conditional", 
      scale = "link", est = "median", prob = 0.95, lv.mc = 1000, return.alllinpred = FALSE, ...) {  
      
      num.lv <- object$num.lv
@@ -18,8 +19,12 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
                }
           }
      if(predict.type == "conditional" & !is.null(newrow.ids)) { 
-          message("For conditional predictions, newrow.ids is ignored since predictions are made conditional on the set of row effects i.e., on the same set of sites.")
+          warning("For conditional predictions, newrow.ids is ignored since predictions are made conditional on the set of row effects i.e., on the same set of units.")
           newrow.ids <- NULL
+          }
+     if(predict.type == "conditional" & !is.null(newranef.ids)) { 
+          warning("For conditional predictions, newranef.ids is ignored since predictions are made conditional on the set of response-specific random intercpets i.e., on the same set of units.")
+          newranef.ids <- NULL
           }
 
         
@@ -35,6 +40,10 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
                     if(nrow(object$row.ids) != nrow(X)) 
                          stop("For conditional predictions, the number of rows in newX must be equal to number of rows in object$row.ids")
                     }
+               if(!is.null(object$ranef.ids)) { 
+                    if(nrow(object$ranef.ids) != nrow(X)) 
+                         stop("For conditional predictions, the number of rows in newX must be equal to number of rows in object$ranef.ids")
+                    }
                if(num.lv > 0) { 
                     if(nrow(object$lv.mean) != nrow(X)) 
                          stop("For conditional predictions, the number of rows in newX must be equal to number of rows in object$lv.mean") 
@@ -45,6 +54,7 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
           X <- object$X 
      n <- nrow(X) 
 
+     
      ## Check properties of X
      if(object$lv.control$type != "independent" & is.null(distmat))
           stop("distmat needs to be supplied when object$lv.control$type is not independent.")
@@ -53,17 +63,18 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
                stop("The dimensions of distmat do not match the dimensions of object$X or newX.")
           }
      
+     
      ## Check properties of newrow.ids; this should only be activated once the predictions are marginal 
      if(!is.null(newrow.ids)) { 
           if(object$row.eff == "none") 
-               stop("Cannot find row effects parameters in object, even though you supplied in newrow.ids")
+               stop("Cannot find row effects parameters in object, but you supplied in newrow.ids")
      
           newrow.ids <- as.matrix(newrow.ids)
           if(is.null(colnames(newrow.ids))) 
                colnames(newrow.ids) <- paste0("ID", 1:ncol(newrow.ids))
           if(ncol(object$row.ids) != ncol(newrow.ids)) 
                stop("The number of columns in newrow.ids must be equal to number of columns in object$row.ids")
-          if(object$row.eff == "fixed"){
+          if(object$row.eff == "fixed") {
                for(k1 in 1:ncol(newrow.ids)) {
                     if(!all(unique(newrow.ids[,k1]) %in% unique(object$row.ids[,k1])))
                          stop(paste0("Not all levels of newrow.ids[,",k1,"] can be found in object$row.ids[,",k1,"]. When the 
@@ -79,12 +90,33 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
                stop("Number of rows in X does not match number of rows in newrow.ids")
           }
 
+          
+     ## Check properties of newranef.ids; this should only be activated once the predictions are marginal 
+     if(!is.null(newranef.ids)) { 
+          if(is.null(object$ranef.ids)) 
+               stop("Cannot find response-specific random intercepts in object, but you supplied in newranef.ids")
+     
+          newranef.ids <- as.matrix(newranef.ids)
+          if(is.null(colnames(newranef.ids))) 
+               colnames(newranef.ids) <- paste0("ID", 1:ncol(newranef.ids))
+          if(ncol(object$ranef.ids) != ncol(newranef.ids)) 
+               stop("The number of columns in newranef.ids must be equal to number of columns in object$ranef.ids")
+          }     
+     if(is.null(newranef.ids)) { 
+          newranef.ids <- object$ranef.ids 
+          }        
+     if(!is.null(X) & !is.null(newranef.ids)) {
+          if(n != nrow(newranef.ids)) 
+               stop("Number of rows in X does not match number of rows in newranef.ids")
+          }
+          
+          
      if(is.null(object$jags.model)) 
           stop("MCMC samples not found.")
 
     
      ##-----------------------------
-     ## Checks done
+     ## Checks done!
      ##-----------------------------
      
      combined_fit_mcmc <- get.mcmcsamples(object) 
@@ -92,15 +124,13 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
      all_linpred <- array(NA, dim = c(n, object$p, nrow(combined_fit_mcmc)))
      pt_pred <- lower_linpred <- upper_linpred <- matrix(NA, nrow = n, ncol = object$p)
      if(any(object$family == "ztnegative.binomial"))
-          all_phi <- array(NA, dim = c(object$p, nrow(combined_fit_mcmc)))
+          all_phi <- matrix(NA, nrow = object$p, ncol = nrow(combined_fit_mcmc))
 
      if(predict.type == "conditional") {
           for(k0 in 1:nrow(combined_fit_mcmc)) {
-               if(object$row.eff != "none") 
-                    cw_row_coefs <- vector("list", ncol(newrow.ids))
-
                cw_lv_coefs <- matrix(combined_fit_mcmc[k0, grep("lv.coefs", mcmc_names)], nrow = object$p)
                cw_eta <- matrix(cw_lv_coefs[,1], nrow = n, ncol = object$p, byrow = TRUE) 
+               
                if(num.lv > 0) {
                     cw.lv <- matrix(combined_fit_mcmc[k0, grep("lvs", mcmc_names)], nrow = n)
                     cw_eta <- cw_eta + tcrossprod(cw.lv, cw_lv_coefs[,2:(num.lv+1)])
@@ -113,8 +143,13 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
                     cw_eta <- cw_eta + object$offset
                if(object$row.eff != "none") { 
                     for(k1 in 1:ncol(newrow.ids)) {
-                         cw_row_coefs[[k1]] <- combined_fit_mcmc[k0, grep(paste0("row.coefs.ID",k1,"\\["), mcmc_names)] 
-                         cw_eta <- cw_eta + cw_row_coefs[[k1]][newrow.ids[,k1]] 
+                         cw_eta <- cw_eta + (combined_fit_mcmc[k0, grep(paste0("row.coefs.ID",k1,"\\["), mcmc_names)])[newrow.ids[,k1]] 
+                         }
+                    }
+               if(!is.null(object$ranef.ids)) {
+                    for(k1 in 1:ncol(newranef.ids)) {
+                         cw_ranef_coefs <- matrix(combined_fit_mcmc[k0, grep(paste0("ranef.coefs.ID",k1,"\\["), mcmc_names)], nrow = object$p)
+                         cw_eta <- cw_eta + t(cw_ranef_coefs)[newranef.ids[,k1],] 
                          }
                     }
 
@@ -126,8 +161,8 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
 
 
      if(predict.type == "marginal") {
-          mc_lv <- rmvnorm(n*lv.mc, mean = rep(0,num.lv))
-          mc_lv <- array(c(mc_lv), dim = c(lv.mc, n, num.lv))
+          #mc_lv <- array(c(rmvnorm(n*lv.mc, mean = rep(0,num.lv))), dim = c(lv.mc, n, num.lv))
+          mc_lv <- array(rnorm(n*lv.mc*num.lv), dim = c(lv.mc, n, num.lv))
           
           for(k0 in 1:nrow(combined_fit_mcmc)) {
                if(k0 %% 100 == 0) 
@@ -156,7 +191,14 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
                if(object$row.eff == "random") {
                     cw_row_coefs <- vector("list", ncol(newrow.ids))
                     for(k1 in 1:ncol(newrow.ids)) 
-                         cw_row_coefs[[k1]] <- matrix(rnorm(length(unique(newrow.ids[,k1]))*lv.mc, mean = 0, sd = combined_fit_mcmc[k0, grep(paste0("row.sigma.ID",k1,"$"), mcmc_names)]), ncol = lv.mc) 
+                         cw_row_coefs[[k1]] <- matrix(rnorm(length(unique(object$row.ids[,k1]))*lv.mc, mean = 0, sd = combined_fit_mcmc[k0, grep(paste0("row.sigma.ID",k1,"$"), mcmc_names)]), ncol = lv.mc) 
+                    }
+               if(!is.null(object$ranef.ids)) {
+                    cw_ranef_coefs <- vector("list", ncol(newranef.ids))
+                    for(k1 in 1:ncol(newranef.ids)) {
+                         cw_ranef_coefs[[k1]] <- lapply(1:object$p, function(j)
+                              matrix(rnorm(length(unique(object$ranef.ids[,k1]))*lv.mc, mean = 0, sd = combined_fit_mcmc[k0, grep(paste0("ranef.sigma.ID",k1,"\\[",j,"\\]"), mcmc_names)]), ncol = lv.mc))
+                              }
                     }
                cw_lv_coefs <- matrix(combined_fit_mcmc[k0, grep("lv.coefs", mcmc_names)], nrow = object$p)
                all_linpredmc <- array(NA, dim = c(n, object$p, lv.mc))
@@ -185,12 +227,16 @@ predict.boral <- function(object, newX = NULL, newrow.ids = NULL, distmat = NULL
                     if(!is.null(object$offset)) 
                          cw_eta <- cw_eta + object$offset
                     if(object$row.eff == "fixed") { 
-                         for(k in 1:ncol(newrow.ids)) 
-                         cw_eta <- cw_eta + cw_row_coefs[[k]][newrow.ids[,k]] 
+                         for(k1 in 1:ncol(newrow.ids)) 
+                         cw_eta <- cw_eta + cw_row_coefs[[k1]][newrow.ids[,k1]] 
                          }
                     if(object$row.eff == "random") { 
-                         for(k in 1:ncol(newrow.ids)) 
-                         cw_eta <- cw_eta + cw_row_coefs[[k]][newrow.ids[,k],b0] 
+                         for(k1 in 1:ncol(newrow.ids)) 
+                              cw_eta <- cw_eta + cw_row_coefs[[k1]][newrow.ids[,k1],b0] 
+                         }
+                    if(!is.null(object$ranef.ids)) { 
+                         for(k1 in 1:ncol(newranef.ids)) 
+                              cw_eta <- cw_eta + sapply(cw_ranef_coefs[[k1]], function(x) x[,b0])[newranef.ids[,k1],] 
                          }
                     all_linpredmc[,,b0] <- cw_eta
                     rm(cw_eta)

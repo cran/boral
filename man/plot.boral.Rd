@@ -9,29 +9,34 @@
 \description{
 \Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
 
-Produces four plots relating to the fitted boral object, which can be used for residual analysis. If some of the columns are ordinal, then a single confusion matrix is also produced.}
+Produces a set of four plots relating to the fitted boral object, which can be used for (some basic0 residual analysis. If some of the columns are ordinal, then a single confusion matrix is also produced.}
 
 \usage{
-\method{plot}{boral}(x, est = "median", jitter = FALSE, ...)
+\method{plot}{boral}(x, est = "median", include.ranef = TRUE, jitter = FALSE, ...)
 }
 
 \arguments{
   \item{x}{An object of class "boral".}
 
-  \item{est}{A choice of either the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}) of the parameters, which are then treated as parameter estimates and the fitted values/residuals used in the plots are calculated from. Default is posterior median.}
+  \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}) of the parameters, which are then treated as parameter estimates and the fitted values/residuals used in the plots are calculated from. Default is posterior median.}
 
   \item{jitter}{If \code{jitter = TRUE}, then some jittering is applied so that points on the plots do not overlap exactly (which can often occur with discrete data). Please see \code{\link{jitter}} for its implementation.}
 
-   \item{...}{Additional graphical options to be included in. These include values for \cr \code{cex, cex.lab, cex.axis, cex.main, lwd}, and so on.}
+  \item{include.ranef}{If response-specific random intercepts were included as part of the fitted model, then this determines whether the predicted random effects will be used in the calculated of the fitted values and Dunn-Smyth residuals. When set to \code{TRUE}, which is the default, then they are included (using either the posterior mean and posterior median predictor). When set to \code{FALSE}, they are not included. The former leads to what are sometimes called conditional fitted values/residuals, while the latter are sometimes called marginal fitted values/residuals.}
+
+  \item{...}{Additional graphical options to be included in. These include values for \cr \code{cex, cex.lab, cex.axis, cex.main, lwd}, and so on.}
 }
 
 \details{
-Four plots are provided:
+A set of four plots are provided:
 \enumerate{
-     \item Plot of Dunn-Smyth residuals against the linear predictors. This can be useful to assess whether the assumed mean-variance relationship is adequately satisfied, as well as to look for particular outliers. For ordinal responses things are more ambiguous due to the lack of single definition for "linear predictor". Therefore, instead of linear predictors the Dunn-Smyth residuals are plotted against the fitted values (defined as the level with the highest fitted probability). It is fully acknowledged that this makes things VERY hard to interpret if only some of your columns are ordinal. 
-     \item Plot of Dunn-Smyth residuals against the row index/row names.  
-     \item Plot of Dunn-Smyth residuals against the column index/column names. Both this and the previous plot are useful for assessing how well each row/column of the response matrix is being modeled. 
-     \item A normal quantile plot of the Dunn-Smyth residuals, which can be used to assess the normality assumption and overall goodness of fit.  
+     \item Plot of Dunn-Smyth residuals against the linear predictors. For ordinal responses, things are more ambiguous due to the lack of single definition for "linear predictor". Therefore, instead of linear predictors the Dunn-Smyth residuals are plotted against the fitted values (defined as the level with the highest fitted probability). It is fully acknowledged that this makes things hard to interpret if only some of your columns are ordinal. 
+     
+     \item Plot of Dunn-Smyth residuals against the row index/names of the response matrix.  
+     
+     \item Plot of Dunn-Smyth residuals against the column index/names of the response matrix. 
+     
+     \item A normal quantile-quantile plot of the Dunn-Smyth residuals.  
      }
 For ordinal responses, a single confusion matrix between the predicted levels (as based on the class with the highest probability) and true levels is aso returned. The table pools the results over all columns assumed to be ordinal.
 }     
@@ -64,12 +69,12 @@ library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
 
-spider.fit.p <- boral(y, family = "poisson", lv.control = list(num.lv = 2),
+spiderfit_pois <- boral(y, family = "poisson", lv.control = list(num.lv = 2),
     row.eff = "fixed", mcmc.control = example_mcmc_control
     model.name = testpath)
 
 par(mfrow = c(2,2))
-plot(spider.fit.p) 
+plot(spiderfit_pois) 
 ## A distinct fan pattern is observed in the plot of residuals 
 ## versus linear predictors plot. 
 

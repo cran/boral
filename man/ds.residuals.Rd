@@ -11,12 +11,14 @@
 
 Calculates the Dunn-Smyth residuals for a fitted model and, if some of the responses are ordinal, a confusion matrix between predicted and true levels.}
 
-\usage{ds.residuals(object, est = "median")}
+\usage{ds.residuals(object, est = "median", include.ranef = TRUE)}
 
 \arguments{
   \item{object}{An object for class "boral".}
 
-  \item{est}{A choice of either the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}), which are then treated as parameter estimates and the residuals are calculated from. Default is posterior median.}
+  \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}), which are then treated as parameter estimates and the residuals are calculated from. Default is posterior median.}
+  
+  \item{include.ranef}{If response-specific random intercepts were included as part of the fitted model, then this determines whether the predicted random effects will be used in the calculated of the fitted values and thus residuals. When set to \code{TRUE}, which is the default, then they are included (using either the posterior mean and posterior median predictor). When set to \code{FALSE}, they are not included. The former leads to what are sometimes called conditional residuals, while the latter are sometimes called marginal residuals.}
 }
 
 \details{
@@ -25,6 +27,8 @@ Details regarding Dunn-Smyth residuals, based on the randomized quantile residua
 For ordinal responses, a single confusion matrix between the predicted levels (as based on the class with the highest probability) and true levels is aso returned. The table pools the results over all columns assumed to be ordinal.
 
 The Dunn-Smyth residuals are calculated based on a point estimate of the parameters, as determined by the argument \code{est}. A fully Bayesian approach would calculate the residuals by averaging over the posterior distribution of the parameters i.e., ergodically average over the MCMC samples. In general however, the results (as in the trends seen in residual analysis) from either approach should be very similar.
+
+Check out also the awesome \code{DHARMa} package for calculation of Dunn-Smyth and probability integral transform residuals in other regression models.
 }
 
 \value{
@@ -35,7 +39,7 @@ A list containing \code{agree.ordinal} which is a single confusion matrix for or
 \itemize{
 \item Dunn, P. K., and Smyth, G. K. (1996). Randomized quantile residuals. Journal of Computational and Graphical Statistics, 5, 236-244.
 
-\item Wang, Y. et al. (2012). mvabund-an R package for model-based analysis of multivariate abundance data. Methods in Ecology and Evolution, 3, 471-474.
+\item Wang et al. (2012). mvabund-an R package for model-based analysis of multivariate abundance data. Methods in Ecology and Evolution, 3, 471-474.
 }
 }
 

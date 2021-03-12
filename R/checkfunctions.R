@@ -2,12 +2,12 @@
 ## Unseen check functions
 ###############################
 
-check_domarglik_ics <- function(fit.mcmc.names, index.ordinal.cols) {	
+check_domarglik_ics <- function(fit.mcmc.names, index.ord.cols) {	
      out <- TRUE
      
      if(length(grep("traits.coefs", fit.mcmc.names)) > 1) 
           out <- FALSE 
-     if(length(index.ordinal.cols) > 1) 
+     if(length(index.ord.cols) > 1) 
           out <- FALSE
      if(length(grep("lv.covparams", fit.mcmc.names)) > 1) 
           out <- FALSE 
@@ -96,9 +96,9 @@ check_row_ids <- function(row.ids = NULL, y) {
      if(!is.null(row.ids)) {
           row.ids <- as.matrix(row.ids)
           if(nrow(row.ids) != nrow(y)) 
-                    stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
+               stop("Number of rows in the matrix row.ids should be equal to number of rows in y.")
           if(is.null(colnames(row.ids))) 
-                    colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
+               colnames(row.ids) <- paste0("ID", 1:ncol(row.ids))
           }
         
     return(row.ids)
@@ -118,6 +118,38 @@ check_row_params <- function(row.params = NULL, y, row.ids = NULL) {
           }
     }
 
+    
+check_ranef_ids <- function(ranef.ids = NULL, y) {
+     if(!is.null(ranef.ids)) {
+          ranef.ids <- as.matrix(ranef.ids)
+          if(nrow(ranef.ids) != nrow(y)) 
+               stop("Number of rows in the matrix ranef.ids should be equal to number of rows in y.")
+          if(is.null(colnames(ranef.ids))) 
+               colnames(ranef.ids) <- paste0("ID", 1:ncol(ranef.ids))
+          for(k0 in 1:ncol(ranef.ids)) {
+               if(identical(ranef.ids[,k0], 1:nrow(y)))
+                    warning("A column in the ranef.ids is equal to a unique index of the rows in y. Is the resulting model is (borderline) unidentifiable in this situation? Please check.")
+               }
+          }
+        
+    return(ranef.ids)
+    }
+
+        
+check_ranef_params <- function(ranef.params = NULL, y, ranef.ids = NULL) {
+     if(!is.null(ranef.params)) {     
+          if(is.null(ranef.ids))
+               stop("ranef.ids needs to be supplied if you want response-specific random intercepts in the model (as determined by ranef.params).")
+          if(!is.matrix(ranef.params))
+               stop("ranef.params should be a matrix of dimension ncol(y) by ncol(ranef.ids)")
+          if(ncol(ranef.params) != ncol(ranef.ids))
+               stop("ranef.params should be a matrix of dimension ncol(y) by ncol(ranef.ids)")
+          if(nrow(ranef.params) != ncol(y))
+               stop("ranef.params should be a matrix of dimension ncol(y) by ncol(ranef.ids)")
+          }
+     }
+
+    
 check_ssvstraits <- function(ssvs.traitsindex, which.traits) {
      if(!is.null(which.traits)) {
           if(length(ssvs.traitsindex) != length(which.traits))
@@ -141,7 +173,7 @@ check_traits <- function(traits, y) {
           if(!is.matrix(traits)) 
                traits <- as.matrix(traits) 
           if(nrow(traits) != ncol(y))
-               stop("If traits are supplied, then please ensure the number of rows in traits i.e., number of species, is equal to the number of columns in the response matrix.") 
+               stop("If traits are supplied, then please ensure the number of rows in traits i.e., number of response, is equal to the number of columns in the response matrix.") 
           if(any(apply(traits,2,function(x) all(x == 1)))) 
                stop("No intercept column should be included in traits. It will be included automatically.")
           }
@@ -181,15 +213,34 @@ check_X_ind <- function(X.ind = NULL, p, num.X, prior.control) {
      }
 
      
-check_which_traits <- function(num.traits, which.traits, traits = NULL, y = NULL, num.X, makejagsboralfile_messages = FALSE) {
+check_X_formula <- function(formula.X = NULL, X = NULL) {
+     if(!is.null(formula.X)) {
+          formulaX <- as.formula(formula.X)
+          
+          if(is.null(X))
+               stop("If formula.X is provided, then X must also be provided.")
+          
+          #formula.X <- update.formula(formula.X, NULL ~ .)
+          termsinformula <- as.character(formula.X)
+          if(length(termsinformula) == 3)
+               termsinformula <- termsinformula[-2]
+          formula.X <- as.formula(termsinformula)
+          if(length(grep("- 1",as.character(formula.X))) > 0)
+               stop("formula.X should not explicitly contain a component to remove the intercept. This will be done automatically in boral.")
+          }
+          
+     return(formula.X)
+     }
 
+     
+check_which_traits <- function(num.traits, which.traits, traits = NULL, y = NULL, num.X, makejagsboralfile_messages = FALSE) {
      if(num.traits > 0 & makejagsboralfile_messages == FALSE) {
           if(num.X == 0 & num.traits > 0) 
                stop("num.traits > 0 suggests traits are to be regressed against covariates X, so please supply X.") 
           if(is.null(which.traits)) 
                stop("If traits are supplied, then please also supply which.traits to inform what traits are regressed against which covariates.") 
           if(nrow(traits) != ncol(y))
-               stop("If traits are supplied, then please ensure the number of rows in traits i.e., number of species, is equal to the number of columns in y.") 
+               stop("If traits are supplied, then please ensure the number of rows in traits i.e., number of response, is equal to the number of columns in y.") 
           if((num.X+1) != length(which.traits))
                stop("which.traits should have equal to 1+ncol(X).") 
           if(any(sapply(which.traits, length) > num.traits)) 

@@ -7,9 +7,9 @@
 \title{Extract Deviance Information Criterion for a fitted model}
 
 \description{
-\Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
+\Sexpr[results=rd, stage=render]{lifecycle::badge("defunct")}
 
-Calculates the Deviance Information Criterion (DIC) for a model fitted using JAGS.}
+Calculates the Deviance Information Criterion (DIC) for a model fitted using JAGS. WARNING: As of version 1.6, this function is no longer maintained (and probably doesn't work properly, if at all)!}
 
 \usage{
 get.dic(jagsfit)
@@ -35,7 +35,7 @@ DIC value for the jags model.
 
 \item Ntzoufras, I. (2011). Bayesian modeling using WinBUGS (Vol. 698). John Wiley & Sons.
 
-\item Spiegelhalter, et al. (2002). Bayesian measures of model complexity and fit. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 64, 583-639.
+\item Spiegelhalter et al. (2002). Bayesian measures of model complexity and fit. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 64, 583-639.
 }
 }
 

@@ -20,23 +20,22 @@ tidyboral(object)
 }
 
 \details{
-Formatting the output into a long data frame maybe useful if one wishes to take the estimated parameters (namely the posterior mean/median/interquartile range/standard deviation, and the lower and upper limits
-of the HPD intervals), and subsequently wrangle them for presentation purposes using packages from the tidyverse e.g., Wickham and Henry (2018), construct plots from them using the ggplot2 package (Wickham, 2016), and so on.
+Formatting the output into a long data frame maybe useful if one wishes to take the estimated parameters (namely the posterior mean/median/interquartile range/standard deviation, and the lower and upper limits of the HPD intervals), and subsequently wrangle them for presentation purposes using packages from the \code{tidyverse} package e.g., Wickham and Henry (2018), construct plots from them using the \code{ggplot2} package (Wickham, 2016), and so on.
 
-It is important to note that this function is solely designed to format output from a fitted boral model relating to the estimated parameters. It does not an additional information like model call and MCMC samples. 
-Please do NOT erase the original fitted model in place of this!
+It is important to note that this function is solely designed to format output from a fitted boral model relating to the estimated parameters. It does not an additional information like model call and MCMC samples. Please do NOT erase the original fitted model in place of this!
 }
 
 
 \value{
-A a list containing the following components where applicable:
-     \item{lv.coefs}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the latent variable coefficients. This also includes the column-specific intercepts, and dispersion parameters if appropriate.}
+A a list containing the following components, where applicable:
+
+     \item{lv.coefs}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the latent variable coefficients. This also includes the response-specific intercepts, and dispersion parameters if appropriate.}
      
      \item{lv}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the latent variables.}
      
      \item{lv.covparams}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions for the parameters characterizing the correlation structure of the latent variables when they are assumed to be non-independent across rows.}
 
-     \item{X.coefs}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the column-specific coefficients relating to \code{X}.}
+     \item{X.coefs}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the response-specific coefficients relating to the covariate matrix.}
      
      \item{traits.coefs}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the coefficients and standard deviation relating to the species traits; please see \code{\link{about.traits}}.}
 
@@ -46,13 +45,17 @@ A a list containing the following components where applicable:
 
      \item{powerparam}{A long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the common power parameter for tweedie responses (please see the not-so-brief tangent on distributions above).}
      
-     \item{row.coefs}{A list with each element being a long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the row effects. The length of the list is equal to the number of row effects included i.e., \code{ncol(row.ids)}.}
+     \item{row.coefs}{A list with each element being a long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the row effects. The length of the list is equal to the number of row effects included i.e., \code{object$ncol(row.ids)}.}
      
-	\item{row.sigma}{A list with each element being a long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the standard deviation for the row random effects normal distribution. The length of the list is equal to the number of row effects included i.e., \code{ncol(row.ids)}.}
+	\item{row.sigma}{A list with each element being a long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the standard deviation for the row random effects normal distribution. The length of the list is equal to the number of row effects included i.e., \code{object$ncol(row.ids)}.}
 	
-     \item{ssvs.indcoefs}{A long format data frame containing posterior probabilities and associated standard deviation for individual SSVS of coefficients in \code{X}.}
+     \item{ranef.coefs}{A list with each element being a long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the response-specific random intercepts. The length of the list is equal to the number of row effects included i.e., \code{ncol(object$ranef.ids)}.}
      
-     \item{ssvs.gpcoefs}{A long format data frame containing posterior probabilities and associated standard deviation for group SSVS of coefficients in \code{X}.}
+	\item{ranef.sigma}{A list with each element being a long format data frame containing the mean/median/standard deviation/interquartile range of the posterior distributions of the standard deviation for the response-specific random intercept normal distributions. The length of the list is equal to the number of row effects included i.e., \code{object$ncol(ranef.ids)}.}
+
+	\item{ssvs.indcoefs}{A long format data frame containing posterior probabilities and associated standard deviation for individual SSVS of coefficients in the covariate matrix.}
+     
+     \item{ssvs.gpcoefs}{A long format data frame containing posterior probabilities and associated standard deviation for group SSVS of coefficients in the covariate matrix.}
      
      \item{ssvs.traitscoefs}{A long format data frame containing posterior probabilities and associated standard deviation for individual SSVS of coefficients relating to species traits.}
 
@@ -95,10 +98,18 @@ testpath <- file.path(tempdir(), "jagsboralmodel.txt")
 library(mvabund) ## Load a dataset from the mvabund package
 data(spider)
 y <- spider$abun
+X <- spider$x
 
 spiderfit_nb <- boral(y, family = "negative.binomial", 
      lv.control = list(num.lv = 2), row.eff = "fixed", 
      mcmc.control = example_mcmc_control, model.name = testpath)
+
+spiderfit_nb_tidy <- tidyboral(spiderfit_nb)
+
+
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
+    ranef.ids = data.frame(region = rep(1:7,each=4)), 
+    mcmc.control = example_mcmc_control, model.name = testpath) 
 
 spiderfit_nb_tidy <- tidyboral(spiderfit_nb)
 }

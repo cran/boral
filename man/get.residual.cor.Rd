@@ -28,9 +28,9 @@ In models with latent variables, the residual covariance matrix is calculated ba
 
 For multivariate abundance data, the inclusion of latent variables provides a parsimonious method of accounting for correlation between species. Specifically, the linear predictor,
 
-\deqn{\beta_{0j} + \bm{x}^\top_i\bm{\beta}_j + \bm{z}^\top_i\bm{\theta}_j}
+\deqn{\beta_{0j} + \bm{x}^\top_i\bm{\beta}_j + \bm{u}^\top_i\bm{\theta}_j}
 
-is normally distributed with a residual covariance matrix given by \eqn{\bm{\Theta}\bm{\Theta}'}. A strong residual covariance/correlation matrix between two species can then be interpreted as evidence of species interaction (e.g., facilitation or competition), missing covariates, as well as any additional species correlation not accounted for by shared environmental responses (see also Pollock et al., 2014, for residual correlation matrices in the context of Joint Species Distribution Models).
+is normally distributed with a residual covariance matrix given by \eqn{\bm{\Theta}\bm{\Theta}'}. A strong residual covariance/correlation matrix between two species can then be interpreted as evidence of species interaction (e.g., facilitation or competition), missing covariates, as well as any additional species correlation not accounted for by shared environmental responses (see also Pollock et al., 2014, for residual correlation matrices in the context of Joint Species Distribution Models). If random effects \eqn{\bm{z}^\top_i\bm{b}_j} are also included in the model, then the latent variables induce a residual covariance/correlation between responses than is conditional on this.
 
 The residual precision matrix (also known as partial correlation matrix, Ovaskainen et al., 2016) is defined as the inverse of the residual correlation matrix. The precision matrix is often used to identify direct or causal relationships between two species e.g., two species can have a zero precision but still be correlated, which can be interpreted as saying that two species do not directly interact, but they are still correlated through other species. In other words, they are conditionally independent given the other species. It is important that the precision matrix does not exhibit the exact same properties of the correlation e.g., the diagonal elements are not equal to 1. Nevertheless, relatively larger values of precision imply a stronger direct relationships between two species. 
 
@@ -39,15 +39,15 @@ In addition to the residual correlation and precision matrices, the median or me
 
 \value{
 A list with the following components:
-     \item{cor, cor.lower, cor.upper}{A set of \eqn{p \times p} correlation matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding 95\% highest posterior interval.}
+     \item{cor, cor.lower, cor.upper}{A set of \eqn{p \times p} correlation matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding (100\eqn{\times}\code{prob}) \% HPD interval.}
      
-     \item{sig.cor}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose 95\% highest posterior interval does not contain zero. All non-significant correlations are set to zero.}
+     \item{sig.cor}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose (100\eqn{\times}\code{prob}) \% HPD interval does not contain zero. All non-significant correlations are set to zero.}
      
      \item{cov}{A \eqn{p \times p} covariance matrix.}
      
-     \item{prec, prec.lower, prec.upper}{A set of \eqn{p \times p} precision matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding 95\% highest posterior interval.}
+     \item{prec, prec.lower, prec.upper}{A set of \eqn{p \times p} precision matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding (100\eqn{\times}\code{prob}) \% HPD interval.}
      
-     \item{sig.prec}{A \eqn{p \times p} residual precision matrix containing only the ``significant" precisions whose 95\% highest posterior interval does not contain zero. All non-significant precision are set to zero.}
+     \item{sig.prec}{A \eqn{p \times p} residual precision matrix containing only the ``significant" precisions whose (100\eqn{\times}\code{prob}) \% HPD interval does not contain zero. All non-significant precision are set to zero.}
 
      \item{trace}{The median/mean point estimator of the trace (sum of the diagonal elements) of the residual covariance matrix.}
 }

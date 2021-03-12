@@ -2,19 +2,19 @@
 \title{News for package 'boral'}
 \encoding{UTF-8}
 
-\section{CHANGES IN boral VERSION 1.9}{
+\section{CHANGES IN boral VERSION 2.0}{
 This list below is written in terms of what is deemed to be most important to least important changes.
 
   \itemize{
-     \item Zero truncated Poisson and zero truncated negative binomial distributions are now available, and fingers crossed they work! They are accessed by setting \code{family = "ztpoisson"} and \code{family = "ztnegative.binomial"}. Please note that, as is commonly used in other regression models, the models are set up such that a log-link function connects the mean of the \emph{untruncated} distribution to the linear predictor.
+     \item Response-specific random intercepts can now be included in a model. If you are familiar with including random row effects in a model, then one may think of response-specific random intercepts as similar to this, except the row effects are now response-specific specific rather than a common across all responses e.g., species-specific random intercepts to accounted for sampling design on a per-species basis. This is done via the \code{ranef.ids} argument in the main function \code{boral} with downstream uses elsewhere also. Please see the help file for \code{boral}, as well as the new \code{about.ranefs} help file for more information.
 
-     \item Creator, author, and contributor have been more formally defined now. Furthermore. lifecycle stickers have also been included for each function, courtesy of the \code{lifecycle} package although, it is all a bit ``opinionated" in the way it is applied. This are most clearly visible when using \code{boral} in RStudio.
+     \item Quite a bit of editing has been done to the help files, as well as some very minor names changes to returned objects. For help files, note that the mathematical notation for latent variables has been changed from \eqn{z_i} to \eqn{u_i}, while species-specifc random intercept "covariates" are now represented by \eqn{z_i}.
+
+     \item The \code{coefsplot} function now implements plotting for fourth-corner coefficients, if a fourth corner model is fitted and \code{fourthcorner = TRUE} is set. Please see the help file for \code{coefsplot} for more information.
+
+     \item A new argument \code{formula.X} is now available in the main \code{boral} function. Like other regression functions such as \code{lm} and \code{glm}, the argument \code{formula.X} should be an object of class "formula", which represents a symbolic description of the covariate matrix one wishes to include.  Please see the help file for \code{boral} for more details. 
        
-     \item The function \code{fitted.boral} now has an additional argument \code{linear.predictor}. When set to \code{TRUE}, it allows one to return the fitted values on the linear predictor scale. When set to \code{FALSE}, which is the defaul behavior, the fitted mean values are on the response scale. Note things are slightly more complicated for the two newly implemented zero truncated distributions because, as mentioned above, the log-link function connects the mean of the \emph{untruncated} distribution to the linear predictor. Therefore if \code{linear.predictor = TRUE}, then the linear predictor is returned. But if \code{linear.predictor = FALSE}, then actual fitted mean value is returned. 
-
-     \item The default for value for \code{mcmc.control$seed} has been changed from \code{123} to \code{NULL}. Thus the user must now specify a seed if they wish to "seed" the MCMC fitting algorithm. 
-
-     \item An issue pertaining to the calculation of the Dunn-Smyth residuals for Tweedie responses has been fixed. Thaks to an ongoing collobration with Adrien Chevallier to leading to this issue being rectified.
+     \item ALL functions to calculate information criteria and log-likelihood values of any sort are now classed as defuncted and no longer maintained...and probably do not work properly!
      }
 
 }

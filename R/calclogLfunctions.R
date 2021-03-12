@@ -13,7 +13,7 @@
 calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coefs = NULL, 
      row.coefs = NULL, row.ids = NULL, offset = NULL, lv = NULL, cutoffs = NULL, powerparam = NULL) {
 
-     deprecate_warn("1.9", "boral::calc.marglogLik()", details = "We will be phasing out all functions to calculate log-likelihoods of any sort (too hard to maintain)!")
+     deprecate_warn("1.9", "boral::calc.condlogLik()", details = "All functions to calculate log-likelihoods are being phased out (too hard to maintain)!")
 
      if(length(family) != ncol(y) & length(family) != 1) { 
         stop("Number of elements in family is either 1 or equal to # of columns in y") }
@@ -66,38 +66,38 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 
     index_multinom_cols <- which(complete_family == "multinom")
     for(j in 1:p) {
-        species_etas <- all_etas[,j]
-        if(!is.null(row.coefs)) { for(k in 1:ncol(row.ids)) species_etas <- species_etas + row.coefs[[k]][row.ids[,k]] }
+        response_etas <- all_etas[,j]
+        if(!is.null(row.coefs)) { for(k in 1:ncol(row.ids)) response_etas <- response_etas + row.coefs[[k]][row.ids[,k]] }
             
         if(complete_family[j] == "binomial") 
-            loglik_comp[,j] <- dbinom(as.vector(unlist(y[,j])), size = complete_trial_size[j], prob = pnorm(species_etas), log = TRUE)
+            loglik_comp[,j] <- dbinom(as.vector(unlist(y[,j])), size = complete_trial_size[j], prob = pnorm(response_etas), log = TRUE)
         if(complete_family[j] == "poisson") 
-            loglik_comp[,j] <- dpois(as.vector(unlist(y[,j])), lambda = exp(species_etas), log = TRUE)
+            loglik_comp[,j] <- dpois(as.vector(unlist(y[,j])), lambda = exp(response_etas), log = TRUE)
         if(complete_family[j] == "ztpoisson") 
-            loglik_comp[,j] <- dztpois(as.vector(unlist(y[,j])), lambda = exp(species_etas), log = TRUE)
+            loglik_comp[,j] <- dztpois(as.vector(unlist(y[,j])), lambda = exp(response_etas), log = TRUE)
         if(complete_family[j] == "negative.binomial") 
-            loglik_comp[,j] <- dnbinom(as.vector(unlist(y[,j])), size=1/(lv.coefs[j,ncol(lv.coefs)]+1e-5), mu=exp(species_etas), log = TRUE)
+            loglik_comp[,j] <- dnbinom(as.vector(unlist(y[,j])), size=1/(lv.coefs[j,ncol(lv.coefs)]+1e-5), mu=exp(response_etas), log = TRUE)
         if(complete_family[j] == "ztnegative.binomial") 
-            loglik_comp[,j] <- dztnbinom(as.vector(unlist(y[,j])), size=1/(lv.coefs[j,ncol(lv.coefs)]+1e-5), mu=exp(species_etas), log = TRUE)
+            loglik_comp[,j] <- dztnbinom(as.vector(unlist(y[,j])), size=1/(lv.coefs[j,ncol(lv.coefs)]+1e-5), mu=exp(response_etas), log = TRUE)
         if(complete_family[j] == "exponential") 
-            loglik_comp[,j] <- dexp(as.vector(unlist(y[,j])), 1/exp(species_etas), log = TRUE)
+            loglik_comp[,j] <- dexp(as.vector(unlist(y[,j])), 1/exp(response_etas), log = TRUE)
         if(complete_family[j] == "gamma") 
-            loglik_comp[,j] <- dgamma(as.vector(unlist(y[,j])), shape=exp(species_etas)*lv.coefs[j,ncol(lv.coefs)], rate = lv.coefs[j,ncol(lv.coefs)], log = TRUE)
+            loglik_comp[,j] <- dgamma(as.vector(unlist(y[,j])), shape=exp(response_etas)*lv.coefs[j,ncol(lv.coefs)], rate = lv.coefs[j,ncol(lv.coefs)], log = TRUE)
         if(complete_family[j] == "beta") 
-            loglik_comp[,j] <- dbeta(as.vector(unlist(y[,j])), lv.coefs[j,ncol(lv.coefs)]*exp(species_etas)/(1+exp(species_etas)), lv.coefs[j,ncol(lv.coefs)]*(1-exp(species_etas)/(1+exp(species_etas))),log = TRUE)
+            loglik_comp[,j] <- dbeta(as.vector(unlist(y[,j])), lv.coefs[j,ncol(lv.coefs)]*exp(response_etas)/(1+exp(response_etas)), lv.coefs[j,ncol(lv.coefs)]*(1-exp(response_etas)/(1+exp(response_etas))),log = TRUE)
         if(complete_family[j] == "normal") 
-            loglik_comp[,j] <- dnorm(as.vector(unlist(y[,j])), mean=species_etas, sd=(lv.coefs[j,ncol(lv.coefs)]+1e-6), log = TRUE)
+            loglik_comp[,j] <- dnorm(as.vector(unlist(y[,j])), mean=response_etas, sd=(lv.coefs[j,ncol(lv.coefs)]+1e-6), log = TRUE)
         if(complete_family[j] == "lnormal") 
-            loglik_comp[,j] <- dlnorm(as.vector(unlist(y[,j])), meanlog=species_etas, sdlog=(lv.coefs[j,ncol(lv.coefs)]+1e-6), log = TRUE)
+            loglik_comp[,j] <- dlnorm(as.vector(unlist(y[,j])), meanlog=response_etas, sdlog=(lv.coefs[j,ncol(lv.coefs)]+1e-6), log = TRUE)
             if(complete_family[j] == "tweedie") 
-                loglik_comp[,j] <- dTweedie(as.vector(unlist(y[,j])), mu = exp(species_etas), phi = lv.coefs[j,ncol(lv.coefs)]+1e-6, p = powerparam, LOG = TRUE) 
+                loglik_comp[,j] <- dTweedie(as.vector(unlist(y[,j])), mu = exp(response_etas), phi = lv.coefs[j,ncol(lv.coefs)]+1e-6, p = powerparam, LOG = TRUE) 
         if(complete_family[j] == "ordinal") { 
             get_probs <- ordinal_conversion(n = n, lv = lv, lv.coefs.j = lv.coefs[j,], num.lv = num.lv, row.coefs = row.coefs, row.ids = row.ids, X = X, X.coefs.j = X.coefs[j,], cutoffs = cutoffs, est = "ignore"); 
             for(i in 1:n) 
                 loglik_comp[i,j] <- log(get_probs[i,as.vector(y[i,j])]+1e-5) 
             }	
 # 		if(complete_family[j] == "multinom") { 
-# 			if(!is.null(X.multinom.coefs)) spp.etas <- matrix(rep(species_etas,dim(X.multinom.coefs)[3]),nrow=n) + as.matrix(X)%*%X.multinom.coefs[which(index_multinom_cols == j),,]
+# 			if(!is.null(X.multinom.coefs)) spp.etas <- matrix(rep(response_etas,dim(X.multinom.coefs)[3]),nrow=n) + as.matrix(X)%*%X.multinom.coefs[which(index_multinom_cols == j),,]
 # 			get_probs <- exp(spp.etas)/apply(exp(spp.etas),1,sum)
 # 			for(i in 1:n) { loglik_comp[i,j] <- log(get_probs[as.vector(y[i,j])]+1e-5) } }	
         } 
@@ -108,7 +108,7 @@ calc.condlogLik <- function(y, X = NULL, family, trial.size = 1, lv.coefs, X.coe
 	
 ## Calculate logl for models with no latent variables
 ## Conditional and marginal log-likelihood are the same in such case, except that in the case of row.eff = "random" there is marginalization over the random row effect
-## lv.coefs still need to be provided though as it contains the spp effects and column-specific dispersion parameters
+## lv.coefs still need to be provided though as it contains the spp effects and response-specific dispersion parameters
 ## Furthermore, note also that since it takes it X.coefs and lv.coefs:
 ## 1) it traits is not NULL, since marginalization is not done over the spp coefs; 
 ## 2) if > 1 are ordinal and hence the beta_{0j} are random effects, then marginalization is not done over the spp intercepts
@@ -117,7 +117,7 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
      X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL, offset = NULL, 
      cutoffs = NULL, powerparam = NULL) {
 
-     deprecate_warn("1.9", "boral::calc.marglogLik()", details = "We will be phasing out all functions to calculate log-likelihoods of any sort (too hard to maintain)!")
+     deprecate_warn("1.9", "boral::calc.logLik.lv0()", details = "All functions to calculate log-likelihoods are being phased out (too hard to maintain)!")
 
      if(length(family) != ncol(y) & length(family) != 1) 
         stop("Number of elements in family is either 1 or equal to the number of columns in y.") 
@@ -294,13 +294,11 @@ calc.logLik.lv0 <- function (y, X = NULL, family, trial.size = 1, lv.coefs,
 ## 1) it traits is not NULL, since marginalization is not done over the spp coefs; 
 ## 2) if > 1 are ordinal and hence the beta_{0j} are random effects, then marginalization is not done over the spp intercepts
 ## 3) The marginalization is incorrect if z_i is structured
-# family <- spider.fit.nb$family; trial.size = 1; lv.coefs = spider.fit.nb$lv.coefs.mean; X.coefs = spider.fit.nb$X.coefs.mean; row.eff = "random"; row.params = list(ID1 = spider.fit.nb$row.sigma$ID1$mean, ID2 = spider.fit.nb$row.sigma$ID2$mean); row.ids = spider.fit.nb$row.ids; num.lv <- spider.fit.nb$num.lv; lv.mc = NULL; cutoffs = NULL; powerparam = NULL
-
 calc.marglogLik <- function (y, X = NULL, family, trial.size = 1, lv.coefs, 
      X.coefs = NULL, row.eff = "none", row.params = NULL, row.ids = NULL, offset = NULL, num.lv, 
      lv.mc = NULL, cutoffs = NULL, powerparam = NULL) { 
 	
-     deprecate_warn("1.6", "boral::calc.marglogLik()")
+     deprecate_warn("1.9", "boral::calc.condlogLik()", details = "All functions to calculate log-likelihoods are being phased out (too hard to maintain)!")
      
     if(num.lv == 0) 
         stop("Please use calc.loglik.lv0 to calculate likelihood in boral models with no latent variables.")

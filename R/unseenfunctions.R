@@ -124,8 +124,8 @@ ordinal_conversion <- function(n, lv = NULL, lv.coefs.j = NULL, num.lv = NULL,
 
 
 ## Process Geweke's convergence diagnotics from a single chain MCMC fit	
-process_geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv, 
-     row.eff, row.ids, num.ord.levels = NULL, prior.control) { #type = "independent"
+process_geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv, row.eff, row.ids, ranef.ids, 
+     num.ord.levels = NULL, prior.control) { #type = "independent"
      
      p <- ncol(y)
      num.X <- 0
@@ -164,6 +164,20 @@ process_geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv,
                out_gewekelist$row.sigma[[k]] <- fit_geweke[grep(paste0("row.sigma.ID",k,"$"), names(fit_geweke))]
           }
 
+
+     if(!is.null(ranef.ids)) {
+          out_gewekelist$ranef.coefs <- vector("list", ncol(ranef.ids))
+          names(out_gewekelist$ranef.coefs) <- colnames(ranef.ids)
+          out_gewekelist$ranef.sigma <- matrix(NA, nrow = p, ncol = ncol(ranef.ids))
+          rownames(out_gewekelist$ranef.sigma) <- colnames(y)
+          colnames(out_gewekelist$ranef.sigma) <- colnames(ranef.ids)
+          for(k0 in 1:ncol(ranef.ids)) {
+               out_gewekelist$ranef.coefs[[k0]] <- matrix(fit_geweke[grep(paste0("ranef.coefs.ID",k0,"\\["), names(fit_geweke))], nrow = p)
+               out_gewekelist$ranef.sigma[,k0] <- fit_geweke[grep(paste0("ranef.sigma.ID",k0,"\\["), names(fit_geweke))]
+               }
+          }
+
+          
      if(num.X > 0) {
           out_gewekelist$X.coefs <- matrix(fit_geweke[grep("X.coefs", names(fit_geweke))], nrow = p)
           rownames(out_gewekelist$X.coefs) <- colnames(y); colnames(out_gewekelist$X.coefs) <- colnames(X)
@@ -199,216 +213,9 @@ process_geweke <- function(fit.mcmc, y, X = NULL, traits = NULL, family, num.lv,
      }
 
 
-## Sets up part of the JAGS script corresponding to family for responses; used in make.jagsboralmodel and make.jagsboralnullmodel. 
-setup_respfamilies <- function(p, complete.family, num.lv, row.eff, row.ids, 
-     offset, num.X, complete.trial.size, index.tweed.cols, index.ord.cols) {
-
-     respfamily_script <- NULL
-	
-     for(j in 1:p) {
-          if(complete.family[j] != "multinom") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) {
-                         if(num.lv == 0) 
-                              linpred_string <- paste("eta[i,j] <- 0", sep = "")
-                         if(num.lv > 0) 
-                              linpred_string <- paste("eta[i,j] <- inprod(lv.coefs[j,2:(num.lv+1)],lvs[i,])", sep = "")
-                         if(row.eff != "none") {
-                              for(k in 1:ncol(row.ids)) 
-                                   linpred_string <- paste(linpred_string, " + row.coefs.ID", k,"[row.ids[i,",k,"]]", sep ="")
-                              }
-                         if(num.X > 0) 
-                              linpred_string <- paste(linpred_string, " + inprod(X.coefs[j,],X[i,])", sep ="")
-                         if(!is.null(offset)) 
-                              linpred_string <- paste(linpred_string, " + offset[i,j]", sep ="")
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { ", linpred_string, " }", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }	
-               if(length(unique(complete.family)) > 1) {
-                    if(num.lv == 0) 
-                         linpred_string <- paste("eta[i,",j, "] <- 0", sep = "")
-                    if(num.lv > 0) 
-                         linpred_string <- paste("eta[i,",j, "] <- inprod(lv.coefs[",j, ",2:(num.lv+1)],lvs[i,])", sep = "")
-                    if(row.eff != "none") 
-                         {
-                         for(k in 1:ncol(row.ids)) 
-                              linpred_string <- paste(linpred_string, " + row.coefs.ID", k,"[row.ids[i,",k,"]]", sep ="")
-                         }
-                    if(num.X > 0) 
-                         linpred_string <- paste(linpred_string, " + inprod(X.coefs[", j, ",],X[i,])", sep ="")
-                    if(!is.null(offset)) 
-                         linpred_string <- paste(linpred_string, " + offset[i,",j,"]", sep ="")
-                    respfamily_script <- c(respfamily_script, paste("\t\t ", linpred_string, sep = ""))
-                    }  
-               }			
-                
-          if(complete.family[j] == "negative.binomial") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) {
-                         #respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { u[i,j] ~ dnorm(0, 1/lv.coefs[",j, ",2]) }", sep = ""))
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { u[i,j] ~ dgamma(1/lv.coefs[j,num.lv+2], 1/lv.coefs[j,num.lv+2]) }", sep = ""))
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dpois(exp(lv.coefs[j,1] + eta[i,j ])*(u[i,j])) } ## Parameterizing the NB as a multiplicative random effect models\n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }	
-               if(length(unique(complete.family)) > 1) {
-                    #respfamily_script <- c(respfamily_script, paste("\t\t u[i,",j, "] ~ dnorm(0, 1/lv.coefs[",j, ",2])", sep = ""))
-                    respfamily_script <- c(respfamily_script, paste("\t\t u[i,",j, "] ~ dgamma(1/lv.coefs[", j, ",num.lv+2], 1/lv.coefs[",j, ",num.lv+2])", sep = ""))
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,",j, "] ~ dpois(exp(lv.coefs[", j, ",1] + eta[i,",j, "])*(u[i,", j, "])) ## Parameterizing the NB as a multiplicative random effect models, with size\n", sep = ""))
-                    }
-               }
-                
-		if(complete.family[j] == "ztnegative.binomial") {
-			if(length(unique(complete.family)) == 1) {
-				if(j == 1) {
-					respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { u[i,j] <- 1/(1 + lv.coefs[j,num.lv+2]*exp(lv.coefs[j,1] + eta[i,j])) }", sep = ""))
-					respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dnegbin(u[i,j], 1/lv.coefs[j,num.lv+2]) T(1,) } \n", sep = ""))
-					}
-				if(j > 1) { }
-				}
-			if(length(unique(complete.family)) > 1) {		
-				respfamily_script <- c(respfamily_script, paste("\t\t u[i,",j, "] <- 1/(1 + lv.coefs[",j, ",num.lv+2]*exp(lv.coefs[", j, ",1] + eta[i,",j, "]))", sep = ""))
-				respfamily_script <- c(respfamily_script, paste("\t\t y[i,",j, "] ~ dnegbin(u[i,", j, "], 1/lv.coefs[",j, ",num.lv+2]) T(1,) \n", sep = ""))
-				}
-			}
-                
-          if(complete.family[j] == "normal") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) {
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dnorm(lv.coefs[j,1] + eta[i,j],pow(lv.coefs[j,num.lv+2],-2)) } \n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(unique(complete.family)) > 1) {
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dnorm(lv.coefs[", j, ",1] + eta[i,", j, "],pow(lv.coefs[", j, ",num.lv+2],-2)) \n", sep = ""))
-                    }
-               }
-
-          if(complete.family[j] == "binomial") {
-               respfamily_script <- c(respfamily_script, paste("\t\t y[i,",j, "] ~ dbin(phi(lv.coefs[", j, ",1] + eta[i,",j, "]),",complete.trial.size[j],")\n", sep = ""))
-               }
-                
-          if(complete.family[j] == "exponential") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) 
-                         {
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dexp(pow(exp(lv.coefs[j,1] + eta[i,j]),-1)) }\n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(unique(complete.family)) > 1) {		
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dexp(pow(exp(lv.coefs[", j, ",1] + eta[i,", j, "]),-1))\n", sep = ""))
-                    }
-               }
-                
-          if(complete.family[j] == "gamma") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) {
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dgamma(exp(lv.coefs[j,1] + eta[i,j])*lv.coefs[j,num.lv+2], lv.coefs[j,num.lv+2]) } \n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(unique(complete.family)) > 1) {		
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dgamma(exp(lv.coefs[", j, ",1] + eta[i,", j, "])*lv.coefs[", j, ",num.lv+2], lv.coefs[", j, ",num.lv+2])\n", sep = ""))
-                    }
-               }
-                
-          if(complete.family[j] == "beta") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) 
-                         {
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dbeta(ilogit(lv.coefs[j,1] + eta[i,j])*lv.coefs[j,num.lv+2],(1-ilogit(lv.coefs[j,1] + eta[i,j]))*lv.coefs[j,num.lv+2]) }\n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(unique(complete.family)) > 1) {		
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dbeta(ilogit(lv.coefs[", j, ",1] + eta[i,", j, "])*lv.coefs[", j, ",num.lv+2],(1-ilogit(lv.coefs[", j, ",1] + eta[i,", j, "]))*lv.coefs[", j, ",num.lv+2])\n", sep = ""))
-                    }
-               }
-                
-          if(complete.family[j] == "poisson") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) {
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dpois(exp(lv.coefs[j,1] + eta[i,j])) }\n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(unique(complete.family)) > 1) 
-                    {		
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dpois(exp(lv.coefs[", j, ",1] + eta[i,", j, "]))\n", sep = ""))
-                    }
-               }	
-                
-          if(complete.family[j] == "ztpoisson") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) {
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dpois(exp(lv.coefs[j,1] + eta[i,j])) T(1,) }\n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(unique(complete.family)) > 1) 
-                    {		
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dpois(exp(lv.coefs[", j, ",1] + eta[i,", j, "])) T(1,) \n", sep = ""))
-                    }
-               }	
-
-          if(complete.family[j] == "lnormal") {
-               if(length(unique(complete.family)) == 1) {
-                    if(j == 1) {
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { y[i,j] ~ dlnorm(lv.coefs[j,1] + eta[i,j],pow(lv.coefs[j,num.lv+2],-2)) } \n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(unique(complete.family)) > 1) {		
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dlnorm(lv.coefs[", j, ",1] + eta[i,", j, "],pow(lv.coefs[", j, ",num.lv+2],-2)) \n", sep = ""))
-                    }
-               }  	
-                
-          if(complete.family[j] == "tweedie") {
-               respfamily_script <- c(respfamily_script, paste("\t\t lambdanum[i,", which(index.tweed.cols == j), "] <- pow(exp(lv.coefs[", j, ",1] + eta[i,", j, "]),2-powerparam)/(lv.coefs[", j, ",num.lv+2]*(2-powerparam))", sep = ""))
-               respfamily_script <- c(respfamily_script, paste("\t\t numfish[i,", which(index.tweed.cols == j), "] ~ dpois(lambdanum[i,", which(index.tweed.cols == j), "])", sep = ""))
-               respfamily_script <- c(respfamily_script, paste("\t\t choose.shape[i,", which(index.tweed.cols == j), ",1] <- numfish[i,", which(index.tweed.cols == j), "]*(2-powerparam)/(powerparam-1)", sep = "")) ## If y > 0, then conditional on numfish, y is sum of independent gammas
-               respfamily_script <- c(respfamily_script, paste("\t\t choose.rate[i,", which(index.tweed.cols == j), ",1] <- 1/(lv.coefs[", j, ",num.lv+2]*(powerparam-1)*pow(exp(lv.coefs[", j, ",1] + eta[i,", j, "]),powerparam-1))", sep = ""))
-               respfamily_script <- c(respfamily_script, paste("\t\t choose.shape[i,", which(index.tweed.cols == j), ",2] <- 1", sep = "")) ## If y = 0, then Tweedie dist equals probability of Poisson equal 0
-               respfamily_script <- c(respfamily_script, paste("\t\t choose.rate[i,", which(index.tweed.cols == j), ",2] <- exp(-lambdanum[i,", which(index.tweed.cols == j), "])", sep = ""))
-               respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dgamma(choose.shape[i,", which(index.tweed.cols == j), ",1+equals(y[i,", which(index.tweed.cols == j), "],0)],choose.rate[i,", j, ",1+equals(y[i,", j, "],0)]) \n", sep = ""))
-               }
-                
-          if(complete.family[j] == "ordinal") {
-               if(length(index.ord.cols) == p) {
-                    if(j == 1) { 
-                         respfamily_script <- c(respfamily_script, paste("\t\t for(j in 1:p) { \n\t\t\t prob[i,j,1] <- phi(cutoffs[1]-eta[i,j]-lv.coefs[j,1])", sep = ""))
-                         respfamily_script <- c(respfamily_script, paste("\t\t\t for(k in 2:(num.ord.levels-1)) { \n\t\t\t\t prob[i,j,k] <- phi(cutoffs[k]-eta[i,j]-lv.coefs[j,1]) - phi(cutoffs[k-1]-eta[i,j]-lv.coefs[j,1]) \n\t\t\t\t }", sep = ""))
-                         respfamily_script <- c(respfamily_script, paste("\t\t\t prob[i,j,num.ord.levels] <- 1-phi(cutoffs[num.ord.levels-1]-eta[i,j]-lv.coefs[j,1])", sep = ""))
-                         respfamily_script <- c(respfamily_script, paste("\t\t\t y[i,j] ~ dcat(prob[i,j,]) \n\t\t\t } \n", sep = ""))
-                         }
-                    if(j > 1) { }
-                    }
-               if(length(index.ord.cols) < p) {
-                    respfamily_script <- c(respfamily_script, paste("\t\t prob[i,", which(index.ord.cols == j), ",1] <- phi(cutoffs[1]-eta[i,", j, "]-lv.coefs[", j, ",1])", sep = ""))
-                    respfamily_script <- c(respfamily_script, paste("\t\t for(k in 2:(num.ord.levels-1)) { prob[i,", which(index.ord.cols == j), ",k] <- phi(cutoffs[k]-eta[i,", j, "]-lv.coefs[", j, ",1]) - phi(cutoffs[k-1]-eta[i,", j, "]-lv.coefs[", j, ",1]) }", sep = ""))
-                    respfamily_script <- c(respfamily_script, paste("\t\t prob[i,", which(index.ord.cols == j), ",num.ord.levels] <- 1-phi(cutoffs[num.ord.levels-1]-eta[i,", j, "]-lv.coefs[", j, ",1])", sep = ""))
-                    respfamily_script <- c(respfamily_script, paste("\t\t y[i,", j, "] ~ dcat(prob[i,", which(index.ord.cols == j), ",])\n", sep = ""))
-                    }
-               }
-                
-          if(complete.family[j] == "multinom") { 
-               stop("You shouldn't have gotten here!") ## Coefficients for lv are constrained to be same for all levels! Otherwise identifiability constraints are hard!
-#    		model_script <- c(model_script, paste("\t\t for(k in 1:num.multinom.levels[",j,"]) {",sep=""))
-# 			if(num.X == 0 & row.eff) model_script <- c(model_script, paste("\t\t\t mu[i,",which(index_multinom_cols == j),",k] <- exp(row.coefs[i] + inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]))",sep="")) 
-# 			if(num.X > 0 & row.eff) model_script <- c(model_script, paste("\t\t\t mu[i,",which(index_multinom_cols == j),",k] <- exp(row.coefs[i] + inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]) + inprod(X.multinom.params[",which(index_multinom_cols == j),",,k],X[i,]))",sep="")) 
-# 			if(num.X == 0 & !row.eff) model_script <- c(model_script, paste("\t\t\t mu[i,",which(index_multinom_cols == j),",k] <- exp(inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]))",sep="")) 
-# 			if(num.X > 0 & !row.eff) model_script <- c(model_script, paste("\t\t\t mu[i,",which(index_multinom_cols == j),",k] <- exp(inprod(lv.coefs[",j,",2:(num.lv+1)],lvs[i,]) + inprod(X.multinom.params[",which(index_multinom_cols == j),",,k],X[i,]))",sep="")) 			
-# 			model_script <- c(model_script, paste("\t\t\t prob[i,",which(index_multinom_cols == j),",k] <- mu[i,",which(index_multinom_cols == j),",k]/sum(mu[i,",which(index_multinom_cols == j),",]) }",sep="")) 
-# 			model_script <- c(model_script, paste("\t\t y[i,",j,"] ~ dcat(prob[i,",which(index_multinom_cols == j),",]+0.001)\n",sep="")) 
-               }		
-          }
-            
-     return(respfamily_script)
-     }
-	
-
+##-------------------
+## Unused functions
+##------------------
 function() {
      ## Extract rhats from multiple chained MCMC fit	
      rhats <- function (x, asc = FALSE) {
@@ -456,7 +263,7 @@ function() {
 #    			names(make.rhatslist$cutoffs) <- paste(1:(num.ord.levels - 1), "|", 2:num.ord.levels, sep = "") 
 #  			if(sum(family == "ordinal") > 2) {
 #  				make.rhatslist$ordinal.sigma <- fit.rhats[grep("ordinal.sigma", rownames(fit.rhats))]
-#  				names(make.rhatslist$ordinal.sigma) <- "Species-specific random intercept sigma for ordinal responses" 
+#  				names(make.rhatslist$ordinal.sigma) <- "Rpecies-specific random intercept sigma for ordinal responses" 
 #  				}
 #    			}
 # 

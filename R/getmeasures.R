@@ -3,7 +3,7 @@
 get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", row.ids = NULL, 
      offset = NULL, num.lv, fit.mcmc) {
         
-     deprecate_warn("1.6", "boral::get.measures()", details = "All functions to calculate information criteria are no longer updated!")
+     deprecate_warn("1.6", "boral::get.measures()", details = "All functions to calculate information criteria are no longer maintained (and probably doesn't work properly, if at all)!")
     
     
      if(length(family) != ncol(y) & length(family) != 1) 
@@ -31,7 +31,7 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
      if(length(grep("ssvs",colnames(fit.mcmc))) > 0)
           warnings("Calculation of information criterion in the presence of any SSVS is problematic at best!")
 
-     do.marglik.ics <- check_domarglik_ics(fit.mcmc.names = colnames(fit.mcmc), index.ordinal.cols = index_ordinal_cols)
+     do.marglik.ics <- check_domarglik_ics(fit.mcmc.names = colnames(fit.mcmc), index.ord.cols = index_ordinal_cols)
         
      ##-----------------------------
      ## Checks done 
@@ -137,7 +137,7 @@ get.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", 
 ## All of this is only permitted when the fitted boral model has a simple enough structure to allow these calculations!
 get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "none", row.ids = NULL, offset = NULL, num.lv, fit.mcmc, verbose = TRUE) { #lv.control
 
-     deprecate_warn("1.6", "boral::get.more.measures()", details = "All functions to calculate information criteria are no longer updated!")
+     deprecate_warn("1.6", "boral::get.more.measures()", details = "All functions to calculate information criteria are no longer maintained (and probably doesn't work properly, if at all)!")
 
     index_ordinal_cols <- which(family == "ordinal")
 
@@ -167,7 +167,7 @@ get.more.measures <- function(y, X = NULL, family, trial.size = 1, row.eff = "no
      if(length(grep("ssvs",colnames(fit.mcmc))) > 0)
           warnings("Calculation of information criterion in the presence of any SSVS is problematic at best!")
 
-     do.marglik.ics <- check_domarglik_ics(fit.mcmc.names = colnames(fit.mcmc), index.ordinal.cols = index_ordinal_cols)
+     do.marglik.ics <- check_domarglik_ics(fit.mcmc.names = colnames(fit.mcmc), index.ord.cols = index_ordinal_cols)
                     
      ## Checks done ##
     

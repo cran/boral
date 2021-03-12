@@ -1,4 +1,4 @@
-get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcmc, lv.control, prob = 0.95, num.lv = NULL) {
+get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, ranef.ids = NULL, fit.mcmc, lv.control, prob = 0.95, num.lv = NULL) {
      n <- nrow(y)
      p <- ncol(y)
      lv.control <- check_lv_control(num.lv = num.lv, lv.control = lv.control, need.distmat = FALSE)
@@ -13,15 +13,16 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
           along = 3)
      final_list <- list()
      
+     
      if(num.lv > 0) {
           lv_arr <- abind(matrix(hpd_lower[grep("lvs", names(hpd_lower))], nrow=n), matrix(hpd_upper[grep("lvs", names(hpd_upper))], nrow=n), along = 3)
           dimnames(lv_arr) <- list(rows = rownames(y), lv = paste0("lv", 1:num.lv), type = c("lower","upper"))		
           final_list$lv <- lv_arr
 
           if(dim(lv_coefs_arr)[2] == (num.lv+2)) 
-               dimnames(lv_coefs_arr) <- list(cols = colnames(y), coefficients = c("beta0",paste0("theta",1:num.lv),"Dispersion"), type = c("lower","upper"))
+               dimnames(lv_coefs_arr) <- list(resp = colnames(y), coefficients = c("beta0",paste0("theta",1:num.lv),"Dispersion"), type = c("lower","upper"))
           if(dim(lv_coefs_arr)[2] == (num.lv+1)) 
-               dimnames(lv_coefs_arr) <- list(cols = colnames(y), coefficients = c("beta0",paste0("theta",1:num.lv)), type = c("lower","upper"))
+               dimnames(lv_coefs_arr) <- list(resp = colnames(y), coefficients = c("beta0",paste0("theta",1:num.lv)), type = c("lower","upper"))
                
           if(lv.control$type != "independent") {
                lv_covparams_arr <- cbind(hpd_lower[grep("lv.covparams", names(hpd_lower))], hpd_upper[grep("lv.covparams", names(hpd_upper))])
@@ -33,13 +34,17 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
                final_list$lv.covparams <- lv_covparams_arr
                }
           }
+          
+          
      if(num.lv == 0) { 
           if(dim(lv_coefs_arr)[2] == 2) 
-               dimnames(lv_coefs_arr) <- list(cols = colnames(y), coefficients = c("beta0","Dispersion"), type = c("lower","upper"))
+               dimnames(lv_coefs_arr) <- list(resp = colnames(y), coefficients = c("beta0","Dispersion"), type = c("lower","upper"))
           if(dim(lv_coefs_arr)[2] == 1) 
-               dimnames(lv_coefs_arr) <- list(cols = colnames(y), coefficients = c("beta0"), type = c("lower","upper"))
+               dimnames(lv_coefs_arr) <- list(resp = colnames(y), coefficients = c("beta0"), type = c("lower","upper"))
           }
      final_list$lv.coefs <- lv_coefs_arr
+     
+     
      
      if(length(grep("row.coefs", names(hpd_lower))) > 0) {
           n.ID <- apply(row.ids, 2, function(x) length(unique(x)))
@@ -68,9 +73,35 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
                }
           }
 
+          
+          
+     if(length(grep("ranef.coefs", names(hpd_lower))) > 0) {
+          n.ranefID <- apply(ranef.ids, 2, function(x) length(unique(x)))
+          final_list$ranef.coefs <- vector("list", ncol(ranef.ids))
+          names(final_list$ranef.coefs) <- colnames(ranef.ids)
+          for(k0 in 1:ncol(ranef.ids)) {
+               ranef_coefs_arr <- abind(
+                    matrix(hpd_lower[grep(paste0("ranef.coefs.ID",k0,"\\["), names(hpd_lower))], nrow = p),
+                    matrix(hpd_upper[grep(paste0("ranef.coefs.ID",k0,"\\["), names(hpd_upper))], nrow = p),
+                    along = 3)
+               dimnames(ranef_coefs_arr) <- list(resp = colnames(y), ID = 1:n.ranefID[k0], type = c("lower","upper"))                        
+               final_list$ranef.coefs[[k0]] <- ranef_coefs_arr
+               rm(ranef_coefs_arr)
+               }
+
+          final_list$ranef.sigma <- array(NA, dim = c(p, ncol(ranef.ids), 2))
+          dimnames(final_list$ranef.sigma) <- list(resp = colnames(y), ranef = colnames(ranef.ids), type = c("lower", "upper"))
+          for(k0 in 1:ncol(ranef.ids)) {
+               final_list$ranef.sigma[,k0,] <- cbind(
+                    hpd_lower[grep(paste0("ranef.sigma.ID",k0,"\\["), names(hpd_lower))],
+                    hpd_upper[grep(paste0("ranef.sigma.ID",k0,"\\["), names(hpd_upper))])
+               }
+          }
+
+          
      if(length(grep("X.coefs", names(hpd_lower))) > 0) {
           X_coefs_arr <- abind(matrix(hpd_lower[grep("X.coefs", names(hpd_lower))],nrow=p), matrix(hpd_upper[grep("X.coefs", names(hpd_upper))],nrow=p), along = 3)
-          dimnames(X_coefs_arr) <- list(cols = colnames(y), coefficients = colnames(X), type = c("lower","upper"))
+          dimnames(X_coefs_arr) <- list(resp = colnames(y), coefficients = colnames(X), type = c("lower","upper"))
 
           final_list$X.coefs <- X_coefs_arr
           }
@@ -105,7 +136,9 @@ get.hpdintervals <- function(y, X = NULL, traits = NULL, row.ids = NULL, fit.mcm
                final_list$ordinal.sigma <- ordinal.sigma.vec
                }
           }
-                              
+           
+           
+           
      if(length(grep("powerparam", names(hpd_lower))) > 0) { ## If powerparam exists, then power parameters are there and some columns involved tweedie responses
           powerparam_vec <- c(hpd_lower[grep("powerparam", names(hpd_lower))], hpd_upper[grep("powerparam", names(hpd_upper))])
           names(powerparam_vec) <- c("lower","upper")

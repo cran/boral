@@ -12,7 +12,7 @@
 This help file provides more information regarding the how species can be included to help mediate environmental responses, analogous to the so-called fourth corner problem.}
 
 \details{
-In the main boral function, when covariates \code{X} are included i.e. both the independent and correlated response models, one has the option of also including traits to help explain differences in species environmental responses to these covariates. Specifically, when \code{traits} and \code{which.traits} are supplied, then the \eqn{\beta_{0j}}'s and \eqn{\bm{\beta}_j}'s are then regarded as random effects drawn from a normal distribution. For the column-specific intercepts, we have
+In the main boral function, when covariates \eqn{\bm{X}} are included i.e. both the independent and correlated response models, one has the option of also including traits to help explain differences in species environmental responses to these covariates. Specifically, when a trait matrix is supplied, along with \code{which.traits}, then the \eqn{\beta_{0j}}'s and \eqn{\bm{\beta}_j}'s are then regarded as random effects drawn from a normal distribution. For the response-specific intercepts, we have
 
 \deqn{\beta_{0j} \sim N(\kappa_{01} + \bm{traits}^\top_j\bm{\kappa}_1, \sigma^2_1),}
 
@@ -22,9 +22,9 @@ In an analogous manner, each of the elements in \eqn{\bm{\beta}_j = (\beta_{j1},
 
 \deqn{\beta_{jk} \sim N(\kappa_{0k} + \bm{traits}^\top_j\bm{\kappa}_k, \sigma^2_k),}
 
-Which traits are to included (regressed) in the mean of the normal distributions is determined by the list argument \code{which.traits} in the main boral function. The first element in the list applies to \eqn{beta_{0j}}, while the remaining elements apply to the the \eqn{\bm{\beta}_j}. Each element of \code{which.traits} is a vector indicating which traits are to be used. For example, if \code{which.traits[[2]] = c(2,3)}, then the \eqn{\beta_{j1}}'s are drawn from a normal distribution with mean depending only on the second and third columns of \code{traits}. If \code{which.traits[[2]][1] = 0}, then the regression coefficients are treated as independent, i.e. the values of \eqn{\beta_{j1}} are given their own priors and estimated separately from each other. 
+Which traits are to included (regressed) in the mean of the normal distributions is determined by the list argument \code{which.traits} in the main boral function. The first element in the list applies to \eqn{beta_{0j}}, while the remaining elements apply to the the \eqn{\bm{\beta}_j}. Each element of \code{which.traits} is a vector indicating which traits are to be used. For example, if \code{which.traits[[2]] = c(2,3)}, then the \eqn{\beta_{j1}}'s are drawn from a normal distribution with mean depending only on the second and third columns of the trait matrix. If \code{which.traits[[2]][1] = 0}, then the regression coefficients are treated as independent, i.e. the values of \eqn{\beta_{j1}} are given their own priors and estimated separately from each other. 
 
-Including species traits in the model can be regarded as a method of simplifying the model: rather than each to estimates \eqn{p} sets of column-specific coefficients, we instead say that these coefficients are linearly related to the corresponding values of their traits (Warton et al., 2015). That is, we are using trait data to help explain similarities/differences in species responses to the environment. This idea has close relations to the fourth corner problem in ecology (Brown et al., 2014). Unlike the models of Brown et al. (2014) however, which treat the \eqn{\beta_{0j}}'s and \eqn{\beta_{jk}}'s are fixed effects and fully explained by the traits, boral adopts a random effects approach similar to Jamil et al. (2013) to "soak up" any additional between species differences in environmental responses not explained by traits.
+Including species traits in the model can be regarded as a method of simplifying the model: rather than each to estimates \eqn{p} sets of response-specific coefficients, we instead say that these coefficients are linearly related to the corresponding values of their traits (Warton et al., 2015; Ovaskainen et al., 2017). That is, we are using trait data to help explain similarities/differences in species responses to the environment. This idea has close relations to the fourth corner problem in ecology (Brown et al., 2014). Unlike the models of Brown et al. (2014) however, which treat the \eqn{\beta_{0j}}'s and \eqn{\beta_{jk}}'s are fixed effects and fully explained by the traits, boral adopts a random effects approach similar to Jamil et al. (2013) to "soak up" any additional between species differences in environmental responses not explained by traits.
 
 Finally, note that from boral version 1.5, stochastic search variable selection (SSVS) can now be applied to the trait coefficients \eqn{\bm{\kappa}_1} and \eqn{\bm{\kappa}_k}; please see \code{\link{about.ssvs}} for more details.
 }
@@ -32,9 +32,11 @@ Finally, note that from boral version 1.5, stochastic search variable selection 
 
 \references{
 \itemize{
-\item Brown, et al. (2014). The fourth-corner solution - using predictive models to understand how species traits interact with the environment. Methods in Ecology and Evolution 5, 344-352.
+\item Brown et al. (2014). The fourth-corner solution - using predictive models to understand how species traits interact with the environment. Methods in Ecology and Evolution, 5, 344-352.
 
-\item Jamil, T. et al. (2013). Selecting traits that explain species-environment relationships: a generalized linear mixed model approach. Journal of Vegetation Science 24, 988-1000
+\item Jamil, et al. (2013). Selecting traits that explain species-environment relationships: a generalized linear mixed model approach. Journal of Vegetation Science 24, 988-1000
+
+\item Ovaskainen, et al. (2017). How to make more out of community data? A conceptual framework and its implementation as models and software. Ecology Letters, 20, 561-576.
 
 \item Warton et al. (2015). So Many Variables: Joint Modeling in Community Ecology. Trends in Ecology and Evolution, 30, 766-779.
 }
@@ -42,7 +44,7 @@ Finally, note that from boral version 1.5, stochastic search variable selection 
 
 \section{Warnings}{
 \itemize{
-\item \emph{No} intercept column should be required in \code{traits}, as it is included automatically.
+\item \emph{No} intercept column should be included in the trait matrix, as it is included automatically.
 }
 }
 

@@ -1,5 +1,6 @@
 make.jagsboralmodel <- function(family, num.X = 0, X.ind = NULL, num.traits = 0, which.traits = NULL,  
-     lv.control = list(num.lv = 2, type = "independent"), row.eff = "none", row.ids = NULL, 
+     lv.control = list(num.lv = 2, type = "independent"), 
+     row.eff = "none", row.ids = NULL, ranef.ids = NULL, 
      offset = NULL, trial.size = 1, n, p, model.name = NULL, 
      prior.control = list(type = c("normal","normal","normal","uniform"), hypparams = c(10, 10, 10, 30), ssvs.index = -1, ssvs.g = 1e-6, ssvs.traitsindex = -1), num.lv = NULL) {
                
@@ -30,6 +31,8 @@ make.jagsboralmodel <- function(family, num.X = 0, X.ind = NULL, num.traits = 0,
           }
 
      
+     ranef.ids <- check_ranef_ids(ranef.ids = ranef.ids, y = matrix(0,n,p))
+
      if(!is.null(offset)) { 
           if(!is.matrix(offset)) 
                stop("offset could be a matrix with the same dimensions as y.")
@@ -58,16 +61,21 @@ make.jagsboralmodel <- function(family, num.X = 0, X.ind = NULL, num.traits = 0,
      index.tweed.cols <- which(complete_family == "tweedie")
     
     
+     ##-------------------
      ## Checks done; starting writing JAGS script!
+     ##-------------------
 
      
      model_script <- paste0("## JAGS model written for boral version ", packageDescription("boral")$Version, " on ", as.character(Sys.time()), " ##\n\n model {")
      model_script <- c(model_script, "\t ## Data Level ## \n\t for(i in 1:n) {")
     
-     write.resp.script <- setup_respfamilies(p = p, complete.family = complete_family, num.lv = num.lv, row.eff = row.eff, row.ids = row.ids, offset = offset, num.X = num.X, complete.trial.size = complete_trial_size, index.tweed.cols = index.tweed.cols, index.ord.cols = index.ord.cols)
+     write.resp.script <- setup_respfamilies(p = p, complete.family = complete_family, num.lv = num.lv, row.eff = row.eff, row.ids = row.ids, ranef.ids = ranef.ids,
+          offset = offset, num.X = num.X, complete.trial.size = complete_trial_size, index.tweed.cols = index.tweed.cols, index.ord.cols = index.ord.cols)
      model_script <- c(model_script, write.resp.script)	
      model_script <- c(model_script, paste0("\t\t }"))
-    
+     rm(write.resp.script)
+
+     
      model_script <- c(model_script, paste0("\t ## Latent variables ##"))    
      if(lv.control$type == "independent")
           model_script <- c(model_script, paste0("\t for(i in 1:n) { for(k in 1:num.lv) { lvs[i,k] ~ dnorm(0,1) } } \n\n\t ## Process level and priors ##"))
@@ -82,33 +90,32 @@ make.jagsboralmodel <- function(family, num.X = 0, X.ind = NULL, num.traits = 0,
      #if(lv.control$type == "cauchy") ## DOES NOT WORK VERY WELL!
           #model_script <- c(model_script, paste0("\t for(k in 1:num.lv) { lvs[1:n,k] ~ dmnorm(zero.lvs,invSigma.lvs) } \n\t for(k1 in 1:n) { for(k2 in 1:n) { Sigma.lvs[k1,k2] <- pow(1+ pow(distmat[k1,k2]/lv.covparams[1],2), -lv.covparams[2]) } } \n\t invSigma.lvs <- inverse(Sigma.lvs) \n\n\t ## Process level and priors ##"))
      ## Matern not implemented to due complications/lack of direct availability of a BesselK function
-     rm(write.resp.script)
     
      ## Build prior strings for all priors distributions
      prior.strings <- construct_prior_strings(x = prior.control)
     
 
-     ## Code for column-specific intercept. Note this is set up different to how X variables are set up to save some coding space!
+     ## Code for response-specific intercept. Note this is set up different to how X variables are set up to save some coding space!
      ## No traits or traits included but not regressed against intercept
      if(num.traits == 0 || (num.traits > 0 & which.traits[[1]][1] == 0)) { 
           ## Not ordinal columns, then as per usual
           if(length(index.ord.cols) == 0) 
-               model_script <- c(model_script, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ ", prior.strings$p1, " } ## Separate species intercepts")) 
+               model_script <- c(model_script, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ ", prior.strings$p1, " } ## Separate response intercepts")) 
           ## If 1 ordinal column, then intercept for this column equal 0
           if(length(index.ord.cols) == 1) {
-               model_script <- c(model_script, paste0("\t lv.coefs[",index.ord.cols, ",1] <- 0 ## Single ordinal species intercept"))
+               model_script <- c(model_script, paste0("\t lv.coefs[",index.ord.cols, ",1] <- 0 ## Single ordinal response intercept"))
                for(j in (1:p)[-index.ord.cols]) 
-                    model_script <- c(model_script, paste0("\t lv.coefs[", j, ",1] ~ ", prior.strings$p1, "All other species intercepts"))
+                    model_script <- c(model_script, paste0("\t lv.coefs[", j, ",1] ~ ", prior.strings$p1, "All other response intercepts"))
                }
-          ## More than 1 ordinal column, then set up random intercept for this species
+          ## More than 1 ordinal column, then set up random intercept for this response
           if(length(index.ord.cols) > 1) {
                if(length(index.ord.cols) == p)
-                    model_script <- c(model_script, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ dnorm(0,pow(ordinal.sigma,-2)) } ## Random intercept for all ordinal species"))
+                    model_script <- c(model_script, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ dnorm(0,pow(ordinal.sigma,-2)) } ## Random intercept for all ordinal response"))
                else {
                     for(j in index.ord.cols)
-                         model_script <- c(model_script, paste0("\t lv.coefs[",j, ",1] ~ dnorm(0,pow(ordinal.sigma,-2)) ## Random intercept for all ordinal species"))	
+                         model_script <- c(model_script, paste0("\t lv.coefs[",j, ",1] ~ dnorm(0,pow(ordinal.sigma,-2)) ## Random intercept for all ordinal response"))	
                     for(j in (1:p)[-index.ord.cols]) 
-                         model_script <- c(model_script, paste0("\t lv.coefs[", j, ",1] ~ ", prior.strings$p1, "All other species intercepts"))
+                         model_script <- c(model_script, paste0("\t lv.coefs[", j, ",1] ~ ", prior.strings$p1, "All other response intercepts"))
                     }
                model_script <- c(model_script, paste0("\t ordinal.sigma ~ ", prior.strings$p4))
                }
@@ -120,11 +127,11 @@ make.jagsboralmodel <- function(family, num.X = 0, X.ind = NULL, num.traits = 0,
      if(num.traits > 0 & all(which.traits[[1]] > 0)) {
           ## If there are 0 or > 1 ordinal columns, then regress all intercepts against traits
           if(length(index.ord.cols) != 1) { 
-               model_script <- c(model_script, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ dnorm(traits.int[1] + inprod(traits[j,],traits.coefs[1,1:num.traits]),pow(trait.sigma[1],-2)) } ## Species intercepts regressed against traits"))
+               model_script <- c(model_script, paste0("\t for(j in 1:p) { lv.coefs[j,1] ~ dnorm(traits.int[1] + inprod(traits[j,],traits.coefs[1,1:num.traits]),pow(trait.sigma[1],-2)) } ## response intercepts regressed against traits"))
                }
           ## If there is 1 ordinal column, do not regress this intercept against trait	
           if(length(index.ord.cols) == 1) { 
-               model_script <- c(model_script, paste0("\t lv.coefs[",index.ord.cols, ",1] <- 0 ## Ordinal species intercept"))
+               model_script <- c(model_script, paste0("\t lv.coefs[",index.ord.cols, ",1] <- 0 ## Ordinal response intercept"))
                for(j in (1:p)[-index.ord.cols]) 
                     model_script <- c(model_script, paste0("\t lv.coefs[", j, ",1] ~ dnorm(traits.int[1] + inprod(traits[",j,",],traits.coefs[1,1:num.traits]),pow(trait.sigma[1],-2)) ## All other intercepts"))
                     }
@@ -171,7 +178,16 @@ make.jagsboralmodel <- function(family, num.X = 0, X.ind = NULL, num.traits = 0,
                }
           }
 
-            
+          
+     ## Priors on response-specific random intercepts
+     if(!is.null(ranef.ids)) {
+          for(k0 in 1:ncol(ranef.ids)) {
+               model_script <- c(model_script, paste0("\n\t for(j in 1:p) { for(i in 1:n.ranefID[", k0, "]) { ranef.coefs.ID", k0, "[j,i] ~ dnorm(0, pow(ranef.sigma.ID", k0, "[j],-2)) } }"))
+               model_script <- c(model_script, paste0("\t for(j in 1:p) { ranef.sigma.ID", k0, "[j] ~ ",prior.strings$p4, " }"))
+               }
+          }     
+
+          
      ## Priors on latent variables if required, controlled by prior.control$hypparams[2]
      if(lv.control$type %in% c("exponential","squared.exponential","spherical")) {
           model_script <- c(model_script, paste0("\t lv.covparams[1] ~ ", prior.strings$p22))

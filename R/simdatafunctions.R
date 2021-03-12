@@ -4,11 +4,14 @@
 
 ## If true.lv is supplied, then create.life conditions on this and everthing in distmat is overwritten
 ## If true.lv is not supplied, then create.life will use the lv.control to simulate new lvs 
+## Similarly, if true.ranef is supplied, then create.life conditions on this. But if true.ranef is not supplied, then create.life will use the ranef.params to to simulate response-specific random intercepts
 create.life <- function(true.lv = NULL, lv.coefs, 
     lv.control = list(num.lv = 0, type = "independent", lv.covparams = NULL, distmat = NULL),
     X = NULL, X.coefs = NULL, traits = NULL, traits.coefs = NULL, 
-    family, row.eff = "none", row.params = NULL, row.ids = NULL, offset = NULL, 
-    trial.size = 1, cutoffs = NULL, powerparam = NULL, manual.dim = NULL, save.params = FALSE) { 
+    family, row.eff = "none", row.params = NULL, row.ids = NULL, 
+    true.ranef = NULL, ranef.params = NULL, ranef.ids = NULL, 
+    offset = NULL, trial.size = 1, cutoffs = NULL, powerparam = NULL, 
+    manual.dim = NULL, save.params = FALSE) { 
 
      n <- max(nrow(true.lv), nrow(X))
      p <- max(nrow(lv.coefs), nrow(X.coefs), length(cutoffs))
@@ -92,8 +95,11 @@ create.life <- function(true.lv = NULL, lv.coefs,
           stop("Common powerparam must be supplied if any columns are tweedie data (Var = dispersion*mu^powerparam).")
 
           
-     row.coefs <- NULL
      sim_y <- matrix(NA, nrow = n, ncol = p)
+
+     check_offset(offset = offset, y = sim_y)
+     
+     row.coefs <- NULL
      if(row.eff != "none") {
           if(is.null(row.ids)) {
                row.ids <- matrix(1:nrow(sim_y), ncol = 1)
@@ -102,7 +108,6 @@ create.life <- function(true.lv = NULL, lv.coefs,
           row.ids <- check_row_ids(row.ids = row.ids, y = sim_y)
           check_row_params(row.params = row.params, y = sim_y, row.ids = row.ids)
           }
-     check_offset(offset = offset, y = sim_y)
      if(row.eff == "fixed") 
           row.coefs <- row.params
      if(row.eff == "random") {
@@ -110,6 +115,34 @@ create.life <- function(true.lv = NULL, lv.coefs,
           for(k in 1:ncol(row.ids)) 
                row.coefs[[k]] <- rnorm(length(unique(row.ids[,k])), mean = 0, sd = row.params[[k]]) 
           }
+          
+          
+     ranef_coefs <- NULL     
+     if(!is.null(ranef.ids) & (is.null(true.ranef) & is.null(ranef.params))) 
+          stop("If you want response-specific random intercepts in the model, then you need supply either true.ranef or ranef.params, in conjunction with ranef.ids")
+     ranef.ids <- check_ranef_ids(ranef.ids = ranef.ids, y = sim_y)
+     check_ranef_params(ranef.params = ranef.params, y = sim_y, ranef.ids = ranef.ids)
+     if(!is.null(true.ranef) & !is.null(ranef.ids)) {
+          if(is.null(ranef.ids))
+               stop("ranef.ids needs to be supplied if you want response-specific random intercepts in the model (as determined by true.ranef).")
+          if(!is.list(true.ranef))
+               stop("true.ranef must be a list of length ncol(ranef.ids).")
+          for(k0 in 1:length(true.ranef)) {
+               if(nrow(true.ranef[[k0]]) != p)
+                    stop("The k-th element in the list true.ranef should be matrix of dimension p by length(unique(ranef.ids[,k])).")
+               if(ncol(true.ranef[[k0]]) != length(unique(ranef.ids[,k0])))
+                    stop("The k-th element in the list true.ranef should be matrix of dimension p by length(unique(ranef.ids[,k])).")
+               }
+
+          ranef_coefs <- true.ranef
+          }
+     if(is.null(true.ranef) & !is.null(ranef.ids)) {
+          ranef_coefs <- vector("list", ncol(ranef.ids))
+               for(k in 1:ncol(ranef.ids)) 
+                    ranef_coefs[[k]] <- t(sapply(1:p, function(j) rnorm(length(unique(ranef.ids[,k])), mean = 0, sd = ranef.params[j,k])))
+          }
+          
+     
      if(num.lv > 5) 
           warnings("We won't stop you, but please consider if you really want more than five latent variables in the model", immediate. = TRUE)
      
@@ -139,6 +172,10 @@ create.life <- function(true.lv = NULL, lv.coefs,
      if(!is.null(row.coefs)) { 
           for(k in 1:ncol(row.ids)) 
                eta <- eta + row.coefs[[k]][row.ids[,k]] 
+          }
+     if(!is.null(ranef_coefs)) { 
+          for(k in 1:ncol(ranef.ids)) 
+               eta <- eta + t(ranef_coefs[[k]])[ranef.ids[,k],] 
           }
           
      for(j in 1:p) {
@@ -174,7 +211,9 @@ create.life <- function(true.lv = NULL, lv.coefs,
      if(!save.params) 
           out <- sim_y
      if(save.params) 
-          out <- list(resp = sim_y, true.lv = true.lv, lv.coefs = lv.coefs, lv.covparams = lv.control$lv.covparams, X.coefs = X.coefs, traits.coefs = traits.coefs, row.params = row.params, row.coefs = row.coefs, cutoffs = cutoffs, powerparam = powerparam)
+          out <- list(resp = sim_y, true.lv = true.lv, lv.coefs = lv.coefs, lv.covparams = lv.control$lv.covparams, X.coefs = X.coefs, traits.coefs = traits.coefs, row.params = row.params, row.coefs = row.coefs, row.ids = row.ids,
+          ranef.params = ranef.params, ranef.coefs = ranef_coefs, ranef.ids = ranef.ids, 
+          cutoffs = cutoffs, powerparam = powerparam)
      
      return(out)
      }
@@ -182,51 +221,100 @@ create.life <- function(true.lv = NULL, lv.coefs,
 
 
       
-## Wrapper for create.life: Takes a boral model and applies create.life to it if possible
-simulate.boral <- function(object, nsim = 1, seed = NULL, new.lvs = FALSE, distmat = NULL, est = "median", ...) { 
+## Wrapper for create.life: Takes a boral model and applies create.life to it, if possible
+## Note always new row effects if row.eff = "random", this is probably not ideal?
+function() {
+     object <- spiderfit_nb
+     nsims <- 1
+     seed = NULL
+     new.lvs = FALSE
+     new.ranefs = TRUE
+     distmat = NULL
+     est = "median"
+     }
+simulate.boral <- function(object, nsim = 1, seed = NULL, new.lvs = FALSE, new.ranefs = FALSE, distmat = NULL, est = "median", ...) { 
      if(class(object) != "boral") 
           stop("object must be of class boral.")
      
      if(est == "mean") {
-          true_mod <- list(lv.coefs = object$lv.coefs.mean, lv = object$lv.mean, X.coefs = object$X.coefs.mean, traits = object$traits, traits.coefs = object$traits.coefs.mean, cutoffs = object$cutoffs.mean, powerparam = object$powerparam.mean, lv.covparams = object$lv.covparams.mean) 
+          true_mod <- list(lv.coefs = object$lv.coefs.mean, lv = object$lv.mean, X.coefs = object$X.coefs.mean, 
+               ranef.coefs = object$ranef.coefs.mean, ranef.params = object$ranef.params.mean, ranef.ids = object$ranef.ids,
+               traits = object$traits, traits.coefs = object$traits.coefs.mean, cutoffs = object$cutoffs.mean, powerparam = object$powerparam.mean, 
+               lv.covparams = object$lv.covparams.mean) 
           if(object$row.eff == "fixed") 
                true_mod$row.params <- lapply(object$row.coefs, function(x) x$mean)
           if(object$row.eff == "random") 
                true_mod$row.params <- lapply(object$row.sigma, function(x) x$mean)
+          if(!is.null(object$ranef.ids)) 
+               true_mod$ranef.params <- object$ranef.sigma.mean
           }
      
      if(est == "median") {
-          true_mod <- list(lv.coefs = object$lv.coefs.median, lv = object$lv.median, X.coefs = object$X.coefs.median, traits = object$traits, traits.coefs = object$traits.coefs.median, cutoffs = object$cutoffs.median, powerparam = object$powerparam.median, lv.covparams = object$lv.covparams.median) 
+          true_mod <- list(lv.coefs = object$lv.coefs.median, lv = object$lv.median, X.coefs = object$X.coefs.median, traits = object$traits, 
+               ranef.coefs = object$ranef.coefs.median, ranef.params = object$ranef.params.median, ranef.ids = object$ranef.ids,
+               traits.coefs = object$traits.coefs.median, cutoffs = object$cutoffs.median, powerparam = object$powerparam.median, 
+               lv.covparams = object$lv.covparams.median) 
           if(object$row.eff == "fixed") 
                true_mod$row.params <- lapply(object$row.coefs, function(x) x$median)
           if(object$row.eff == "random") 
                true_mod$row.params <- lapply(object$row.sigma, function(x) x$median)
+          if(!is.null(object$ranef.ids)) 
+               true_mod$ranef.params <- object$ranef.sigma.median
           }
 
      if(!is.null(seed)) 
           set.seed(seed)
 
+          
      if(!new.lvs) {
-          message("Same latent variables used across simulated datasets.")
-          out <- replicate(nsim, 
-               create.life(true.lv = true_mod$lv, lv.coefs = true_mod$lv.coefs, X = object$X, X.coefs = true_mod$X.coefs, traits = object$traits, 
-                    traits.coefs = true_mod$traits.coefs, family = object$family, row.eff = object$row.eff, row.params = true_mod$row.params, 
-                    offset = object$offset, trial.size = object$trial.size, cutoffs = true_mod$cutoffs, powerparam = true_mod$powerparam)
-               )
+          message("Same latent variables used across simulated datasets (if the model involves them).")          
+          if(!new.ranefs) {
+               message("Same response-specific random intercepts used across simulated datasets (if the model involves them).")          
+               out <- replicate(nsim, 
+                    create.life(true.lv = true_mod$lv, lv.coefs = true_mod$lv.coefs, X = object$X, X.coefs = true_mod$X.coefs, traits = object$traits, 
+                         traits.coefs = true_mod$traits.coefs, family = object$family, 
+                         row.eff = object$row.eff, row.params = true_mod$row.params, row.ids = object$row.ids, 
+                         true.ranef = true_mod$ranef.coefs, ranef.ids = object$ranef.ids,
+                         offset = object$offset, trial.size = object$trial.size, cutoffs = true_mod$cutoffs, powerparam = true_mod$powerparam))
+               }
+          if(new.ranefs) {
+               message("New response-specific random intercepts used across simulated datasets (if the model involves them).")          
+               out <- replicate(nsim, 
+                    create.life(true.lv = true_mod$lv, lv.coefs = true_mod$lv.coefs, X = object$X, X.coefs = true_mod$X.coefs, traits = object$traits, 
+                         traits.coefs = true_mod$traits.coefs, family = object$family, 
+                         row.eff = object$row.eff, row.params = true_mod$row.params, row.ids = object$row.ids, 
+                         ranef.params = true_mod$ranef.params, ranef.ids = object$ranef.ids,
+                         offset = object$offset, trial.size = object$trial.size, cutoffs = true_mod$cutoffs, powerparam = true_mod$powerparam))
+               }
           }
+          
      if(new.lvs) {
-          message("New latent variables generated for each simulated dataset.")
+          message("New latent variables generated for each simulated dataset (if the model involves them).")
           lv.control <- object$lv.control
           lv.control$lv.covparams <- true_mod$lv.covparams
           if(lv.control$type != "independent" & is.null(distmat))
                stop("For structured latent variables are to be generated, please supply distmat.")
           lv.control$distmat <- distmat
-                    
-          out <- replicate(nsim, 
-               create.life(true.lv = NULL, lv.coefs = true_mod$lv.coefs, lv.control = lv.control, X = object$X, X.coefs = true_mod$X.coefs, 
-                    traits = object$traits, traits.coefs = true_mod$traits.coefs, family = object$family, row.eff = object$row.eff, 
-                    row.params = true_mod$row.params, offset = object$offset, trial.size = object$trial.size, cutoffs = true_mod$cutoffs, 
-                    powerparam = true_mod$powerparam))
+
+          
+          if(!new.ranefs) {
+               message("Same response-specific random intercepts used across simulated datasets (if the model involves them).")          
+               out <- replicate(nsim, 
+                    create.life(true.lv = NULL, lv.coefs = true_mod$lv.coefs, lv.control = lv.control, X = object$X, X.coefs = true_mod$X.coefs, 
+                         traits = object$traits, traits.coefs = true_mod$traits.coefs, family = object$family, 
+                         row.eff = object$row.eff, row.params = true_mod$row.params, row.ids = object$row.ids, 
+                         true.ranef = true_mod$ranef.coefs, ranef.ids = object$ranef.ids,
+                         offset = object$offset, trial.size = object$trial.size, cutoffs = true_mod$cutoffs, powerparam = true_mod$powerparam))
+                    }
+          if(new.ranefs) {
+               message("New response-specific random intercepts used across simulated datasets (if the model involves them).")          
+               out <- replicate(nsim, 
+                    create.life(true.lv = NULL, lv.coefs = true_mod$lv.coefs, lv.control = lv.control, X = object$X, X.coefs = true_mod$X.coefs, 
+                         traits = object$traits, traits.coefs = true_mod$traits.coefs, family = object$family, 
+                         row.eff = object$row.eff, row.params = true_mod$row.params, row.ids = object$row.ids, 
+                         ranef.params = true_mod$ranef.params, ranef.ids = object$ranef.ids,
+                         offset = object$offset, trial.size = object$trial.size, cutoffs = true_mod$cutoffs, powerparam = true_mod$powerparam))
+                    }
           }
             
      set.seed(NULL)

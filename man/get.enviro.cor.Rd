@@ -9,7 +9,7 @@
 \description{
 \Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
 
-Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables i.e., shared environmental response}
+Calculates the correlation between columns of the response matrix, due to similarities in the response to explanatory variables i.e., shared environmental response.}
 
 \usage{
 get.enviro.cor(object, est = "median", prob = 0.95)
@@ -24,16 +24,18 @@ get.enviro.cor(object, est = "median", prob = 0.95)
 }
 
 \details{
-In both independent response and correlated response models, where the each of the columns of the response matrix \code{y} are fitted to a set of explanatory variables given by \code{X}, the covariance and thus between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}^\top_i\bm{\beta}_j} and \eqn{\bm{x}^\top_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are column-specific coefficients relating to the explanatory variables.
+In both independent response and correlated response models, where the each of the columns of the response matrix \eqn{\bm{Y}} are fitted to a set of covariates, the covariance and thus between two columns \eqn{j} and \eqn{j'} due to similarities in their response to the model matrix is calculated based on the linear predictors \eqn{\bm{x}^\top_i\bm{\beta}_j} and \eqn{\bm{x}^\top_i\bm{\beta}_{j'})}, where \eqn{\bm{\beta}_j} are response-specific coefficients relating to the explanatory variables. 
 
 For multivariate abundance data, the correlation calculated by this function can be interpreted as the correlation attributable to similarities in the environmental response between species. Such correlation matrices are discussed and found in Ovaskainen et al., (2010), Pollock et al., 2014.
+
+Please note this correlation calculation does not include any row effects or any response-specific random intercepts.
 }
 
 \value{
 A list with the following components:
-\item{cor, cor.lower, cor.upper}{A set of \eqn{p \times p} correlation matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding 95\% highest posterior interval.}
+\item{cor, cor.lower, cor.upper}{A set of \eqn{p \times p} correlation matrices, containing either the posterior median or mean estimate plus lower and upper limits of the corresponding (100\eqn{\times}\code{prob}) \% HPD interval.}
 
-\item{sig.cor}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose 95\% highest posterior interval does not contain zero. All non-significant correlations are set to zero.}
+\item{sig.cor}{A \eqn{p \times p} correlation matrix containing only the ``significant" correlations whose (100\eqn{\times}\code{prob}) \% HPD interval does not contain zero. All non-significant correlations are set to zero.}
 
 \item{cov}{A \eqn{p \times p} covariance matrix.}
 }

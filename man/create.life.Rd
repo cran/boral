@@ -8,22 +8,24 @@
 \title{
 \Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
 
-Simulate a Multivariate Response Matrix}
+Simulate a Multivariate response matrix}
 
-\description{Simulate a multivariate response matrix, given parameters such as but not necessarily all of: family, number of latent variables and related coefficients, an matrix of explanatory variables and related coefficients, row effects, cutoffs for cumulative probit regression of ordinal responses.}
+\description{Simulate a multivariate response matrix, given parameters such as but not necessarily all of: family, number of latent variables and related coefficients, an matrix of explanatory variables and related coefficients, row effects, response-specific random intercepts, cutoffs for cumulative probit regression of ordinal responses, and so on.}
 
 \usage{ 
 create.life(true.lv = NULL, lv.coefs, 
-    lv.control = list(num.lv = 0, type = "independent", 
-    lv.covparams = NULL, distmat = NULL),
+     lv.control = list(num.lv = 0, type = "independent", 
+     lv.covparams = NULL, distmat = NULL),
      X = NULL, X.coefs = NULL, 
-     traits = NULL, traits.coefs = NULL, family, row.eff = "none", 
-     row.params = NULL, row.ids = NULL, offset = NULL, 
-     trial.size = 1, cutoffs = NULL, powerparam = NULL, 
+     traits = NULL, traits.coefs = NULL, family, 
+     row.eff = "none", row.params = NULL, row.ids = NULL, 
+     true.ranef = NULL, ranef.params = NULL, ranef.ids = NULL, 
+     offset = NULL, trial.size = 1, cutoffs = NULL, powerparam = NULL, 
      manual.dim = NULL, save.params = FALSE)
 
-\method{simulate}{boral}(object, nsim = 1, seed = NULL, new.lvs = FALSE, distmat = NULL, 
-     est = "median", ...)   
+     
+\method{simulate}{boral}(object, nsim = 1, seed = NULL, new.lvs = FALSE, new.ranefs = FALSE, 
+     distmat = NULL, est = "median", ...)   
  }
 
 \arguments{
@@ -33,15 +35,17 @@ create.life(true.lv = NULL, lv.coefs,
 
  \item{seed}{Seed for dataset simulation. Defaults to \code{NULL}, in which case no seed is set.}
 
- \item{new.lvs}{If \code{FALSE}, then true latent variables are obtained from the \code{object}. If \code{TRUE}, then new true latent variables are generated.}
+ \item{new.lvs}{If \code{FALSE}, then true latent variables are obtained from \code{object}. If \code{TRUE}, then new true latent variables are generated.}
+
+ \item{new.ranefs}{If \code{FALSE}, then true response-specific random intercepts are obtained from \code{object}. If \code{TRUE}, then new random intercepts are generated.}
 
  \item{distmat}{A distance matrix required to calculate correlations across sites when a non-independent correlation structure on the latent variables is imposed, when \code{new.lvs = TRUE} and \code{object$lv.type != "independent"}.}
    
- \item{est}{A choice of either the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
+ \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
 
   \item{true.lv}{A matrix of true latent variables. With multivariate abundance data in ecology for instance, each row corresponds to the true site ordination coordinates. If supplied, then simulation is based of these true latent variables. If \code{NULL}, then the function looks to the argument \code{lv.control} to see what to do. Defaults to \code{NULL}.}
 
- \item{lv.coefs}{A matrix containing column-specific intercepts, latent variable coefficients relating to \code{true.lv}, and dispersion parameters.}
+ \item{lv.coefs}{A matrix containing response-specific intercepts, latent variable coefficients relating to \code{true.lv}, and dispersion parameters.}
 
  \item{lv.control}{This argument is utilized if \code{true.lv = NULL}, in which case the function uses this argument to determine how to simulate new, true latent variables. A list (currently) with the following arguments:
     \itemize{
@@ -56,32 +60,38 @@ create.life(true.lv = NULL, lv.coefs,
     Please see \code{\link{about.lvs}} for more information.
     }
 
- \item{X}{An model matrix of covariates, which can be included as part of the data generation. Defaults to \code{NULL}, in which case no model matrix is used. No intercept column should be included in \code{X}.}  
+ \item{X}{A model matrix of covariates (otherwise known as the covariate matrix), which can be included as part of the data generation. Defaults to \code{NULL}, in which case no model matrix is used. No intercept column should be included.}  
 
-  \item{X.coefs}{The coefficients relating to \code{X}. Defaults to \code{NULL}. This argument needs to be supplied if \code{X} is supplied and no \code{traits} are supplied.}
+  \item{X.coefs}{The coefficients relating to the covariate matrix. Defaults to \code{NULL}. This argument needs to be supplied if the covariate matrix is supplied and no trait matrix is supplied.}
 
-  \item{traits}{A model matrix of species traits, which can be included as part of the model. Defaults to \code{NULL}, in which case no matrix was used. No intercept column should be included in \code{traits}, as it is included automatically.}  
+  \item{traits}{A model matrix of species traits (otherwise known as the covariate matrix), which can be included as part of the model. Defaults to \code{NULL}, in which case no matrix was used. No intercept column should be included in the trait matrix, as it is included automatically.}  
 
-  \item{traits.coefs}{A matrix of coefficients that are used to generate "new" column-specific intercepts and \code{X.coefs}. The number of rows should equal to (\code{ncol(X)+1}) and the number of columns should equal to (\code{ncol(traits)}+2). 
+  \item{traits.coefs}{A matrix of coefficients that are used to generate "new" response-specific intercepts and \code{X.coefs}. The number of rows should equal to (\code{ncol(X)+1}) and the number of columns should equal to (\code{ncol(traits)}+2). 
   
-  How this argument works is as follows: when both \code{traits} and \code{traits.coefs} are supplied, then new column-specific intercepts (i.e. the first column of \code{lv.coefs} is overwritten) are generated by simulating from a normal distribution with mean equal to \cr \code{crossprod(c(1,traits), traits.coefs[1,1:(ncol(traits.coefs)-1)])} and standard deviation \cr \code{traits.coefs[1,ncol(traits.coefs)]}. In other words, the last column of \code{trait.coefs} provides the standard deviation of the normal distribution, with the other columns being the regression coefficients in the mean of the normal distribution. Analogously, new \code{X.coefs} are generated in the same manner using the remaining rows of \code{trait.coefs}. Please see \code{\link{about.traits}} for more information.
+  How this argument works is as follows: when both \code{traits} and \code{traits.coefs} are supplied, then new response-specific intercepts (i.e. the first column of \code{lv.coefs} is overwritten) are generated by simulating from a normal distribution with mean equal to \cr \code{crossprod(c(1,traits), traits.coefs[1,1:(ncol(traits.coefs)-1)])} and standard deviation \cr \code{traits.coefs[1,ncol(traits.coefs)]}. In other words, the last column of \code{trait.coefs} provides the standard deviation of the normal distribution, with the other columns being the regression coefficients in the mean of the normal distribution. Analogously, new \code{X.coefs} are generated in the same manner using the remaining rows of \code{trait.coefs}. Please see \code{\link{about.traits}} for more information.
    
-  It is important that highlight then with in this data generation mechanism, the new column-specific intercepts and \code{X.coefs} are now random effects, being drawn from a normal distribution. 
+  It is important that highlight then with in this data generation mechanism, the new response-specific intercepts and \code{X.coefs} are now random effects, being drawn from a normal distribution. 
 
   Defaults to \code{NULL}, in conjuction with \code{traits = NULL}.}  
 
-  \item{family}{Either a single element, or a vector of length equal to the number of columns in \code{y}. The former assumes all columns of \code{y} come from this distribution. The latter option allows for different distributions for each column of \code{y}. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression), "ztpoisson" (zero truncated Poisson with log link), "ztnegative.binomial" (zero truncated negative binomial with log link). 
+  \item{family}{Either a single element, or a vector of length equal to the number of columns in the response matrix. The former assumes all columns of the response matrix come from this distribution. The latter option allows for different distributions for each column of the response matrix. Elements can be one of "binomial" (with probit link), "poisson" (with log link), "negative.binomial" (with log link), "normal" (with identity link), "lnormal" for lognormal (with log link), "tweedie" (with log link), "exponential" (with log link), "gamma" (with log link), "beta" (with logit link), "ordinal" (cumulative probit regression), "ztpoisson" (zero truncated Poisson with log link), "ztnegative.binomial" (zero truncated negative binomial with log link). 
 
   Please see \code{\link{about.distributions}} for information on distributions available in boral overall.
   }
 
   \item{row.eff}{Single element indicating whether row effects are included as fixed effects ("fixed"), random effects ("random") or not included ("none") in the fitted model. If fixed effects, then for parameter identifiability the first row effect is set to zero, which analogous to acting as a reference level when dummy variables are used. If random effects, they are drawn from a normal distribution with mean zero and standard deviation given by \code{row.params}. Defaults to "none". } 
 
-  \item{row.params}{Parameters corresponding to the row effect from the fitted model. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in \code{y}. If \code{row.eff = "random"}, then this is the standard deviation for the random effects normal distribution. \cr If \code{row.eff = "none"}, then this argument is ignored.}
+  \item{row.params}{Parameters corresponding to the row effects. If \cr \code{row.eff = "fixed"}, then these are the fixed effects and should have length equal to the number of columns in the response matrix. If \code{row.eff = "random"}, then this is the standard deviation for the random effects normal distribution. \cr If \code{row.eff = "none"}, then this argument is ignored.}
 
- \item{row.ids}{A matrix with the number of rows equal to the number of rows in \code{y}, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates to the cluster ID of row \eqn{i} in \code{y} for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \cr  \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row. An internal check is done to see \code{row.params} and \code{row.ids} are consistent in terms of arguments supplied.}    
+ \item{row.ids}{A matrix with the number of rows equal to the number of rows in the response matrix, and the number of columns equal to the number of row effects to be included in the model. Element \eqn{(i,j)} indicates the cluster ID of row \eqn{i} in the response matrix for random effect eqn{j}; please see \code{\link{boral}} for details. Defaults to \code{NULL}, so that if \code{row.params = NULL} then the argument is ignored, otherwise if \code{row.params} is supplied then \cr  \code{row.ids = matrix(1:nrow(y), ncol = 1)} i.e., a single, row effect unique to each row.}    
 
- \item{offset}{A matrix with the same dimensions as the response matrix \code{y}, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
+  \item{true.ranef}{A list of true response-specific random intercepts. If supplied, it should be a list of length \code{length(ranef.ids)}, where the k-th element is the matrix a matrix where the number of rows is equal to the number of responses, and the number of columns is equal to \code{length(unique(ranef.ids[,k]))}. If \code{NULL}, then the function looks to the arguments \code{ranef.ids} and/or \code{ranef.params} to see what to do. Defaults to \code{NULL}.}
+   
+  \item{ranef.params}{Parameters corresponding to standard deviation for the the response-specific random intercepts distribution. If supplied, it should be a matrix, where the number of rows is equal to the number of responses, and the number of columns equal to \code{length(ranef.ids)}. If \code{NULL}, then the function looks to the arguments \code{ranef.ids} and/or \code{true.ranef} to see what to do. Defaults to \code{NULL}.}
+
+ \item{ranef.ids}{A matrix with the number of rows equal to the number of rows in the response matrix, and the number of columns equal to the number of random intercepts to be included in the model. Element \eqn{(i,j)} indicates the cluster ID of row \eqn{i} in the response matrix for random intercept eqn{j}; please see \code{\link{about.ranefs}} for details. Defaults to \code{NULL}, in which case it is assumed no random intercepts are to be included in the model. If supplied, then either one of \code{true.ranef} or \code{ranef.params} must also be supplied. If \code{true.ranef} is supplied, then these are used as the true random intercepts; if \code{ranef.params} is supplied, then response-specific random intercepts are generated from a normal distribution with mean zero and (response-specific) standard deviation based on the elements of \code{ranef.params}.}    
+
+ \item{offset}{A matrix with the same dimensions as the response matrix, specifying an a-priori known component to be included in the linear predictor during fitting. Defaults to \code{NULL}.}
 
  \item{trial.size}{Either equal to a single element, or a vector of length equal to the number of columns in y. If a single element, then all columns assumed to be binomially distributed will have trial size set to this. If a vector, different trial sizes are allowed in each column of y. The argument is ignored for all columns not assumed to be binomially distributed. Defaults to 1, i.e. Bernoulli distribution.}
 
@@ -91,19 +101,19 @@ create.life(true.lv = NULL, lv.coefs,
 
   \item{manual.dim}{A vector of length 2, containing the number of rows (\eqn{n}) and columns (\eqn{p}) for the multivariate response matrix. This is a "backup" argument only required when \code{create.life} can not determine how many rows or columns the multivariate response matrix should be.}
 
-  \item{save.params}{If \code{save.params = TRUE}, then all parameters provided as input and/or generated (e.g. when \code{traits} and \code{traits.coefs} are supplied then \code{X.coefs} is generated internally; please see \code{traits.coefs} argument above) are returned, in addition to the simulated multivariate response matrix. Defaults to \code{FALSE}.}
+  \item{save.params}{If \code{save.params = TRUE}, then all parameters provided as input and/or generated are returned, in addition to the simulated multivariate response matrix. Defaults to \code{FALSE}.}
     
   \item{...}{Not used.}
 }
 
 \details{
-\code{create.life} gives the user full capacity to control the true parameters of the model from which the multivariate responses matrices are generated from. If \code{true.lv} is supplied, then the data generation mechanism is based on this. If \code{true.lv = NULL}, then the function looks to \code{lv.control} to determine whether and how the true latent variables are to be simulated. 
+\code{create.life} gives the user flexibility to control the true parameters of the model from which the multivariate responses matrices are generated from. For example, if \code{true.lv} is supplied, then the data generation mechanism is based on this set of true latent variables. If \code{true.lv = NULL}, then the function looks to \code{lv.control} to determine whether and how the true latent variables are to be simulated. 
 
-\code{simulate} makes use of the generic function of the same name in \code{R}: it takes a fitted model, treats either the posterior medians and mean estimates from the model as the true parameters, and generates response matrices based off that.
+\code{simulate} makes use of the generic function of the same name in \code{R}: it takes a fitted model, treats either the posterior medians and mean estimates from the model as the true parameters, and generates response matrices based off that. There is control as to whether the latent variables and/or response-specific random intercepts obtained from the fitted model are used, or new ones are generated.
 }
 
 \value{
-If \code{create.life} is used, then: 1) if \code{save.params} = FALSE, a \eqn{n} by \eqn{p} multivariate response matrix is returned only, 2) if \code{save.params = TRUE}, then a list containing the element \code{resp} which is a \eqn{n} times \eqn{p} multivariate response matrix, as well as other elements for the parameters used in the true model, e.g. \code{true.lv, lv.coefs = lv.coefs, traits.coef}, is returned.
+If \code{create.life} is used, then: 1) if \code{save.params} = FALSE, a \eqn{n} by \eqn{p} multivariate response matrix is returned only, 2) if \code{save.params = TRUE}, then a list containing the element \code{resp} which is a \eqn{n} times \eqn{p} multivariate response matrix, as well as other elements for the parameters used in the true model are returned.
 
 If \code{simulate} is used, then a three dimensional array of dimension \eqn{n} by \eqn{p} by \code{nsim} is returned. The same latent variables can be used each time (\code{new.lvs = FALSE}), or new true latent variables can be generated each time (\code{new.lvs = TRUE}).
 }
@@ -131,67 +141,80 @@ testpath <- file.path(tempdir(), "jagsboralmodel.txt")
 library(mvtnorm)
 
 ## 30 rows (sites) with two latent variables 
-true.lv <- rbind(rmvnorm(n=15,mean=c(1,2)),rmvnorm(n=15,mean=c(-3,-1))) 
+true_lv <- rbind(rmvnorm(n=15,mean=c(1,2)),rmvnorm(n=15,mean=c(-3,-1))) 
 ## 30 columns (species)
-lv.coefs <- cbind(matrix(runif(30*3),30,3),1)
+true_lv_coefs <- cbind(matrix(runif(30*3),30,3),1)
 
 X <- matrix(rnorm(30*4),30,4) 
 ## 4 explanatory variables
 X.coefs <- matrix(rnorm(30*4),30,4)
 
-simy <- create.life(true.lv = true.lv, lv.coefs = lv.coefs, 
+simy <- create.life(true.lv = true_lv, lv.coefs = true_lv_coefs, 
     X = X, X.coefs = X.coefs, family = "normal")
 
 \dontrun{
-fit.boral <- boral(simy, X = X, family = "normal", lv.control = list(num.lv = 2),
+fit_simdata <- boral(simy, X = X, family = "normal", lv.control = list(num.lv = 2),
     mcmc.control = example_mcmc_control, model.name = testpath)
 
-summary(fit.boral)
+summary(fit_simdata)
 }
 
 ## Example 1b - Include a nested random row effect
 ## 30 subregions nested within six regions
 example_row_ids <- cbind(1:30, rep(1:6,each=5))
 ## Subregion has a small std deviation; region has a larger one
-true.row.sigma <- list(ID1 = 0.5, ID2 = 2)
+true_ranef_sigma <- list(ID1 = 0.5, ID2 = 2)
 
-simy <- create.life(true.lv = true.lv, lv.coefs = lv.coefs, 
+simy <- create.life(true.lv = true_lv, lv.coefs = true_lv_coefs, 
     X = X, X.coefs = X.coefs, row.eff = "random",
-    row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
+    row.params = true_ranef_sigma, row.ids = example_row_ids, family = "normal",
     save.params = TRUE)
-
+	
 	
 ## Example 1c - Same as example 1b except new, true latent variables are generated
-simy <- create.life(true.lv = NULL, lv.coefs = lv.coefs, 
+simy <- create.life(true.lv = NULL, lv.coefs = true_lv_coefs, 
     X = X, X.coefs = X.coefs, row.eff = "random",
-    row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
+    row.params = true_ranef_sigma, row.ids = example_row_ids, family = "normal",
     save.params = TRUE)
 
     
 ## Example 1d - Same as example 1a except new, true latent variables are generated
-## with a non-independent correlation structure using a fake distance matrix
+##   with a non-independent correlation structure using a fake distance matrix
 makedistmat <- as.matrix(dist(1:30))
-simy <- create.life(true.lv = NULL, lv.coefs = lv.coefs, 
+simy <- create.life(true.lv = NULL, lv.coefs = true_lv_coefs, 
     lv.control = list(num.lv = 2, type = "exponential", lv.covparams = 5, 
           distmat = makedistmat),
     X = X, X.coefs = X.coefs, row.eff = "random",
-    row.params = true.row.sigma, row.ids = example_row_ids, family = "normal",
+    row.params = true_ranef_sigma, row.ids = example_row_ids, family = "normal",
+    save.params = TRUE)
+    
+    
+## Example 1e - Similar to 1b, except instead of a nested random row effect,
+## it includes a species-specific random interept at the region level
+example_ranef_ids <- data.frame(region = rep(1:6,each=5))
+## Subregion has a small std deviation; region has a larger one
+true_ranef_sigma <- matrix(runif(nrow(true_lv_coefs)), 
+     nrow = nrow(true_lv_coefs), ncol = 1)
+
+simy <- create.life(true.lv = true_lv, lv.coefs = true_lv_coefs, 
+    X = X, X.coefs = X.coefs, ranef.ids = example_ranef_ids,
+    ranef.params = true_ranef_sigma, family = "normal",
     save.params = TRUE)
 
-    
+        
 ## Example 2 - Simulate a response matrix of ordinal data
 ## 30 rows (sites) with two latent variables 
-true.lv <- rbind(rmvnorm(15,mean=c(-2,-2)),rmvnorm(15,mean=c(2,2)))
+true_lv <- rbind(rmvnorm(15,mean=c(-2,-2)),rmvnorm(15,mean=c(2,2)))
 ## 10 columns (species)
-true.lv.coefs <- rmvnorm(10,mean = rep(0,3)); 
+true_lv_coefs <- rmvnorm(10,mean = rep(0,3)); 
 ## Cutoffs for proportional odds regression (must be in increasing order)
 true.ordinal.cutoffs <- seq(-2,10,length=10-1)
 
-simy <- create.life(true.lv = true.lv, lv.coefs = true.lv.coefs, 
+simy <- create.life(true.lv = true_lv, lv.coefs = true_lv_coefs, 
      family = "ordinal", cutoffs = true.ordinal.cutoffs, save.params = TRUE) 
 
 \dontrun{
-fit.boral <- boral(y = simy$resp, family = "ordinal", lv.control = list(num.lv = 2),
+fit_simdata <- boral(y = simy$resp, family = "ordinal", lv.control = list(num.lv = 2),
       mcmc.control = example_mcmc_control, model.name = testpath)
 }
 
@@ -225,7 +248,6 @@ simy <- simulate(object = fit_traits)
 
 ## The easy way, generating new latent variables
 simy <- simulate(object = fit_traits, new.lvs = TRUE)
-}
 
 
 ## Example 4 - simulate Bernoulli data, based on a model with two latent variables, 
@@ -253,10 +275,6 @@ simy <- create.life(lv.control = simfit$lv.control, lv.coefs = simfit$lv.coefs,
     family = "binomial") 
 
 
-\dontrun{
-## NOTE: The values below MUST NOT be used in a real application;
-## they are only used here to make the examples run quick!!!
-
 example_which_traits <- vector("list",ncol(X)+1); 
 for(i in 1:length(example_which_traits)) 
     example_which_traits[[i]] <- 1:ncol(traits)
@@ -264,6 +282,21 @@ fit_traits <- boral(y = simy, X = X, traits = traits,
     which.traits = example_which_traits, family = "binomial", 
     lv.control = list(num.lv = 2), save.model = TRUE, 
     mcmc.control = example_mcmc_control, model.name = testpath)
-}
 
+
+## Example 5 -- extend Example 2e in the main boral help file to simulate data from a 
+##   fitted model
+library(mvabund) ## Load a dataset from the mvabund package
+data(spider)
+y <- spider$abun
+X <- scale(spider$x)
+
+spiderfit_nb <- boral(y, X = X, family = "negative.binomial", 
+    ranef.ids = data.frame(region = rep(1:7,each=4)), 
+    mcmc.control = example_mcmc_control, model.name = testpath) 
+
+simulate(object = spiderfit_nb)
+
+simulate(object = spiderfit_nb, new.ranefs = TRUE)   
+}
 }

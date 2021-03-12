@@ -9,18 +9,20 @@
 \description{
 \Sexpr[results=rd, stage=render]{lifecycle::badge("stable")}
 
-Calculated the predicted mean responses based on the fitted model, by using the posterior medians or means of the parameters.}
+Calculated the fitted values based on the response or linear predictor scale, by using the posterior medians or means of the parameters.}
 
 \usage{ 
-\method{fitted}{boral}(object, est = "median", linear.predictor = FALSE, ...) 
+\method{fitted}{boral}(object, est = "median", include.ranef = TRUE, linear.predictor = FALSE, ...) 
 }
 
 \arguments{
   \item{object}{An object of class "boral".}
 
-  \item{est}{A choice of either the posterior median (\code{est == "median"}) or posterior mean (\code{est == "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
+  \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}), which are then treated as estimates and the fitted values are calculated from. Default is posterior median.}
 
-  \item{linear.predictor}{Determines the scale on which to return the fitted values. When set to \code{TRUE}, it returns the fitted mean values on the linear predictor scale. When set to \code{FALSE}, which is the defaul behavior, the fitted mean values are on the response scale. Note things are slightly more complicated for zero truncated distributions because, the log-link connects the mean of the \emph{untruncated} distribution to the linear predictor. Therefore if \code{linear.predictor = TRUE}, then the linear predictor is returned. But if \code{linear.predictor = FALSE}, then actual fitted mean value is returned.}
+  \item{include.ranef}{If response-specific random intercepts were included as part of the fitted model, then this determines whether the predicted random effects will be included in the fitted values. When set to \code{TRUE}, which is the default, then they are included (using either the posterior mean and posterior median predictor). When set to \code{FALSE}, they are not included. The former are sometimes called conditional fitted values, while the latter are sometimes called marginal fitted values.}
+
+  \item{linear.predictor}{Determines the scale on which to return the fitted values. When set to \code{TRUE}, it returns the fitted values on the linear predictor scale. When set to \code{FALSE}, which is the defaul behavior, the fitted values are on the response scale. Note things are slightly more complicated for zero truncated distributions because, the log-link connects the mean of the \emph{untruncated} distribution to the linear predictor. Therefore if \code{linear.predictor = TRUE}, then the linear predictor is returned. But if \code{linear.predictor = FALSE}, then actual mean value is returned.}
 
   \item{...}{Not used.}
 }
@@ -30,7 +32,7 @@ This fitted values here are calculated based on a point estimate of the paramete
 }
 
 \value{
-A list containing \code{ordinal.probs} which is an array with dimensions (no. of rows of \code{y}) x (no. of rows of \code{y}) x (no. of levels) containing the predicted probabilities for ordinal columns, and \code{out} which is a matrix of the same dimension as the original response matrix \code{y} containing the fitted values. For ordinal columns, the "fitted values" are defined as the level/class that had the highest fitted probability. 
+A list containing \code{ordinal.probs} which is an array with dimensions (number of rows of the response matrix) x (number of columns of the response matrix) x (no. of levels) containing the predicted probabilities for ordinal columns, and \code{out} which is a matrix of the same dimension as the original response matrix containing the fitted values. For ordinal columns, the "fitted values" are defined as the level/class that had the highest fitted probability. 
 }
 
 \author{
@@ -40,7 +42,8 @@ Maintainer: \packageMaintainer{boral}
 }
 
 \seealso{
-\code{\link{plot.boral}} which uses the fitted values calculated from this function to construct plots for residual analysis; \code{\link{ds.residuals}} for calculating the Dunn-Smyth residuals for a fitted model. 
+\code{\link{plot.boral}} which uses the fitted values calculated from this function to construct plots for residual analysis,
+\code{\link{ds.residuals}} for calculating the Dunn-Smyth residuals for a fitted model. 
 }
 
 \examples{

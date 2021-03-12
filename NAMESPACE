@@ -20,6 +20,7 @@ make.jagsboralmodel,
 make.jagsboralnullmodel,
 predict.boral,
 plot.boral,
+ranefsplot, 
 summary.boral,
 tidyboral
 )
@@ -40,6 +41,7 @@ importFrom(corpcor, cor2pcor, pseudoinverse)
 importFrom(lifecycle,deprecate_stop, deprecate_warn, deprecate_soft)
 importFrom(R2jags, jags)
 importFrom(reshape2, melt)
+importFrom(stats, as.formula, model.matrix)
 importFrom(stats, dbeta, pbeta, qbeta, rbeta)
 importFrom(stats, binomial, poisson, gaussian)
 importFrom(stats, dbinom, pbinom, qbinom, rbinom)
@@ -53,7 +55,7 @@ importFrom(stats, dunif, runif, punif, qunif)
 importFrom(stats, rWishart)
 importFrom(stats, median, IQR, sd, cor, var, cov, cov2cor, simulate, qqline)
 importFrom(stats, offset, quantile, splinefun)
-importFrom(graphics, abline,axis,layout,legend,lines,matplot,par,points,plot,text,mtext,segments)
-importFrom(grDevices,palette, rainbow)
+importFrom(graphics, abline, axis, layout, legend, lines, matplot, par, points, plot, text, mtext, segments)
+importFrom(grDevices,palette, rainbow, n2mfrow)
 importFrom(utils, packageVersion)
 
