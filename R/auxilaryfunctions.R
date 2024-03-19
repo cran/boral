@@ -3,7 +3,7 @@
 ##########
 print.boral.startupInfo <- function() { 
      version <- packageVersion("boral")
-     startup_note <- paste0("This is boral version ", version, ". If you recently updated boral, please check news(package = \"boral\") for the updates in the latest version.")
+     startup_note <- paste0("This is boral version ", version, ". \nPlease note that as of version 2.0, boral will no longer be regularly maintained and updated. However, if you spot any bugs/typos or have a specific feature requests, please contact the maintainer.")
      packageStartupMessage(startup_note)
      }
 

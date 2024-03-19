@@ -20,7 +20,7 @@ ranefsplot(sel.spp, object, ordered = FALSE, est = "median", ...)
 
      \item{object}{An object for class "boral".}
                
-     \item{ordered}{If set to \code{TRUE}, then the random intercept predictions in each caterpillar plot are plotted from smallest to largest. Defaults to \code{FALSE}, in which case the caterpillar plot is simply ordered as per the rows of object{object$ranef.ids}.}
+     \item{ordered}{If set to \code{TRUE}, then the random intercept predictions in each caterpillar plot are plotted from smallest to largest. Defaults to \code{FALSE}, in which case the caterpillar plot is simply ordered as per the rows of \code{object$ranef.ids}.}
 
      \item{est}{A choice of either the posterior median (\code{est = "median"}) or posterior mean (\code{est = "mean"}), which are then used as the point estimates in the lines. Default is posterior median.}
 
@@ -28,7 +28,7 @@ ranefsplot(sel.spp, object, ordered = FALSE, est = "median", ...)
 }
 
 \details{
-For each response (column of the response matrix) and random intercept, the horizontal line or "caterpillar" is constructed by first marking the point prediction (posterior mean or median) with an "x" symbol. Then the line is construed based on the lower and upper limits of the highest posterior density (HPD) intervals as found in \code{object$hpdintervals}. By default, these are 95\% HPD intervals. To complete the plot, a vertical dotted line is drawn to denote the zero value. All HPD intervals that include zero are colored gray, while HPD intervals that exclude zero are colored black. 
+For each response (column of the response matrix) and random intercept, the horizontal line or "caterpillar" is constructed by first marking the point prediction (posterior mean or median) with an "x" symbol. Then the line is construed based on the lower and upper limits of the highest posterior density (HPD) intervals as found in \code{object$hpdintervals}. By default, these are 95\% HPD intervals. To complete the plot, a vertical dotted line is drawn to denote the zero value. All HPD intervals that include zero are colored gray, while HPD intervals that exclude zero are colored black.
 
 By defaults, the plots are constructed one response at a time. That is, for a particular response, caterpillar plots of all the random intercepts (noting the number of plots is detemined by the number of random intercepts included in the model i.e., \code{ncol(object$ranef.ids}) are constructed on a single page. Then it moves onto the next response, and so on. If the user is only interested in plots from a subset of responses, then please make use of the \code{sel.spp} argument. This may be recommended especially since, in community ecology for example, the number of responses may be very large and so plotting all graphs may take a lot time.
 

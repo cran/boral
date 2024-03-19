@@ -22,7 +22,7 @@ calc.varpart <- function(object, groupX = NULL) {
         cw_X_coefs <- matrix(fit_mcmc[k, grep("X.coefs", colnames(fit_mcmc))], nrow = object$p)
         cw_lv_coefs <- matrix(fit_mcmc[k, grep("lv.coefs", colnames(fit_mcmc))], nrow = object$p) ## Need for spp intercept
 
-        fullX <- cbind(1,object$X)
+        fullX <- cbind(1,as.matrix(object$X))
         full.coefs <- cbind(cw_lv_coefs[,1],as.matrix(cw_X_coefs))
         cw.X.linpred <- tcrossprod(fullX, full.coefs)
         if(!is.null(groupX)) {
@@ -57,8 +57,8 @@ calc.varpart <- function(object, groupX = NULL) {
         if(!is.null(object$traits)) {
             cw.traits.coefs <- cbind(fit_mcmc[k, grep("traits.int",colnames(fit_mcmc))], matrix(fit_mcmc[k, grep("traits.coefs",colnames(fit_mcmc))], nrow = ncol(object$X)+1))
             rownames(cw.traits.coefs) <- c("beta0", colnames(object$X))
-            trait.X.coefs <- tcrossprod(cbind(1,object$traits), cw.traits.coefs) ## beta = intercept + trait %*% trait.coefs
-            cw.trait.linpred <- tcrossprod(cbind(1,object$X), trait.X.coefs)
+            trait.X.coefs <- tcrossprod(cbind(1,as.matrix(object$traits)), cw.traits.coefs) ## beta = intercept + trait %*% trait.coefs
+            cw.trait.linpred <- tcrossprod(cbind(1,as.matrix(object$X)), trait.X.coefs)
             all_cors_spp[k,] <-  sapply(1:object$p, function(i) cor(cw.X.linpred[,i], cw.trait.linpred[,i])^2)
             }
         }

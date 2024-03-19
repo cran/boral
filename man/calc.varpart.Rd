@@ -42,7 +42,7 @@ For the response, a variation partitioning of the linear predictor is performed 
 
 After scaling, we can then obtain the proportion of variance for each response which is explained by the variance components. These proportions are calculated for each MCMC sample and then average acrossed them to calculate a posterior mean variance partitioning. 
 
-If \code{groupX} is supplied, the variance due to the covariates is done based on subsets of the covariates (including the intercept) as identified by code{groupX}, and then rescaled correspondingly. This is useful if one was to, for example, quantify the proportion of variation in each response which is explained by each covariate.
+If \code{groupX} is supplied, the variance due to the covariates is done based on subsets of the covariates (including the intercept) as identified by  \code{groupX}, and then rescaled correspondingly. This is useful if one was to, for example, quantify the proportion of variation in each response which is explained by each covariate.
 
 If a fitted model also containing traits, which are included to help explain/mediate differences in species environmental responses, then the function calculates \eqn{R^2} value for the proportion of variance in the covariates which is explained by the traits. In brief, this is calculated based the correlation between \eqn{\beta_{0j} + \bm{x}^\top_i\bm{\beta}_j} and \eqn{\tau_{0j} + \bm{x}^\top_i\bm{\tau}_j}, where \eqn{\tau_{0j}} and \eqn{\bm{\tau}_j} are the ``predicted" values of the species coefficients based on values i.e., \eqn{\tau_{0j} = \kappa_{01} + \bm{traits}^\top_j\bm{\kappa}_1} and \eqn{\tau_{jk} = \kappa_{0k} + \bm{traits}^\top_j\bm{\kappa}_k} for element \eqn{k} in \eqn{\bm{\tau}_j}. 
 }

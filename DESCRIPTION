@@ -1,7 +1,7 @@
 Package: boral
 Title: Bayesian Ordination and Regression AnaLysis
-Version: 2.0
-Date: 2021-04-01
+Version: 2.0.1
+Date: 2024-04-01
 Author: Francis K.C. Hui [aut, cre], 
      Wade Blanchard [aut]
 Maintainer: Francis K.C. Hui <fhui28@gmail.com>
@@ -12,6 +12,6 @@ Imports: abind, corpcor, fishMod, graphics, grDevices, lifecycle, MASS,
         mvtnorm, R2jags, reshape2, stats
 Suggests: mvabund (>= 4.0.1), corrplot
 NeedsCompilation: no
-Packaged: 2021-03-12 08:18:18 UTC; fh
+Packaged: 2024-03-19 21:52:40 UTC; fkch
 Repository: CRAN
-Date/Publication: 2021-03-12 09:50:02 UTC
+Date/Publication: 2024-03-19 22:10:02 UTC

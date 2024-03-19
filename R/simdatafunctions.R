@@ -233,7 +233,7 @@ function() {
      est = "median"
      }
 simulate.boral <- function(object, nsim = 1, seed = NULL, new.lvs = FALSE, new.ranefs = FALSE, distmat = NULL, est = "median", ...) { 
-     if(class(object) != "boral") 
+     if(!inherits(object, "boral"))
           stop("object must be of class boral.")
      
      if(est == "mean") {

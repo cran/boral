@@ -4,14 +4,7 @@
 ## Multinomial regression is written, but CURRENTLY NOT ALLOWED DUE TO COMPUTATION TIME
 ################
 
-## Changes from v1.9 (news files to be updated, and remember to run runningexamples.R)
-## - Quite a bit of editing done to the help files and some names changes to returned objects. For help files, in particular note the notation for latent variables has been changed from z_i to u_i, and random intercept covariates represented by z_i
-## - coefsplot now does fourth corner coefficient plotting
-## - Attempting to gradually add response-specific random intercepts. This is done with ranef.ids. 
-##   + R scripts done [NC for no change -- ALL DONE]: 
-##   + Help files done [NC for no change]: 
-## - Including an argument formula.X in the boral fitting function for users to more readily specifiy a covariate matrix
-## - ICs and log-likelihood are now formally defunct and no longer maintained!
+## **As of v2.0, boral will not be regularly maintained and updated. However, if you spot any bugs/typos or have a specific feature requests, please contact the maintainer**
 
 ## TODO:
 ## -1) lvsplot version 2.0; after some consultation with David and inspired by a problem of Hao Ran -- see playingaround_lvsplot2

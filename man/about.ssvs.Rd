@@ -29,7 +29,7 @@ SSVS can be applied at a grouped or individual coefficient level, and this is go
 
 \item For elements equal to 0, SSVS is applied to each individual coefficients of the corresponding covariate in \eqn{\bm{X}}. That is, the fitted model will return posterior probabilities for this covariate, one for each column of the response matrix.
 
-\item For elements taking positive integers {1,2,...}, SSVS is applied to each group of coefficients of the corresponding covariate in \eqn{\bm{X}}. That is, the fitted model will return a single posterior probability for this covariate, indicating whether this covariate should be included for all columns of the response matrix; see O'Hara and Sillanpaa (2009) and Tenan et al. (2014) among many others for an discussion of Bayesian variable selection methods.
+\item For elements taking positive integers 1, 2, and so on, SSVS is applied to each group of coefficients of the corresponding covariate in \eqn{\bm{X}}. That is, the fitted model will return a single posterior probability for this covariate, indicating whether this covariate should be included for all columns of the response matrix; see O'Hara and Sillanpaa (2009) and Tenan et al. (2014) among many others for an discussion of Bayesian variable selection methods.
 }
 
 
