@@ -53,7 +53,7 @@ calc.varpart <- function(object, groupX = NULL) {
                 groupX_var[k2,k,] <- apply(cw.groupX.linpred[[k2]],2,var)
             }
         if(num.lv > 0) 
-            lv_var[k,] <- rowSums(cw_lv_coefs[,2:(1+object$num.lv)]^2) 
+            lv_var[k,] <- rowSums(cw_lv_coefs[,2:(1+object$num.lv),drop=FALSE]^2)
         if(!is.null(object$traits)) {
             cw.traits.coefs <- cbind(fit_mcmc[k, grep("traits.int",colnames(fit_mcmc))], matrix(fit_mcmc[k, grep("traits.coefs",colnames(fit_mcmc))], nrow = ncol(object$X)+1))
             rownames(cw.traits.coefs) <- c("beta0", colnames(object$X))
