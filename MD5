@@ -1,4 +1,4 @@
-7f071d4823a3a96b9101fbaf2943ba59 *DESCRIPTION
+30a315d1e59ceafaa434d9df26a96875 *DESCRIPTION
 cee653f413b6fae6c401c615579faf3f *NAMESPACE
 2773885d286490e380ffdcd9743b8d51 *R/auxilaryfunctions.R
 1e120eab6b3c0b53f5d9e1a4a799ae09 *R/boral.jags.R
@@ -22,8 +22,9 @@ f34c820b1bb88a766e5af0d6042d2852 *R/tidyboral.R
 a92ca1a35dfcaa7799e4918c787a99a8 *R/varpart.R
 f05c5bf27ac6f5e8aaf37cf4f048bef4 *R/ztnbinom.R
 33b0cff53751ee4b61261dd0e1d9af43 *R/ztpoisson.R
-112893a933ff0b13a350fb7163fe016f *build/boral.pdf
-be002e88582ddb025976b713a557680b *build/partial.rdb
+82b41cef1399ceceef035e4ed578ffb5 *build/boral.pdf
+e3943d712b3cc31d3db945ade2846994 *build/partial.rdb
+92068b78705f0df3bca1e44aba9599de *build/stage23.rdb
 4ded4ed6fc77ac3295679d8543058f3f *inst/CITATION
 63007f4191d726900e17e40cd4057d67 *man/about.distributions.Rd
 f880d567a8dd04339e7a9a2898bd7f7b *man/about.lvs.Rd

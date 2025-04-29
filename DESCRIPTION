@@ -1,10 +1,15 @@
 Package: boral
 Title: Bayesian Ordination and Regression AnaLysis
-Version: 2.0.2
-Date: 2024-04-15
-Author: Francis K.C. Hui [aut, cre], 
-     Wade Blanchard [aut]
-Maintainer: Francis K.C. Hui <fhui28@gmail.com>
+Version: 2.0.3
+Date: 2025-05-1
+Authors@R: c(person(given = c("Francis", "K.C."),
+                        family = "Hui",
+                        role = c("aut", "cre"),
+                        email = "fhui28@gmail.com",
+                        comment = c(ORCID = "0000-0003-0765-3533")),
+                 person(given = "Wade",
+                        family = "Blanchard",
+                        role = "aut"))
 Description: Bayesian approaches for analyzing multivariate data in ecology. Estimation is performed using Markov Chain Monte Carlo (MCMC) methods via Three. JAGS types of models may be fitted: 1) With explanatory variables only, boral fits independent column Generalized Linear Models (GLMs) to each column of the response matrix; 2) With latent variables only, boral fits a purely latent variable model for model-based unconstrained ordination; 3) With explanatory and latent variables, boral fits correlated column GLMs with latent variables to account for any residual correlation between the columns of the response matrix. 
 License: GPL-2
 Depends: coda
@@ -12,6 +17,9 @@ Imports: abind, corpcor, fishMod, graphics, grDevices, lifecycle, MASS,
         mvtnorm, R2jags, reshape2, stats
 Suggests: mvabund (>= 4.0.1), corrplot
 NeedsCompilation: no
-Packaged: 2024-03-24 09:55:36 UTC; fkch
+Packaged: 2025-04-29 22:57:15 UTC; fkch
+Author: Francis K.C. Hui [aut, cre] (<https://orcid.org/0000-0003-0765-3533>),
+  Wade Blanchard [aut]
+Maintainer: Francis K.C. Hui <fhui28@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-03-24 22:20:02 UTC
+Date/Publication: 2025-04-29 23:10:02 UTC
